@@ -1,6 +1,12 @@
-out/
 node_modules/
 webview-ui/node_modules/
+dist/
+out/
 media/webview/
 *.vsix
-.DS_Store
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/

@@ -1,93 +1,62 @@
 # Meridian
 
-Code quality metrics and analysis for Python projects, powered by [radon](https://radon.readthedocs.io/) with [semver](https://python-semver.readthedocs.io/)-compliant versioning.
+A VS Code extension that surfaces Python code quality metrics — cyclomatic complexity, maintainability index, and raw LOC — directly inside your editor via a React-powered side panel.
 
 ## Features
 
-- **Cyclomatic complexity** — per-function/class CC scores with A–F ranking
-- **Maintainability index** — MI score and letter grade for each file
-- **Raw LOC metrics** — lines of code, source lines, comments, and blank lines
-- **CLI + JSON output** — human-readable tables or machine-readable JSON
-- **Semantic versioning** — version managed as a first-class `semver.Version` object
+- **Metrics panel** — live side panel showing complexity, MI score, and LOC for the active Python file
+- **Right-click analysis** — analyse any Python file from the editor context menu
+- **Auto-refresh on save** — panel updates every time you save a Python file
+- **Colour-coded ranks** — A (green) through F (red) badges at a glance
+- **JSON-safe** — all radon output is parsed and rendered in React; no raw HTML injection
 
-## Installation
+## Requirements
 
-```bash
-pip install meridian
-```
-
-For development:
+- VS Code 1.90+
+- Python 3.10+ with `radon` installed:
 
 ```bash
-git clone https://github.com/onetoomanybi/meridian.git
-cd meridian
-pip install -e ".[dev]"
+pip install radon
 ```
 
-## Usage
+## Getting Started
 
-### CLI
+1. Install the extension
+2. Open a Python file
+3. Run **Meridian: Show Metrics Panel** from the Command Palette (`Ctrl+Shift+P`)
 
-```bash
-# Analyse a single file
-meridian path/to/file.py
+Or right-click inside any Python file and choose **Meridian: Analyze Current File**.
 
-# Analyse an entire directory
-meridian src/
+## Configuration
 
-# JSON output (pipe-friendly)
-meridian src/ --json
-
-# Show version
-meridian --version
-```
-
-### Python API
-
-```python
-from meridian.metrics import complexity, maintainability, raw_metrics
-
-source = open("mymodule.py").read()
-
-print(raw_metrics(source))
-# {'loc': 42, 'sloc': 30, 'comments': 5, 'blank': 7}
-
-print(maintainability(source))
-# {'score': 72.3, 'rank': 'A'}
-
-for block in complexity(source):
-    print(block)
-# {'name': 'my_func', 'type': 'F', 'complexity': 3, 'rank': 'A', 'lineno': 10}
-```
-
-### Version
-
-```python
-from meridian import VERSION  # semver.Version instance
-
-next_version = VERSION.bump_minor()
-print(next_version)  # 0.2.0
-```
-
-## Complexity Ranks
-
-| Rank | CC Score | Risk |
-|------|----------|------|
-| A    | 1–5      | Low  |
-| B    | 6–10     | Low  |
-| C    | 11–15    | Medium |
-| D    | 16–20    | Medium |
-| E    | 21–25    | High |
-| F    | 26+      | Very high |
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `meridian.pythonPath` | `"python"` | Path to the Python executable |
+| `meridian.complexityThreshold` | `10` | CC value above which a warning is shown |
+| `meridian.showOnSave` | `true` | Auto-refresh panel on file save |
 
 ## Development
 
 ```bash
-# Run tests
-pytest
+npm install
+npm run dev       # webpack watch mode
+# Press F5 in VS Code to launch the Extension Development Host
+```
 
-# Run tests with coverage
-pytest --cov=meridian
+### Project layout
+
+```
+src/
+├── extension.ts          # Activation, command registration
+├── panels/
+│   └── MetricsPanel.ts   # WebviewPanel host, radon subprocess
+└── webview/
+    ├── index.tsx         # React root
+    ├── App.tsx           # State machine (idle / loading / data / error)
+    └── components/
+        ├── MetricsView.tsx
+        ├── EmptyView.tsx
+        └── ErrorView.tsx
 ```
 
 ## License

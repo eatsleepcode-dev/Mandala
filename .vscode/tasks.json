@@ -2,22 +2,22 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "npm: compile",
+      "label": "build",
       "type": "npm",
-      "script": "compile",
+      "script": "build",
       "group": {
         "kind": "build",
         "isDefault": true
       },
-      "problemMatcher": ["$tsc"],
-      "detail": "Compile extension TypeScript"
+      "problemMatcher": ["$ts-webpack-watch"]
     },
     {
-      "label": "npm: build:webview",
+      "label": "watch",
       "type": "npm",
-      "script": "build:webview",
-      "problemMatcher": [],
-      "detail": "Build React webview bundle into media/"
+      "script": "dev",
+      "group": "build",
+      "isBackground": true,
+      "problemMatcher": ["$ts-webpack-watch"]
     }
   ]
 }
