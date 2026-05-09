@@ -1,9 +1,6 @@
-__pycache__/
-*.py[cod]
-*.egg-info/
-dist/
-build/
-.pytest_cache/
-.coverage
-htmlcov/
-*.egg
+out/
+node_modules/
+webview-ui/node_modules/
+media/webview/
+*.vsix
+.DS_Store
