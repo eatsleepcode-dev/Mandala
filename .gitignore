@@ -1,5 +1,8 @@
 node_modules/
+webview-ui/node_modules/
 dist/
+out/
+media/webview/
 *.vsix
 __pycache__/
 *.py[cod]
