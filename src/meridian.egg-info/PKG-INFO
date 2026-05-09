@@ -1,3 +1,16 @@
+Metadata-Version: 2.4
+Name: meridian
+Version: 0.1.0
+Summary: Code quality metrics and analysis tool powered by radon
+License: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: radon>=6.0
+Requires-Dist: semver>=3.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: pytest-cov>=5.0; extra == "dev"
+
 # Meridian
 
 Code quality metrics and analysis for Python projects, powered by [radon](https://radon.readthedocs.io/) with [semver](https://python-semver.readthedocs.io/)-compliant versioning.
