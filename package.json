@@ -54,6 +54,31 @@
           "type": "string",
           "default": "__inbox/__todo",
           "description": "Workspace-relative path to the sprint task card folder"
+        },
+        "meridian.integrations.claude": {
+          "type": "boolean",
+          "default": true,
+          "description": "Sync CLAUDE.md at workspace root from .meridian/agents/context/CLAUDE.md (symlink or generated)"
+        },
+        "meridian.integrations.copilot": {
+          "type": "boolean",
+          "default": false,
+          "description": "Sync .github/copilot-instructions.md from .meridian/agents/context/COPILOT.md"
+        },
+        "meridian.integrations.cursor": {
+          "type": "boolean",
+          "default": false,
+          "description": "Sync .cursorrules from .meridian/agents/context/CURSORRULES.md"
+        },
+        "meridian.integrations.cline": {
+          "type": "boolean",
+          "default": false,
+          "description": "Sync .clinerules from .meridian/agents/context/CLINERULES.md"
+        },
+        "meridian.integrations.claudeCommands": {
+          "type": "boolean",
+          "default": true,
+          "description": "Symlink .claude/commands/ to .meridian/agents/skills/ so skills appear as Claude Code slash commands"
         }
       }
     }

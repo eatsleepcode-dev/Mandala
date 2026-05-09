@@ -176,3 +176,24 @@ body {
 .type-chore { color: var(--fg-muted); }
 .type-docs { color: #ce93d8; }
 .type-tidy { color: #80cbc4; }
+
+/* ─── Settings view ──────────────────────────────────────────────────────── */
+.settings-view { padding: 24px; max-width: 700px; }
+.settings-section { margin-bottom: 32px; }
+.settings-section h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-dim); margin-bottom: 8px; }
+.settings-hint { font-size: 12px; color: var(--fg-muted); margin-bottom: 12px; }
+.settings-known-list { list-style: none; padding: 0; margin: 0; }
+.settings-known-list li { display: flex; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.settings-known-list label { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; flex: 1; }
+.settings-target-hint { font-family: var(--font-mono); font-size: 10px; color: var(--fg-muted); }
+.settings-custom-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 12px; }
+.settings-custom-table th { text-align: left; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--fg-muted); padding: 4px 8px; border-bottom: 1px solid var(--border); }
+.settings-custom-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.settings-custom-table button { font-size: 10px; padding: 2px 8px; background: var(--red-dim); color: var(--red); border: 1px solid var(--red-dim); border-radius: 3px; cursor: pointer; }
+.settings-add-btn { font-size: 11px; padding: 4px 12px; background: var(--blue); color: #fff; border: none; border-radius: 3px; cursor: pointer; }
+.settings-add-form { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--bg-card); border-radius: 4px; }
+.settings-add-form input { background: var(--bg-panel); border: 1px solid var(--border); color: var(--fg); font-size: 12px; padding: 5px 8px; border-radius: 3px; }
+.settings-add-actions { display: flex; gap: 8px; }
+.settings-add-actions button { font-size: 11px; padding: 4px 12px; border: none; border-radius: 3px; cursor: pointer; }
+.settings-add-actions button:first-child { background: var(--blue); color: #fff; }
+.settings-add-actions button:last-child { background: var(--bg-panel); color: var(--fg-dim); border: 1px solid var(--border); }

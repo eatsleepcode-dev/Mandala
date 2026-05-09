@@ -52,11 +52,74 @@ export interface ErrorMessage {
   text: string;
 }
 
-export type HostMessage =
-  | LoadStoryMapMessage
-  | LoadDiaryMessage
-  | InitStateMessage
-  | ErrorMessage;
+// ─── Integration / settings types ────────────────────────────────────────────
+
+export interface KnownIntegration {
+  id: string;
+  label: string;
+  source: string;
+  target: string;
+}
+
+export const KNOWN_INTEGRATIONS: KnownIntegration[] = [
+  {
+    id: 'claude',
+    label: 'Claude Code',
+    source: 'context/CLAUDE.md',
+    target: 'CLAUDE.md',
+  },
+  {
+    id: 'copilot',
+    label: 'GitHub Copilot',
+    source: 'context/COPILOT.md',
+    target: '.github/copilot-instructions.md',
+  },
+  {
+    id: 'cursor',
+    label: 'Cursor',
+    source: 'context/CURSORRULES.md',
+    target: '.cursorrules',
+  },
+  {
+    id: 'cline',
+    label: 'Cline',
+    source: 'context/CLINERULES.md',
+    target: '.clinerules',
+  },
+  {
+    id: 'claudeCommands',
+    label: 'Slash Commands',
+    source: 'skills',
+    target: '.claude/commands',
+  },
+];
+
+export interface CustomIntegration {
+  id: string;
+  label: string;
+  source: string;
+  target: string;
+}
+
+export interface KnownIntegrationFlags {
+  claude: boolean;
+  copilot: boolean;
+  cursor: boolean;
+  cline: boolean;
+  claudeCommands: boolean;
+}
+
+export interface IntegrationSettings {
+  known: KnownIntegrationFlags;
+  custom: CustomIntegration[];
+}
+
+// ─── Host → Webview: settings ────────────────────────────────────────────────
+
+export interface LoadSettingsMessage {
+  command: 'loadSettings';
+  settings: IntegrationSettings;
+}
 
 // ─── Webview → Host messages ─────────────────────────────────────────────────
 
@@ -65,10 +128,22 @@ export interface RefreshMessage { command: 'refresh'; }
 export interface OpenFileMessage { command: 'openFile'; path: string; }
 export interface InitWorkspaceMessage { command: 'initWorkspace'; }
 export interface MigrateWorkspaceMessage { command: 'migrateWorkspace'; }
+export interface SaveSettingsMessage {
+  command: 'saveSettings';
+  settings: IntegrationSettings;
+}
+
+export type HostMessage =
+  | LoadStoryMapMessage
+  | LoadDiaryMessage
+  | InitStateMessage
+  | ErrorMessage
+  | LoadSettingsMessage;
 
 export type WebviewMessage =
   | ReadyMessage
   | RefreshMessage
   | OpenFileMessage
   | InitWorkspaceMessage
-  | MigrateWorkspaceMessage;
+  | MigrateWorkspaceMessage
+  | SaveSettingsMessage;

@@ -6,7 +6,12 @@ import {
   migrateToMeridianFolder,
   meridianPath,
 } from '../lib/workspace';
-import type { WebviewMessage } from '../shared/types';
+import {
+  loadIntegrationConfig,
+  saveIntegrationConfig,
+  syncIntegrations,
+} from '../lib/integrations';
+import type { WebviewMessage, KnownIntegrationFlags, IntegrationSettings } from '../shared/types';
 
 export class BrainPanel {
   public static currentPanel: BrainPanel | undefined;
@@ -106,6 +111,32 @@ export class BrainPanel {
             await panel._pushData();
             return;
           }
+
+          case 'saveSettings': {
+            const { settings } = message;
+            // Persist custom integrations to .meridian/config.json
+            const config = await loadIntegrationConfig(
+              panel._workspaceRoot,
+              vscode.workspace.fs
+            );
+            config.custom = settings.custom;
+            await saveIntegrationConfig(panel._workspaceRoot, config, vscode.workspace.fs);
+
+            // Update VS Code workspace settings for known flags
+            const wsConfig = vscode.workspace.getConfiguration('meridian.integrations');
+            for (const [key, value] of Object.entries(settings.known)) {
+              await wsConfig.update(key, value, vscode.ConfigurationTarget.Workspace);
+            }
+
+            // Run sync
+            await syncIntegrations(
+              panel._workspaceRoot,
+              settings.known as KnownIntegrationFlags,
+              config,
+              vscode.workspace.fs as any
+            );
+            return;
+          }
         }
       },
       undefined,
@@ -145,9 +176,26 @@ export class BrainPanel {
       hasMigratableData,
     });
 
+    // Send current integration settings
+    await this._pushSettings();
+
     if (detection.found) {
       await this._pushData();
     }
+  }
+
+  private async _pushSettings(): Promise<void> {
+    const wsConfig = vscode.workspace.getConfiguration('meridian.integrations');
+    const known: KnownIntegrationFlags = {
+      claude: wsConfig.get<boolean>('claude', true),
+      copilot: wsConfig.get<boolean>('copilot', false),
+      cursor: wsConfig.get<boolean>('cursor', false),
+      cline: wsConfig.get<boolean>('cline', false),
+      claudeCommands: wsConfig.get<boolean>('claudeCommands', true),
+    };
+    const config = await loadIntegrationConfig(this._workspaceRoot, vscode.workspace.fs);
+    const settings: IntegrationSettings = { known, custom: config.custom };
+    this._panel.webview.postMessage({ command: 'loadSettings', settings });
   }
 
   private async _pushData(): Promise<void> {

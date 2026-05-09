@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type ViewId = 'storymap' | 'diary';
+export type ViewId = 'storymap' | 'diary' | 'settings';
 
 interface Props {
   active: ViewId;
@@ -10,6 +10,7 @@ interface Props {
 const ITEMS: Array<{ id: ViewId; label: string; icon: string }> = [
   { id: 'storymap', label: 'Story Map', icon: '⊞' },
   { id: 'diary', label: 'Diary', icon: '📓' },
+  { id: 'settings', label: 'Settings', icon: '⚙' },
 ];
 
 export function Sidebar({ active, onSelect }: Props) {
