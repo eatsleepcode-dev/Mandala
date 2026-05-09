@@ -1,90 +1,205 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
+import {
+  detectDevBrainFolders,
+  loadTaskCards,
+  loadDiaryEntries,
+  migrateToMeridianFolder,
+  meridianPath,
+} from '../lib/workspace';
+import type { WebviewMessage } from '../shared/types';
 
 export class BrainPanel {
   public static currentPanel: BrainPanel | undefined;
+
   private readonly _panel: vscode.WebviewPanel;
+  private readonly _extensionUri: vscode.Uri;
+  private readonly _workspaceRoot: vscode.Uri;
   private _disposables: vscode.Disposable[] = [];
 
-  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, rootPath: string) {
+  private constructor(
+    panel: vscode.WebviewPanel,
+    extensionUri: vscode.Uri,
+    workspaceRoot: vscode.Uri
+  ) {
     this._panel = panel;
+    this._extensionUri = extensionUri;
+    this._workspaceRoot = workspaceRoot;
+
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
-    this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri);
+    this._panel.webview.html = buildWebviewHtml(
+      this._panel.webview,
+      extensionUri,
+      getNonce()
+    );
     this._setWebviewMessageListener(this._panel.webview);
   }
 
-  public static render(extensionUri: vscode.Uri, rootPath: string) {
+  public static render(extensionUri: vscode.Uri, workspaceRoot: vscode.Uri): void {
     if (BrainPanel.currentPanel) {
       BrainPanel.currentPanel._panel.reveal(vscode.ViewColumn.One);
-    } else {
-      const panel = vscode.window.createWebviewPanel(
-        "meridianDashboard",
-        "Meridian: Dev-Brain Dashboard",
-        vscode.ViewColumn.One,
-        {
-          enableScripts: true,
-          localResourceRoots: [vscode.Uri.joinPath(extensionUri, "media")],
-        }
-      );
-      BrainPanel.currentPanel = new BrainPanel(panel, extensionUri, rootPath);
+      return;
     }
+    const panel = vscode.window.createWebviewPanel(
+      'meridianDashboard',
+      'Meridian',
+      vscode.ViewColumn.One,
+      {
+        enableScripts: true,
+        localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'dist', 'webview')],
+        retainContextWhenHidden: true,
+      }
+    );
+    BrainPanel.currentPanel = new BrainPanel(panel, extensionUri, workspaceRoot);
   }
 
-  public dispose() {
+  public dispose(): void {
     BrainPanel.currentPanel = undefined;
     this._panel.dispose();
     while (this._disposables.length) {
-      const disposable = this._disposables.pop();
-      if (disposable) disposable.dispose();
+      this._disposables.pop()?.dispose();
     }
   }
 
-  private _getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
-    const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(extensionUri, "media", "webview", "index.js")
-    );
-    const styleUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(extensionUri, "media", "webview", "style.css")
-    );
-    const nonce = getNonce();
-
-    return `
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
-          <link rel="stylesheet" type="text/css" href="${styleUri}">
-          <title>Meridian</title>
-        </head>
-        <body>
-          <div id="root"></div>
-          <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
-        </body>
-      </html>
-    `;
-  }
-
-  private _setWebviewMessageListener(webview: vscode.Webview) {
+  private _setWebviewMessageListener(webview: vscode.Webview): void {
     webview.onDidReceiveMessage(
-      (message: { command: string; text: string }) => {
+      async (message: WebviewMessage) => {
+        // Capture panel reference at handler start to avoid race on dispose
+        const panel = BrainPanel.currentPanel;
+        if (!panel) return;
+
         switch (message.command) {
-          case "hello":
-            vscode.window.showInformationMessage(message.text);
+          case 'ready':
+            await panel._sendInitialData();
             return;
+
+          case 'refresh':
+            await panel._pushData();
+            return;
+
+          case 'openFile':
+            vscode.workspace
+              .openTextDocument(message.path)
+              .then((doc) => vscode.window.showTextDocument(doc));
+            return;
+
+          case 'initWorkspace': {
+            const { initDevBrainFolders } = await import('../lib/workspace');
+            await initDevBrainFolders(panel._workspaceRoot, vscode.workspace.fs);
+            await panel._pushData();
+            return;
+          }
+
+          case 'migrateWorkspace': {
+            const report = await migrateToMeridianFolder(
+              panel._workspaceRoot,
+              vscode.workspace.fs
+            );
+            if (report.skipped.length > 0) {
+              vscode.window.showWarningMessage(
+                `Migration complete. ${report.moved.length} files moved, ${report.skipped.length} skipped (check permissions).`
+              );
+            } else {
+              vscode.window.showInformationMessage(
+                `Migration complete — ${report.moved.length} files moved to .meridian/`
+              );
+            }
+            await panel._pushData();
+            return;
+          }
         }
       },
       undefined,
       this._disposables
     );
   }
+
+  private async _sendInitialData(): Promise<void> {
+    const detection = await detectDevBrainFolders(
+      this._workspaceRoot,
+      vscode.workspace.fs
+    );
+
+    // Check if legacy folders exist for migration prompt
+    let hasMigratableData = false;
+    if (!detection.found) {
+      try {
+        await vscode.workspace.fs.readDirectory(
+          vscode.Uri.file(`${this._workspaceRoot.fsPath}/__inbox/__todo`)
+        );
+        hasMigratableData = true;
+      } catch {
+        try {
+          await vscode.workspace.fs.readDirectory(
+            vscode.Uri.file(`${this._workspaceRoot.fsPath}/diary`)
+          );
+          hasMigratableData = true;
+        } catch {
+          // no legacy data
+        }
+      }
+    }
+
+    this._panel.webview.postMessage({
+      command: 'initState',
+      initialized: detection.found,
+      hasMigratableData,
+    });
+
+    if (detection.found) {
+      await this._pushData();
+    }
+  }
+
+  private async _pushData(): Promise<void> {
+    const fs = vscode.workspace.fs;
+    const root = this._workspaceRoot;
+
+    const [cards, entries] = await Promise.all([
+      loadTaskCards(meridianPath(root, 'inbox'), fs),
+      loadDiaryEntries(meridianPath(root, 'diary'), fs),
+    ]);
+
+    this._panel.webview.postMessage({ command: 'loadStoryMap', cards });
+    this._panel.webview.postMessage({ command: 'loadDiary', entries });
+  }
 }
 
-function getNonce() {
-  let text = "";
-  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 32; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
+// ─── Exported pure helpers (also tested directly) ───────────────────────────
+
+export function getNonce(): string {
+  const buf = new Uint8Array(16);
+  // crypto is available in both Node 15+ and the VS Code extension host
+  (globalThis.crypto ?? require('crypto').webcrypto).getRandomValues(buf);
+  return Array.from(buf, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+export function buildWebviewHtml(
+  webview: Pick<vscode.Webview, 'cspSource' | 'asWebviewUri'>,
+  extensionUri: { fsPath: string },
+  nonce: string
+): string {
+  const scriptUri = webview.asWebviewUri({
+    fsPath: `${extensionUri.fsPath}/dist/webview/webview.js`,
+  } as vscode.Uri);
+  const styleUri = webview.asWebviewUri({
+    fsPath: `${extensionUri.fsPath}/dist/webview/webview.css`,
+  } as vscode.Uri);
+
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+      content="default-src 'none';
+               style-src ${webview.cspSource} 'unsafe-inline';
+               script-src 'nonce-${nonce}';">
+    <link rel="stylesheet" href="${styleUri}" />
+    <title>Meridian</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script nonce="${nonce}" src="${scriptUri}"></script>
+  </body>
+</html>`;
 }

@@ -1,52 +1,122 @@
-import React, { useEffect, useState } from "react";
-import { MetricsView } from "./components/MetricsView";
-import { ErrorView } from "./components/ErrorView";
-import { EmptyView } from "./components/EmptyView";
+import React, { useEffect, useReducer } from 'react';
+import { vscode } from './vscode';
+import { Sidebar } from './components/Sidebar';
+import { StoryMapView } from './components/StoryMapView';
+import { DiaryView } from './components/DiaryView';
+import type { HostMessage, TaskCard, DiaryEntry } from '../shared/types';
+import type { ViewId } from './components/Sidebar';
 
-type Metrics = {
-  file: string;
-  raw: { loc: number; sloc: number; comments: number; blank: number };
-  maintainability: { score: number; rank: string };
-  complexity: { name: string; type: string; complexity: number; rank: string; lineno: number }[];
-};
+// ─── State machine ───────────────────────────────────────────────────────────
 
-type State =
-  | { status: "idle" }
-  | { status: "loading" }
-  | { status: "data"; metrics: Metrics }
-  | { status: "error"; text: string };
+type Phase =
+  | { status: 'loading' }
+  | { status: 'setup'; hasMigratableData: boolean }
+  | { status: 'ready'; cards: TaskCard[]; entries: DiaryEntry[] };
 
-declare function acquireVsCodeApi(): {
-  postMessage(msg: unknown): void;
-};
+interface AppState {
+  phase: Phase;
+  activeView: ViewId;
+}
 
-const vscode = acquireVsCodeApi();
+type Action =
+  | { type: 'INIT'; initialized: boolean; hasMigratableData: boolean }
+  | { type: 'LOAD_STORY_MAP'; cards: TaskCard[] }
+  | { type: 'LOAD_DIARY'; entries: DiaryEntry[] }
+  | { type: 'SET_VIEW'; view: ViewId };
 
-export function App() {
-  const [state, setState] = useState<State>({ status: "idle" });
+function reducer(state: AppState, action: Action): AppState {
+  switch (action.type) {
+    case 'INIT':
+      return action.initialized
+        ? { ...state, phase: { status: 'ready', cards: [], entries: [] } }
+        : { ...state, phase: { status: 'setup', hasMigratableData: action.hasMigratableData } };
+
+    case 'LOAD_STORY_MAP':
+      if (state.phase.status !== 'ready') return state;
+      return { ...state, phase: { ...state.phase, cards: action.cards } };
+
+    case 'LOAD_DIARY':
+      if (state.phase.status !== 'ready') return state;
+      return { ...state, phase: { ...state.phase, entries: action.entries } };
+
+    case 'SET_VIEW':
+      return { ...state, activeView: action.view };
+
+    default:
+      return state;
+  }
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
+export default function App() {
+  const [state, dispatch] = useReducer(reducer, {
+    phase: { status: 'loading' },
+    activeView: 'storymap',
+  });
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      const msg = event.data;
-      if (msg.command === "metrics") {
-        setState({ status: "data", metrics: msg.data });
-      } else if (msg.command === "error") {
-        setState({ status: "error", text: msg.text });
-      } else if (msg.command === "loading") {
-        setState({ status: "loading" });
+      const msg = event.data as HostMessage;
+      switch (msg.command) {
+        case 'initState':
+          dispatch({ type: 'INIT', initialized: msg.initialized, hasMigratableData: msg.hasMigratableData });
+          break;
+        case 'loadStoryMap':
+          dispatch({ type: 'LOAD_STORY_MAP', cards: msg.cards });
+          break;
+        case 'loadDiary':
+          dispatch({ type: 'LOAD_DIARY', entries: msg.entries });
+          break;
       }
     };
-
-    window.addEventListener("message", handler);
-    vscode.postMessage({ command: "ready" });
-    return () => window.removeEventListener("message", handler);
+    window.addEventListener('message', handler);
+    vscode.postMessage({ command: 'ready' });
+    return () => window.removeEventListener('message', handler);
   }, []);
 
-  if (state.status === "idle" || state.status === "loading") {
-    return <EmptyView loading={state.status === "loading"} />;
+  const openFile = (path: string) => vscode.postMessage({ command: 'openFile', path });
+
+  const { phase, activeView } = state;
+
+  if (phase.status === 'loading') {
+    return <div className="meridian-loading">Loading…</div>;
   }
-  if (state.status === "error") {
-    return <ErrorView text={state.text} />;
+
+  if (phase.status === 'setup') {
+    return (
+      <div className="meridian-setup">
+        <h1>Meridian</h1>
+        {phase.hasMigratableData ? (
+          <>
+            <p>Existing __inbox/, diary/, or .agents/ folders detected.</p>
+            <button onClick={() => vscode.postMessage({ command: 'migrateWorkspace' })}>
+              Migrate to .meridian/
+            </button>
+          </>
+        ) : (
+          <>
+            <p>No .meridian/ workspace found.</p>
+            <button onClick={() => vscode.postMessage({ command: 'initWorkspace' })}>
+              Initialize .meridian/
+            </button>
+          </>
+        )}
+      </div>
+    );
   }
-  return <MetricsView metrics={state.metrics} />;
+
+  return (
+    <div className="meridian-dashboard">
+      <Sidebar active={activeView} onSelect={(v) => dispatch({ type: 'SET_VIEW', view: v })} />
+      <main className="meridian-main">
+        {activeView === 'storymap' && (
+          <StoryMapView cards={phase.cards} onOpenFile={openFile} />
+        )}
+        {activeView === 'diary' && (
+          <DiaryView entries={phase.entries} onOpenFile={openFile} />
+        )}
+      </main>
+    </div>
+  );
 }
