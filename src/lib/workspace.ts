@@ -158,14 +158,14 @@ export interface MigrationReport {
   skipped: string[];
 }
 
-/** Legacy folder → new .mandala/ subdir mapping */
+/** Legacy folder → new .mandala/ subdir mapping (checked in order; first match wins per dest) */
 const LEGACY_MAP: Array<{ src: string[]; dest: Subdir }> = [
-  { src: ['__inbox', '__todo'], dest: 'inbox' },
-  { src: ['diary'], dest: 'diary' },
-  { src: ['.agents'], dest: 'agents' },
   { src: ['.meridian', 'inbox'], dest: 'inbox' },
   { src: ['.meridian', 'diary'], dest: 'diary' },
   { src: ['.meridian', 'agents'], dest: 'agents' },
+  { src: ['__inbox', '__todo'], dest: 'inbox' },
+  { src: ['diary'], dest: 'diary' },
+  { src: ['.agents'], dest: 'agents' },
 ];
 
 export async function migrateToMandalaFolder(
