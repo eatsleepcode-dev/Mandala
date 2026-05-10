@@ -4,7 +4,6 @@ import {
   loadTaskCards,
   loadDiaryEntries,
   migrateToMandalaFolder,
-  mandalaPath,
 } from '../lib/workspace';
 import {
   loadIntegrationConfig,
@@ -201,10 +200,14 @@ export class BrainPanel {
   private async _pushData(): Promise<void> {
     const fs = vscode.workspace.fs;
     const root = this._workspaceRoot;
+    const cfg = vscode.workspace.getConfiguration('mandala');
+
+    const inboxUri = vscode.Uri.joinPath(root, cfg.get<string>('inboxPath', '.mandala/inbox'));
+    const diaryUri = vscode.Uri.joinPath(root, cfg.get<string>('diaryPath', '.mandala/diary'));
 
     const [cards, entries] = await Promise.all([
-      loadTaskCards(mandalaPath(root, 'inbox'), fs),
-      loadDiaryEntries(mandalaPath(root, 'diary'), fs),
+      loadTaskCards(inboxUri, fs),
+      loadDiaryEntries(diaryUri, fs),
     ]);
 
     this._panel.webview.postMessage({ command: 'loadStoryMap', cards });

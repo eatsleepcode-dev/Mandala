@@ -47,13 +47,13 @@
       "properties": {
         "mandala.diaryPath": {
           "type": "string",
-          "default": "diary",
-          "description": "Workspace-relative path to the diary folder"
+          "default": ".mandala/diary",
+          "description": "Workspace-relative path to the diary folder (default: .mandala/diary)"
         },
         "mandala.inboxPath": {
           "type": "string",
-          "default": "__inbox/__todo",
-          "description": "Workspace-relative path to the sprint task card folder"
+          "default": ".mandala/inbox",
+          "description": "Workspace-relative path to the sprint task card folder (default: .mandala/inbox)"
         },
         "mandala.integrations.claude": {
           "type": "boolean",
