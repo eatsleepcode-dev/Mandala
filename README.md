@@ -1,4 +1,4 @@
-# Meridian
+# Mandala
 
 A VS Code extension that surfaces Python code quality metrics — cyclomatic complexity, maintainability index, and raw LOC — directly inside your editor via a React-powered side panel.
 
@@ -23,17 +23,17 @@ pip install radon
 
 1. Install the extension
 2. Open a Python file
-3. Run **Meridian: Show Metrics Panel** from the Command Palette (`Ctrl+Shift+P`)
+3. Run **Mandala: Show Metrics Panel** from the Command Palette (`Ctrl+Shift+P`)
 
-Or right-click inside any Python file and choose **Meridian: Analyze Current File**.
+Or right-click inside any Python file and choose **Mandala: Analyze Current File**.
 
 ## Configuration
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `meridian.pythonPath` | `"python"` | Path to the Python executable |
-| `meridian.complexityThreshold` | `10` | CC value above which a warning is shown |
-| `meridian.showOnSave` | `true` | Auto-refresh panel on file save |
+| `mandala.pythonPath` | `"python"` | Path to the Python executable |
+| `mandala.complexityThreshold` | `10` | CC value above which a warning is shown |
+| `mandala.showOnSave` | `true` | Auto-refresh panel on file save |
 
 ## Development
 

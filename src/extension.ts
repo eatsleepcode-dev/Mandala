@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
 import { BrainPanel } from './panels/BrainPanel';
-import { detectDevBrainFolders, migrateToMeridianFolder } from './lib/workspace';
+import { detectDevBrainFolders, migrateToMandalaFolder } from './lib/workspace';
 
 export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('meridian.openDashboard', async () => {
+    vscode.commands.registerCommand('mandala.openDashboard', async () => {
       const root = getWorkspaceRoot();
       if (!root) {
-        vscode.window.showWarningMessage('Meridian requires an open workspace folder.');
+        vscode.window.showWarningMessage('Mandala requires an open workspace folder.');
         return;
       }
 
@@ -18,15 +18,15 @@ export function activate(context: vscode.ExtensionContext): void {
 
         if (hasMigratableData) {
           const choice = await vscode.window.showInformationMessage(
-            'Meridian found existing __inbox/, diary/, or .agents/ folders. Migrate them to .meridian/?',
+            'Mandala found existing __inbox/, diary/, or .agents/ folders. Migrate them to .mandala/?',
             'Migrate',
             'Initialize Fresh',
             'Cancel'
           );
           if (choice === 'Migrate') {
-            const report = await migrateToMeridianFolder(root, vscode.workspace.fs);
+            const report = await migrateToMandalaFolder(root, vscode.workspace.fs);
             vscode.window.showInformationMessage(
-              `Migrated ${report.moved.length} files to .meridian/`
+              `Migrated ${report.moved.length} files to .mandala/`
             );
           } else if (choice === 'Initialize Fresh') {
             const { initDevBrainFolders } = await import('./lib/workspace');
@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext): void {
           }
         } else {
           const choice = await vscode.window.showInformationMessage(
-            'No Meridian workspace found. Initialize .meridian/ now?',
+            'No Mandala workspace found. Initialize .mandala/ now?',
             'Initialize',
             'Cancel'
           );
@@ -51,15 +51,15 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('meridian.initWorkspace', async () => {
+    vscode.commands.registerCommand('mandala.initWorkspace', async () => {
       const root = getWorkspaceRoot();
       if (!root) {
-        vscode.window.showWarningMessage('Meridian requires an open workspace folder.');
+        vscode.window.showWarningMessage('Mandala requires an open workspace folder.');
         return;
       }
       const { initDevBrainFolders } = await import('./lib/workspace');
       await initDevBrainFolders(root, vscode.workspace.fs);
-      vscode.window.showInformationMessage('Meridian: .meridian/ workspace initialized.');
+      vscode.window.showInformationMessage('Mandala: .mandala/ workspace initialized.');
     })
   );
 }

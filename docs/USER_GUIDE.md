@@ -1,8 +1,8 @@
-# Meridian — User Guide
+# Mandala — User Guide
 
 ## What it does
 
-Meridian is a VS Code extension that opens a Dev-Brain dashboard panel
+Mandala is a VS Code extension that opens a Dev-Brain dashboard panel
 inside your editor. It reads your `__inbox/__todo/` sprint cards, `diary/`
 entries, and `.agents/` registers and presents them in two views:
 
@@ -23,7 +23,7 @@ The extension is not yet on the VS Code Marketplace. Install it from source:
 
 ```bash
 # 1. Navigate to the extension folder
-cd __tools/meridian
+cd __tools/mandala
 
 # 2. Install extension host dependencies
 npm install
@@ -38,13 +38,13 @@ cd ..
 npm run compile
 ```
 
-Then press **F5** in VS Code (with the `meridian` folder open) to launch
+Then press **F5** in VS Code (with the `mandala` folder open) to launch
 an Extension Development Host window with the extension loaded.
 
 ## Opening the dashboard
 
 1. Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
-2. Type **Meridian: Open Dashboard**
+2. Type **Mandala: Open Dashboard**
 3. Press Enter
 
 If your workspace already contains `__inbox/`, `diary/`, or
@@ -95,7 +95,7 @@ working after a fresh build.
 No default keybindings are assigned. To add one:
 
 1. Open `File → Preferences → Keyboard Shortcuts`
-2. Search for **Meridian: Open Dashboard**
+2. Search for **Mandala: Open Dashboard**
 3. Click the `+` icon and assign your preferred chord (e.g. `Ctrl+Shift+B`)
 
 ## Troubleshooting
@@ -103,7 +103,7 @@ No default keybindings are assigned. To add one:
 | Symptom | Fix |
 |---|---|
 | Dashboard opens blank / white | The webview bundle is missing. Run `cd webview-ui && npm run build` then reload VS Code. |
-| "Meridian requires an open workspace" | Open a folder (`File → Open Folder`) before running the command. |
+| "Mandala requires an open workspace" | Open a folder (`File → Open Folder`) before running the command. |
 | Extension command not found | Ensure you ran `npm run compile` and that `out/extension.js` exists. |
 | CSP error in webview DevTools | A stale `index.js` bundle is cached. Run `npm run build:webview` again. |
 
@@ -114,5 +114,5 @@ Host window. No files are written outside your workspace.
 
 ## Feedback and issues
 
-File issues at the `meridian` repository once it has been extracted to
+File issues at the `mandala` repository once it has been extracted to
 its own standalone repo.

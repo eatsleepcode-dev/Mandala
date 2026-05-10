@@ -106,25 +106,25 @@ export default function App() {
   const { phase, activeView, settings } = state;
 
   if (phase.status === 'loading') {
-    return <div className="meridian-loading">Loading…</div>;
+    return <div className="mandala-loading">Loading…</div>;
   }
 
   if (phase.status === 'setup') {
     return (
-      <div className="meridian-setup">
-        <h1>Meridian</h1>
+      <div className="mandala-setup">
+        <h1>Mandala</h1>
         {phase.hasMigratableData ? (
           <>
             <p>Existing __inbox/, diary/, or .agents/ folders detected.</p>
             <button onClick={() => vscode.postMessage({ command: 'migrateWorkspace' })}>
-              Migrate to .meridian/
+              Migrate to .mandala/
             </button>
           </>
         ) : (
           <>
-            <p>No .meridian/ workspace found.</p>
+            <p>No .mandala/ workspace found.</p>
             <button onClick={() => vscode.postMessage({ command: 'initWorkspace' })}>
-              Initialize .meridian/
+              Initialize .mandala/
             </button>
           </>
         )}
@@ -133,9 +133,9 @@ export default function App() {
   }
 
   return (
-    <div className="meridian-dashboard">
+    <div className="mandala-dashboard">
       <Sidebar active={activeView} onSelect={(v) => dispatch({ type: 'SET_VIEW', view: v })} />
-      <main className="meridian-main">
+      <main className="mandala-main">
         {activeView === 'storymap' && (
           <StoryMapView cards={phase.cards} onOpenFile={openFile} />
         )}

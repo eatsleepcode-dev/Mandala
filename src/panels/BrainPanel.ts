@@ -3,8 +3,8 @@ import {
   detectDevBrainFolders,
   loadTaskCards,
   loadDiaryEntries,
-  migrateToMeridianFolder,
-  meridianPath,
+  migrateToMandalaFolder,
+  mandalaPath,
 } from '../lib/workspace';
 import {
   loadIntegrationConfig,
@@ -45,8 +45,8 @@ export class BrainPanel {
       return;
     }
     const panel = vscode.window.createWebviewPanel(
-      'meridianDashboard',
-      'Meridian',
+      'mandalaDashboard',
+      'Mandala',
       vscode.ViewColumn.One,
       {
         enableScripts: true,
@@ -95,7 +95,7 @@ export class BrainPanel {
           }
 
           case 'migrateWorkspace': {
-            const report = await migrateToMeridianFolder(
+            const report = await migrateToMandalaFolder(
               panel._workspaceRoot,
               vscode.workspace.fs
             );
@@ -105,7 +105,7 @@ export class BrainPanel {
               );
             } else {
               vscode.window.showInformationMessage(
-                `Migration complete — ${report.moved.length} files moved to .meridian/`
+                `Migration complete — ${report.moved.length} files moved to .mandala/`
               );
             }
             await panel._pushData();
@@ -114,7 +114,7 @@ export class BrainPanel {
 
           case 'saveSettings': {
             const { settings } = message;
-            // Persist custom integrations to .meridian/config.json
+            // Persist custom integrations to .mandala/config.json
             const config = await loadIntegrationConfig(
               panel._workspaceRoot,
               vscode.workspace.fs
@@ -123,7 +123,7 @@ export class BrainPanel {
             await saveIntegrationConfig(panel._workspaceRoot, config, vscode.workspace.fs);
 
             // Update VS Code workspace settings for known flags
-            const wsConfig = vscode.workspace.getConfiguration('meridian.integrations');
+            const wsConfig = vscode.workspace.getConfiguration('mandala.integrations');
             for (const [key, value] of Object.entries(settings.known)) {
               await wsConfig.update(key, value, vscode.ConfigurationTarget.Workspace);
             }
@@ -185,7 +185,7 @@ export class BrainPanel {
   }
 
   private async _pushSettings(): Promise<void> {
-    const wsConfig = vscode.workspace.getConfiguration('meridian.integrations');
+    const wsConfig = vscode.workspace.getConfiguration('mandala.integrations');
     const known: KnownIntegrationFlags = {
       claude: wsConfig.get<boolean>('claude', true),
       copilot: wsConfig.get<boolean>('copilot', false),
@@ -203,8 +203,8 @@ export class BrainPanel {
     const root = this._workspaceRoot;
 
     const [cards, entries] = await Promise.all([
-      loadTaskCards(meridianPath(root, 'inbox'), fs),
-      loadDiaryEntries(meridianPath(root, 'diary'), fs),
+      loadTaskCards(mandalaPath(root, 'inbox'), fs),
+      loadDiaryEntries(mandalaPath(root, 'diary'), fs),
     ]);
 
     this._panel.webview.postMessage({ command: 'loadStoryMap', cards });
@@ -243,7 +243,7 @@ export function buildWebviewHtml(
                style-src ${webview.cspSource} 'unsafe-inline';
                script-src 'nonce-${nonce}';">
     <link rel="stylesheet" href="${styleUri}" />
-    <title>Meridian</title>
+    <title>Mandala</title>
   </head>
   <body>
     <div id="root"></div>

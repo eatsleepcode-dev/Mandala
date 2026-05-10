@@ -15,7 +15,7 @@ const ITEMS: Array<{ id: ViewId; label: string; icon: string }> = [
 
 export function Sidebar({ active, onSelect }: Props) {
   return (
-    <nav className="sidebar" aria-label="Meridian navigation">
+    <nav className="sidebar" aria-label="Mandala navigation">
       {ITEMS.map(({ id, label, icon }) => (
         <button
           key={id}

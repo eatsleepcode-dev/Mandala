@@ -12,7 +12,7 @@ export function DiaryView({ entries, onOpenFile }: Props) {
   if (entries.length === 0) {
     return (
       <div data-testid="diary-view" className="empty-state">
-        <p>No diary entries found in .meridian/diary/</p>
+        <p>No diary entries found in .mandala/diary/</p>
       </div>
     );
   }

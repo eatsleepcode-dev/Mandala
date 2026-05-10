@@ -1,4 +1,4 @@
-# Meridian — Code Guide
+# Mandala — Code Guide
 
 ## Architecture overview
 
@@ -26,7 +26,7 @@ VS Code extensions have a hard process boundary. The extension host runs in Node
 ## Directory map
 
 ```
-meridian/
+mandala/
 ├── src/                        Extension host (compiled by tsc → out/)
 │   ├── extension.ts            Activation entry point
 │   └── panels/
@@ -54,7 +54,7 @@ meridian/
 
 ### `src/extension.ts`
 
-Registers the `meridian.openDashboard` command. On activation it checks for the three Dev-Brain signals (`__inbox`, `diary`, `.agents/TECH_DEBT.md`). If found, delegates to `BrainPanel.render`. If not found, it offers to initialise the workspace structure.
+Registers the `mandala.openDashboard` command. On activation it checks for the three Dev-Brain signals (`__inbox`, `diary`, `.agents/TECH_DEBT.md`). If found, delegates to `BrainPanel.render`. If not found, it offers to initialise the workspace structure.
 
 **To add a new command:**
 1. Add the command ID to `contributes.commands` in `package.json`
@@ -154,7 +154,7 @@ The sidebar and the webview panel can communicate via the same `BrainPanel.curre
 ## Quality gates
 
 ```bash
-cd __tools/meridian
+cd __tools/mandala
 npm run compile                   # must exit 0
 cd webview-ui && npm run build    # must exit 0 and emit media/webview/index.js
 ```
