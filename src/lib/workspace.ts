@@ -163,6 +163,9 @@ const LEGACY_MAP: Array<{ src: string[]; dest: Subdir }> = [
   { src: ['__inbox', '__todo'], dest: 'inbox' },
   { src: ['diary'], dest: 'diary' },
   { src: ['.agents'], dest: 'agents' },
+  { src: ['.meridian', 'inbox'], dest: 'inbox' },
+  { src: ['.meridian', 'diary'], dest: 'diary' },
+  { src: ['.meridian', 'agents'], dest: 'agents' },
 ];
 
 export async function migrateToMandalaFolder(
