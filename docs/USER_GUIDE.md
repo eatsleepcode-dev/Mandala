@@ -2,20 +2,18 @@
 
 ## What it does
 
-Mandala is a VS Code extension that opens a Dev-Brain dashboard panel
-inside your editor. It reads your `__inbox/__todo/` sprint cards, `diary/`
-entries, and `.agents/` registers and presents them in two views:
+Mandala is a VS Code extension that opens a Dev-Brain dashboard panel inside your editor. It reads your `.mandala/inbox/` sprint task cards and `.mandala/diary/` entries and presents them in three views:
 
 | View | Shows |
 |---|---|
-| **Strategic** | Jeff Patton Story Map — gaps, sprints, and user activities as a CSS grid |
-| **Tactical** | Daily Execution Ledger — today's `__todo/` tasks and diary entries |
+| **Story Map** | Jeff Patton-style grid — user activities as columns, sprints as rows |
+| **Diary** | Chronological log of daily entries with metadata (branch, type, tech-debt flag) |
+| **Settings** | AI tool integration toggles and custom context file mappings |
 
 ## Prerequisites
 
-- VS Code 1.74 or later
+- VS Code 1.90 or later
 - Node.js 18 or later (for building from source)
-- A workspace that contains at least one of: `__inbox/`, `diary/`, `.agents/TECH_DEBT.md`
 
 ## Installation (development build)
 
@@ -23,23 +21,16 @@ The extension is not yet on the VS Code Marketplace. Install it from source:
 
 ```bash
 # 1. Navigate to the extension folder
-cd __tools/mandala
+cd mandala
 
-# 2. Install extension host dependencies
-npm install
+# 2. Install all dependencies (extension host + webview)
+npm install --legacy-peer-deps
 
-# 3. Install and build the React webview
-cd webview-ui
-npm install
+# 3. Build the extension
 npm run build
-cd ..
-
-# 4. Compile the extension host
-npm run compile
 ```
 
-Then press **F5** in VS Code (with the `mandala` folder open) to launch
-an Extension Development Host window with the extension loaded.
+Then press **F5** in VS Code (with the `mandala` folder open) to launch an Extension Development Host window with the extension loaded.
 
 ## Opening the dashboard
 
@@ -47,48 +38,81 @@ an Extension Development Host window with the extension loaded.
 2. Type **Mandala: Open Dashboard**
 3. Press Enter
 
-If your workspace already contains `__inbox/`, `diary/`, or
-`.agents/TECH_DEBT.md`, the dashboard opens immediately.
-
 ## First-time setup (new workspace)
 
-If no Dev-Brain folders are detected, you will see:
+If no `.mandala/` folder is detected, you will be prompted:
 
-> **No Dev-Brain folders detected in this workspace. Initialize them now?**
+> **No Mandala workspace found. Initialize .mandala/ now?**
 
-Click **Yes, Initialize Framework**. The extension creates:
+Click **Initialize**. The extension creates:
 
 ```
-__inbox/__todo/          Sprint task cards go here
-diary/                   Daily diary entries go here
-.agents/TECH_DEBT.md     Technical debt register
-.agents/SPRINT_REGISTER.md  Sprint register
+.mandala/
+├── inbox/                   Sprint task cards go here
+├── diary/                   Daily diary entries go here
+└── agents/
+    ├── TECH_DEBT.md         Technical debt register
+    └── SPRINT_REGISTER.md   Sprint register
 ```
+
+## Migrating from the legacy layout
+
+If your workspace has the old `__inbox/__todo/`, `diary/`, or `.agents/` folders, Mandala will detect them and offer to migrate:
+
+> **Mandala found existing \_\_inbox/, diary/, or .agents/ folders. Migrate them to .mandala/?**
+
+Choose **Migrate** to move all files into the new `.mandala/` structure, or **Initialize Fresh** to start clean.
 
 ## Using the dashboard
 
-### Switching views
+### Story Map view
 
-Use the **Tactical (Calendar)** and **Strategic (Story Map)** buttons in the
-dashboard header to switch between views.
+Displays task cards from `.mandala/inbox/` as a Jeff Patton story map. Cards are grouped by activity (column) and sprint (row). Click any card to open the source Markdown file.
 
-### Strategic view — Story Map
+Task cards are Markdown files with YAML frontmatter:
 
-Shows Jeff Patton-style story map data sourced from `__inbox/__todo/` task
-cards. Gaps flow left-to-right as activity columns; sprint rows flow
-top-to-bottom. *(Full indexing via DuckDB-WASM — coming in the next release.)*
+```yaml
+---
+id: auth-refresh
+title: Token refresh flow
+sprint: 3
+status: in-progress   # planned | in-progress | complete | blocked
+type: feat
+tags: [auth, backend]
+points: 3
+---
+```
 
-### Tactical view — Daily Ledger
+### Diary view
 
-Shows today's open tasks from `__inbox/__todo/` and the latest diary entry.
-*(File-read bridge via VS Code message API — coming in the next release.)*
+Displays entries from `.mandala/diary/` in reverse chronological order. Select an entry in the left-hand list to read it. Click the branch chip to open the file.
 
-### Testing the VS Code bridge
+Diary entries are Markdown files with YAML frontmatter:
 
-The **Test VS Code Bridge** button in the Strategic view sends a test message
-from the React webview to the extension host, which responds with a VS Code
-information notification. Use this to confirm the communication channel is
-working after a fresh build.
+```yaml
+---
+date: 2026-05-10
+title: Wired up token refresh
+type: feat
+branch: feat/auth-refresh
+techDebt: false
+adr: false
+---
+```
+
+### Settings view
+
+Configure which AI tool context files Mandala syncs:
+
+| Toggle | Syncs |
+|---|---|
+| Claude | `CLAUDE.md` at workspace root |
+| Copilot | `.github/copilot-instructions.md` |
+| Cursor | `.cursorrules` |
+| Cline | `.clinerules` |
+| Claude Commands | `.claude/commands/` → `.mandala/agents/skills/` |
+
+You can also add custom integrations — mapping any file under `.mandala/agents/` to any target path in your workspace.
 
 ## Keyboard shortcuts
 
@@ -102,17 +126,10 @@ No default keybindings are assigned. To add one:
 
 | Symptom | Fix |
 |---|---|
-| Dashboard opens blank / white | The webview bundle is missing. Run `cd webview-ui && npm run build` then reload VS Code. |
+| Dashboard opens blank | The webview bundle is missing. Run `npm run build` then reload VS Code. |
 | "Mandala requires an open workspace" | Open a folder (`File → Open Folder`) before running the command. |
-| Extension command not found | Ensure you ran `npm run compile` and that `out/extension.js` exists. |
-| CSP error in webview DevTools | A stale `index.js` bundle is cached. Run `npm run build:webview` again. |
-
-## Uninstalling
-
-If installed via F5 development mode, simply close the Extension Development
-Host window. No files are written outside your workspace.
+| Extension command not found | Ensure you ran `npm run build` and that `dist/extension.js` exists. |
 
 ## Feedback and issues
 
-File issues at the `mandala` repository once it has been extracted to
-its own standalone repo.
+File issues at the [Mandala repository](https://github.com/onetoomanybi/Mandala).
