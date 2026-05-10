@@ -11,7 +11,7 @@ const entry = (overrides: Partial<DiaryEntry> = {}): DiaryEntry => {
     date,
     type: 'feat',
     title: 'Implemented auth',
-    path: `/workspace/.meridian/diary/${date}.md`,
+    path: `/workspace/.mandala/diary/${date}.md`,
     body: 'Details here.',
     techDebt: false,
     adr: false,
@@ -69,7 +69,7 @@ describe('DiaryView', () => {
     const onOpenFile = jest.fn();
     render(<DiaryView entries={[entry()]} onOpenFile={onOpenFile} />);
     await userEvent.click(screen.getByTitle(/open in editor/i));
-    expect(onOpenFile).toHaveBeenCalledWith('/workspace/.meridian/diary/2026-05-09.md');
+    expect(onOpenFile).toHaveBeenCalledWith('/workspace/.mandala/diary/2026-05-09.md');
   });
 
   it('shows branch chip when branch is present', () => {

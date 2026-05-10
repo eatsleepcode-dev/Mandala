@@ -1,6 +1,6 @@
 {
-  "name": "meridian",
-  "displayName": "Meridian",
+  "name": "mandala",
+  "displayName": "Mandala",
   "description": "Developer diary and sprint planner inside VS Code",
   "version": "0.1.0",
   "publisher": "onetoomanybi",
@@ -24,61 +24,61 @@
   "contributes": {
     "commands": [
       {
-        "command": "meridian.openDashboard",
-        "title": "Meridian: Open Dashboard"
+        "command": "mandala.openDashboard",
+        "title": "Mandala: Open Dashboard"
       },
       {
-        "command": "meridian.initWorkspace",
-        "title": "Meridian: Initialize Dev-Brain Workspace"
+        "command": "mandala.initWorkspace",
+        "title": "Mandala: Initialize Dev-Brain Workspace"
       }
     ],
     "menus": {
       "commandPalette": [
         {
-          "command": "meridian.openDashboard"
+          "command": "mandala.openDashboard"
         },
         {
-          "command": "meridian.initWorkspace"
+          "command": "mandala.initWorkspace"
         }
       ]
     },
     "configuration": {
-      "title": "Meridian",
+      "title": "Mandala",
       "properties": {
-        "meridian.diaryPath": {
+        "mandala.diaryPath": {
           "type": "string",
-          "default": "diary",
-          "description": "Workspace-relative path to the diary folder"
+          "default": ".mandala/diary",
+          "description": "Workspace-relative path to the diary folder (default: .mandala/diary)"
         },
-        "meridian.inboxPath": {
+        "mandala.inboxPath": {
           "type": "string",
-          "default": "__inbox/__todo",
-          "description": "Workspace-relative path to the sprint task card folder"
+          "default": ".mandala/inbox",
+          "description": "Workspace-relative path to the sprint task card folder (default: .mandala/inbox)"
         },
-        "meridian.integrations.claude": {
+        "mandala.integrations.claude": {
           "type": "boolean",
           "default": true,
-          "description": "Sync CLAUDE.md at workspace root from .meridian/agents/context/CLAUDE.md (symlink or generated)"
+          "description": "Sync CLAUDE.md at workspace root from .mandala/agents/context/CLAUDE.md (symlink or generated)"
         },
-        "meridian.integrations.copilot": {
+        "mandala.integrations.copilot": {
           "type": "boolean",
           "default": false,
-          "description": "Sync .github/copilot-instructions.md from .meridian/agents/context/COPILOT.md"
+          "description": "Sync .github/copilot-instructions.md from .mandala/agents/context/COPILOT.md"
         },
-        "meridian.integrations.cursor": {
+        "mandala.integrations.cursor": {
           "type": "boolean",
           "default": false,
-          "description": "Sync .cursorrules from .meridian/agents/context/CURSORRULES.md"
+          "description": "Sync .cursorrules from .mandala/agents/context/CURSORRULES.md"
         },
-        "meridian.integrations.cline": {
+        "mandala.integrations.cline": {
           "type": "boolean",
           "default": false,
-          "description": "Sync .clinerules from .meridian/agents/context/CLINERULES.md"
+          "description": "Sync .clinerules from .mandala/agents/context/CLINERULES.md"
         },
-        "meridian.integrations.claudeCommands": {
+        "mandala.integrations.claudeCommands": {
           "type": "boolean",
           "default": true,
-          "description": "Symlink .claude/commands/ to .meridian/agents/skills/ so skills appear as Claude Code slash commands"
+          "description": "Symlink .claude/commands/ to .mandala/agents/skills/ so skills appear as Claude Code slash commands"
         }
       }
     }

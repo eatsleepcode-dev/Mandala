@@ -10,7 +10,7 @@ const card = (overrides: Partial<TaskCard> = {}): TaskCard => ({
   status: 'planned',
   type: 'feat',
   tags: ['auth'],
-  path: '/workspace/.meridian/inbox/T-001.md',
+  path: '/workspace/.mandala/inbox/T-001.md',
   body: '',
   activity: 'User Auth',
   ...overrides,
@@ -58,7 +58,7 @@ describe('StoryMapView', () => {
     screen.getByText('Add login').closest('[data-status]')!.dispatchEvent(
       new MouseEvent('click', { bubbles: true })
     );
-    expect(onOpenFile).toHaveBeenCalledWith('/workspace/.meridian/inbox/T-001.md');
+    expect(onOpenFile).toHaveBeenCalledWith('/workspace/.mandala/inbox/T-001.md');
   });
 
   it('groups cards without an activity under Uncategorized', () => {

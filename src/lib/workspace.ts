@@ -16,12 +16,12 @@ export interface UriLike {
   fsPath: string;
 }
 
-export const MERIDIAN_ROOT = '.meridian';
-export const MERIDIAN_SUBDIRS = ['inbox', 'diary', 'agents'] as const;
-type Subdir = (typeof MERIDIAN_SUBDIRS)[number];
+export const MANDALA_ROOT = '.mandala';
+export const MANDALA_SUBDIRS = ['inbox', 'diary', 'agents'] as const;
+type Subdir = (typeof MANDALA_SUBDIRS)[number];
 
 // Keep the old export name so extension.ts callers stay consistent
-export const DEV_BRAIN_SIGNALS = MERIDIAN_SUBDIRS;
+export const DEV_BRAIN_SIGNALS = MANDALA_SUBDIRS;
 
 export interface DetectionResult {
   found: boolean;
@@ -50,9 +50,9 @@ export async function detectDevBrainFolders(
   fs: Pick<FsLike, 'readDirectory'>
 ): Promise<DetectionResult> {
   const missing: Subdir[] = [];
-  for (const sub of MERIDIAN_SUBDIRS) {
+  for (const sub of MANDALA_SUBDIRS) {
     try {
-      await fs.readDirectory(joinPath(workspaceRoot, MERIDIAN_ROOT, sub));
+      await fs.readDirectory(joinPath(workspaceRoot, MANDALA_ROOT, sub));
     } catch {
       missing.push(sub);
     }
@@ -60,9 +60,9 @@ export async function detectDevBrainFolders(
   return { found: missing.length === 0, missing };
 }
 
-/** Convenience: resolve a subdir path under .meridian/ */
-export function meridianPath(workspaceRoot: UriLike, sub: Subdir): UriLike {
-  return joinPath(workspaceRoot, MERIDIAN_ROOT, sub);
+/** Convenience: resolve a subdir path under .mandala/ */
+export function mandalaPath(workspaceRoot: UriLike, sub: Subdir): UriLike {
+  return joinPath(workspaceRoot, MANDALA_ROOT, sub);
 }
 
 // ─── loadTaskCards ───────────────────────────────────────────────────────────
@@ -151,21 +151,24 @@ export async function loadDiaryEntries(
   return results;
 }
 
-// ─── migrateToMeridianFolder ─────────────────────────────────────────────────
+// ─── migrateToMandalaFolder ─────────────────────────────────────────────────
 
 export interface MigrationReport {
   moved: string[];
   skipped: string[];
 }
 
-/** Legacy folder → new .meridian/ subdir mapping */
+/** Legacy folder → new .mandala/ subdir mapping */
 const LEGACY_MAP: Array<{ src: string[]; dest: Subdir }> = [
   { src: ['__inbox', '__todo'], dest: 'inbox' },
   { src: ['diary'], dest: 'diary' },
   { src: ['.agents'], dest: 'agents' },
+  { src: ['.meridian', 'inbox'], dest: 'inbox' },
+  { src: ['.meridian', 'diary'], dest: 'diary' },
+  { src: ['.meridian', 'agents'], dest: 'agents' },
 ];
 
-export async function migrateToMeridianFolder(
+export async function migrateToMandalaFolder(
   workspaceRoot: UriLike,
   fs: Pick<FsLike, 'readDirectory' | 'readFile' | 'writeFile' | 'createDirectory' | 'delete'>
 ): Promise<MigrationReport> {
@@ -174,7 +177,7 @@ export async function migrateToMeridianFolder(
 
   for (const { src, dest } of LEGACY_MAP) {
     const srcUri = joinPath(workspaceRoot, ...src);
-    const destUri = joinPath(workspaceRoot, MERIDIAN_ROOT, dest);
+    const destUri = joinPath(workspaceRoot, MANDALA_ROOT, dest);
 
     let files: [string, number][];
     try {
@@ -213,9 +216,9 @@ export async function initDevBrainFolders(
   fs: Pick<FsLike, 'createDirectory' | 'writeFile'>
 ): Promise<void> {
   const enc = new TextEncoder();
-  const inbox = joinPath(workspaceRoot, MERIDIAN_ROOT, 'inbox');
-  const diary = joinPath(workspaceRoot, MERIDIAN_ROOT, 'diary');
-  const agents = joinPath(workspaceRoot, MERIDIAN_ROOT, 'agents');
+  const inbox = joinPath(workspaceRoot, MANDALA_ROOT, 'inbox');
+  const diary = joinPath(workspaceRoot, MANDALA_ROOT, 'diary');
+  const agents = joinPath(workspaceRoot, MANDALA_ROOT, 'agents');
 
   await fs.createDirectory(inbox);
   await fs.createDirectory(diary);

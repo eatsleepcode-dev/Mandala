@@ -33,9 +33,9 @@ interface IntegrationFsLike {
   symlink(source: UriLike, target: UriLike): Thenable<void>;
 }
 
-const MERIDIAN_ROOT = '.meridian';
-const AGENTS_ROOT = path.join(MERIDIAN_ROOT, 'agents');
-const CONFIG_PATH = path.join(MERIDIAN_ROOT, 'config.json');
+const MANDALA_ROOT = '.mandala';
+const AGENTS_ROOT = path.join(MANDALA_ROOT, 'agents');
+const CONFIG_PATH = path.join(MANDALA_ROOT, 'config.json');
 
 function joinPath(base: UriLike, ...segments: string[]): UriLike {
   return { fsPath: path.join(base.fsPath, ...segments) };

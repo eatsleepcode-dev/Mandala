@@ -1,4 +1,4 @@
-# Meridian — Code Guide
+# Mandala — Code Guide
 
 ## Architecture overview
 
@@ -26,35 +26,44 @@ VS Code extensions have a hard process boundary. The extension host runs in Node
 ## Directory map
 
 ```
-meridian/
-├── src/                        Extension host (compiled by tsc → out/)
-│   ├── extension.ts            Activation entry point
-│   └── panels/
-│       └── BrainPanel.ts       Webview panel lifecycle + message bridge
-├── webview-ui/                 React frontend (compiled by Vite → media/webview/)
-│   ├── index.html              Vite dev-server entry (not shipped)
-│   ├── vite.config.ts          Build: single-file output, no chunks
-│   └── src/
-│       ├── main.tsx            ReactDOM.createRoot entry
-│       ├── vscode.ts           acquireVsCodeApi() singleton
-│       ├── App.tsx             Root component, view state
-│       └── App.css             VS Code CSS variable-aware styles
-├── media/webview/              Build output (gitignored, loaded by BrainPanel)
-│   ├── index.js
-│   └── style.css
-├── out/                        tsc output (gitignored)
-├── .vscode/
-│   ├── launch.json             F5 Extension Development Host
-│   └── tasks.json              compile + build:webview tasks
+mandala/
+├── src/
+│   ├── extension.ts            Activation entry point, command registration
+│   ├── panels/
+│   │   └── BrainPanel.ts       Webview panel lifecycle + message bridge
+│   ├── lib/
+│   │   ├── workspace.ts        Folder detection, init, migration, file loading
+│   │   ├── integrations.ts     AI-tool context file sync
+│   │   └── frontmatter.ts      YAML frontmatter parser
+│   ├── webview/                React frontend (compiled by Webpack → dist/webview/)
+│   │   ├── index.tsx           ReactDOM.createRoot entry
+│   │   ├── vscode.ts           acquireVsCodeApi() singleton
+│   │   ├── App.tsx             Root component, view state machine
+│   │   ├── webview.css         VS Code CSS variable-aware styles
+│   │   └── components/
+│   │       ├── Sidebar.tsx
+│   │       ├── StoryMapView.tsx
+│   │       ├── DiaryView.tsx
+│   │       └── SettingsView.tsx
+│   ├── shared/
+│   │   └── types.ts            Types shared between host and webview
+│   └── __mocks__/              Jest mocks (vscode, styles)
+├── dist/                       Webpack output (gitignored, loaded by BrainPanel)
+│   └── webview/
+│       ├── webview.js
+│       └── webview.css
+├── docs/
 ├── package.json                Extension manifest + npm scripts
-└── tsconfig.json               Extension host compiler options
+├── webpack.config.js           Builds both extension host and webview bundle
+├── tsconfig.json               Extension host compiler options
+└── tsconfig.webview.json       Webview compiler options (jsx: react-jsx)
 ```
 
 ## Key files in detail
 
 ### `src/extension.ts`
 
-Registers the `meridian.openDashboard` command. On activation it checks for the three Dev-Brain signals (`__inbox`, `diary`, `.agents/TECH_DEBT.md`). If found, delegates to `BrainPanel.render`. If not found, it offers to initialise the workspace structure.
+Registers the `mandala.openDashboard` command. On activation it checks for the three Dev-Brain signals (`__inbox`, `diary`, `.agents/TECH_DEBT.md`). If found, delegates to `BrainPanel.render`. If not found, it offers to initialise the workspace structure.
 
 **To add a new command:**
 1. Add the command ID to `contributes.commands` in `package.json`
@@ -66,8 +75,8 @@ Registers the `meridian.openDashboard` command. On activation it checks for the 
 Manages a singleton `WebviewPanel`. Key points:
 
 - `render()` is idempotent — reveals the existing panel if open
-- `_getWebviewContent()` injects a per-render CSP nonce; `script-src` requires the nonce on the `<script>` tag
-- `localResourceRoots` is restricted to `media/` — the webview cannot load files from anywhere else
+- `buildWebviewHtml()` injects a per-render CSP nonce; `script-src` requires the nonce on the `<script>` tag
+- `localResourceRoots` is restricted to `dist/webview/` — the webview cannot load files from anywhere else
 - `_setWebviewMessageListener()` is the command dispatcher for messages arriving from React
 
 **To add a new host→webview message (push data to the UI):**
@@ -83,45 +92,50 @@ case 'openFile':
   return;
 ```
 
-### `webview-ui/src/vscode.ts`
+### `src/webview/vscode.ts`
 
 `acquireVsCodeApi()` must be called exactly once per webview lifetime. This module calls it at import time and re-exports the handle. Every component that needs to message the host imports from here rather than calling the global again.
 
-### `webview-ui/src/App.tsx`
+### `src/webview/App.tsx`
 
-Holds the single piece of view-level state: `activeView`. Each view is a named `<div>` rendered conditionally. To add a third view:
+Holds all view-level state via a `useReducer` state machine (`loading → setup → ready`). The active sidebar view (`storymap | diary | settings`) is tracked here. Each view is a component rendered conditionally based on `activeView`. To add a new view:
 
-1. Extend the union type: `'tactical' | 'strategic' | 'graph'`
-2. Add a toggle button in `dashboard-header`
-3. Add a conditional branch in `dashboard-content`
-4. Extract into its own component file once it grows beyond ~60 lines
+1. Extend the `ViewId` union in `Sidebar.tsx`
+2. Add an entry to the `ITEMS` array in `Sidebar.tsx`
+3. Add a conditional render branch in `App.tsx`
+4. Create the component under `src/webview/components/`
 
 ## Message protocol
 
-All messages are plain JSON objects with a `command` string discriminator.
+All messages are plain JSON objects with a `command` string discriminator. Types are defined in `src/shared/types.ts` and imported by both sides.
 
 | Direction | `command` | Additional fields | Handler |
 |---|---|---|---|
-| webview → host | `hello` | `text: string` | `showInformationMessage` |
+| webview → host | `ready` | — | Triggers `_sendInitialData()` |
+| webview → host | `refresh` | — | Re-pushes cards and diary entries |
+| webview → host | `openFile` | `path: string` | Opens file in editor |
+| webview → host | `initWorkspace` | — | Runs `initDevBrainFolders` |
+| webview → host | `migrateWorkspace` | — | Runs `migrateToMandalaFolder` |
+| webview → host | `saveSettings` | `settings: IntegrationSettings` | Persists + syncs integrations |
+| host → webview | `initState` | `initialized`, `hasMigratableData` | Sets setup/ready phase |
+| host → webview | `loadStoryMap` | `cards: TaskCard[]` | Populates story map |
+| host → webview | `loadDiary` | `entries: DiaryEntry[]` | Populates diary list |
+| host → webview | `loadSettings` | `settings: IntegrationSettings` | Populates settings view |
 
-Add new message types by extending the switch in `BrainPanel._setWebviewMessageListener` and the corresponding `vscode.postMessage()` call in the webview.
-
-Use a shared types file when the protocol grows:
-
-```
-src/shared/messages.ts          (imported by both sides via path alias)
-```
+Add new message types by extending the discriminated union in `src/shared/types.ts`, the switch in `BrainPanel._setWebviewMessageListener`, and the corresponding `vscode.postMessage()` call in the webview.
 
 ## Build pipeline
 
 ```
-npm run compile          tsc -p ./       → out/extension.js (+ map)
-npm run build:webview    vite build      → media/webview/index.js
-                                         → media/webview/style.css
-npm run vscode:prepublish  runs both sequentially
+npm run build      webpack --mode production  → dist/extension.js
+                                              → dist/webview/webview.js
+                                              → dist/webview/webview.css
+npm run dev        webpack --mode development --watch
+npm run compile    tsc --noEmit   (type-check only, no output)
+npm test           jest           (host + webview test projects)
 ```
 
-Vite is configured with `rollupOptions.output.entryFileNames = 'index.js'` and `assetFileNames = 'style.css'` to produce deterministic filenames that `BrainPanel._getWebviewContent` can reference directly.
+Webpack is configured with two entry points: the extension host (`src/extension.ts` → `dist/extension.js`) and the webview (`src/webview/index.tsx` → `dist/webview/webview.js`). `BrainPanel.buildWebviewHtml` references the webview output via `asWebviewUri`.
 
 ## Content Security Policy
 
@@ -132,14 +146,6 @@ Vite is configured with `rollupOptions.output.entryFileNames = 'index.js'` and `
 This blocks any injected script that doesn't carry the nonce, protecting against XSS via malicious workspace file content rendered in the webview.
 
 **Never use `'unsafe-inline'` for scripts.** Use the nonce pattern or a hash.
-
-## Adding a data layer (DuckDB-WASM)
-
-The intended next step is indexing `__inbox` JSON into DuckDB-WASM inside the webview:
-
-1. Add `@duckdb/duckdb-wasm` to `webview-ui/package.json`
-2. In `BrainPanel._setWebviewMessageListener`, handle `{ command: 'readDir', path }` — use `vscode.workspace.fs.readDirectory` and post back the result (the webview has no filesystem access)
-3. In `App.tsx`, on mount send `readDir` for `__inbox/__todo`, receive the file list, post `readFile` for each, feed content into DuckDB-WASM, and query into React state
 
 ## Extending to a TreeView sidebar
 
@@ -154,13 +160,7 @@ The sidebar and the webview panel can communicate via the same `BrainPanel.curre
 ## Quality gates
 
 ```bash
-cd __tools/meridian
-npm run compile                   # must exit 0
-cd webview-ui && npm run build    # must exit 0 and emit media/webview/index.js
+npm run compile    # TypeScript type-check, must exit 0
+npm test           # Jest (86 tests across host + webview projects), must pass
+npm run build      # Webpack production build, must exit 0
 ```
-
-There are no automated tests yet. Unit-test targets:
-
-- `BrainPanel.getNonce()` — output length 32, alphanumeric only
-- `extension.promptForInitialization` — filesystem side-effects, use `memfs` mock
-- React components — Vitest + `@testing-library/react`

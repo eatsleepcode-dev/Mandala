@@ -49,7 +49,7 @@ export function StoryMapView({ cards, onOpenFile }: Props) {
   if (cards.length === 0) {
     return (
       <div data-testid="story-map-view" className="empty-state">
-        <p>No tasks found in .meridian/inbox/</p>
+        <p>No tasks found in .mandala/inbox/</p>
       </div>
     );
   }

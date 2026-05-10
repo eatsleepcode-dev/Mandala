@@ -59,7 +59,7 @@ export function SettingsView({ settings, onSave }: Props) {
         <h2>AI Tool Integrations</h2>
         <p className="settings-hint">
           Enabled tools will have their context files symlinked from{' '}
-          <code>.meridian/agents/</code>.
+          <code>.mandala/agents/</code>.
         </p>
         <ul className="settings-known-list">
           {KNOWN_INTEGRATIONS.map((integ) => {
@@ -125,7 +125,7 @@ export function SettingsView({ settings, onSave }: Props) {
               onChange={(e) => setForm({ ...form, label: e.target.value })}
             />
             <input
-              placeholder="Source (relative to .meridian/agents/)"
+              placeholder="Source (relative to .mandala/agents/)"
               value={form.source}
               onChange={(e) => setForm({ ...form, source: e.target.value })}
             />

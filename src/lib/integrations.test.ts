@@ -78,14 +78,14 @@ describe('loadIntegrationConfig', () => {
 // ─── saveIntegrationConfig ───────────────────────────────────────────────────
 
 describe('saveIntegrationConfig', () => {
-  it('writes JSON to .meridian/config.json', async () => {
+  it('writes JSON to .mandala/config.json', async () => {
     const mockFs = {
       writeFile: jest.fn().mockResolvedValue(undefined),
     };
     const config: IntegrationConfig = { custom: [] };
     await saveIntegrationConfig(root as any, config, mockFs as any);
     const [uri, data] = mockFs.writeFile.mock.calls[0];
-    expect(uri.fsPath).toContain(path.join('.meridian', 'config.json'));
+    expect(uri.fsPath).toContain(path.join('.mandala', 'config.json'));
     const written = JSON.parse(new TextDecoder().decode(data));
     expect(written.custom).toEqual([]);
   });
@@ -130,7 +130,7 @@ describe('syncIntegrations', () => {
     expect(mockFs.symlink).toHaveBeenCalled();
     const [src, tgt] = mockFs.symlink.mock.calls[0];
     expect(tgt.fsPath).toContain('CLAUDE.md');
-    expect(src.fsPath).toContain(path.join('.meridian', 'agents', 'context', 'CLAUDE.md'));
+    expect(src.fsPath).toContain(path.join('.mandala', 'agents', 'context', 'CLAUDE.md'));
   });
 
   it('falls back to generating the file when symlink throws', async () => {

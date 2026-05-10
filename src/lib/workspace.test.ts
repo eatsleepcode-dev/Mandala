@@ -4,8 +4,8 @@ import {
   loadTaskCards,
   loadDiaryEntries,
   initDevBrainFolders,
-  MERIDIAN_SUBDIRS,
-  MERIDIAN_ROOT,
+  MANDALA_SUBDIRS,
+  MANDALA_ROOT,
 } from './workspace';
 
 const makeUri = (fsPath: string) => ({ fsPath });
@@ -17,16 +17,16 @@ const md = (content: string) => enc.encode(content);
 describe('detectDevBrainFolders', () => {
   const root = makeUri('/workspace');
 
-  it('returns found=false when all .meridian/ subdirs are missing', async () => {
+  it('returns found=false when all .mandala/ subdirs are missing', async () => {
     const mockFs = {
       readDirectory: jest.fn().mockRejectedValue(new Error('ENOENT')),
     };
     const result = await detectDevBrainFolders(root as any, mockFs as any);
     expect(result.found).toBe(false);
-    expect(result.missing).toEqual(expect.arrayContaining([...MERIDIAN_SUBDIRS]));
+    expect(result.missing).toEqual(expect.arrayContaining([...MANDALA_SUBDIRS]));
   });
 
-  it('returns found=true when all .meridian/ subdirs exist', async () => {
+  it('returns found=true when all .mandala/ subdirs exist', async () => {
     const mockFs = {
       readDirectory: jest.fn().mockResolvedValue([]),
     };
@@ -35,7 +35,7 @@ describe('detectDevBrainFolders', () => {
     expect(result.missing).toHaveLength(0);
   });
 
-  it('probes paths under .meridian/', async () => {
+  it('probes paths under .mandala/', async () => {
     const mockFs = {
       readDirectory: jest.fn().mockResolvedValue([]),
     };
@@ -43,8 +43,8 @@ describe('detectDevBrainFolders', () => {
     const probedPaths: string[] = mockFs.readDirectory.mock.calls.map(
       (c: [{ fsPath: string }]) => c[0].fsPath
     );
-    for (const sub of MERIDIAN_SUBDIRS) {
-      expect(probedPaths.some((p) => p.includes(path.join(MERIDIAN_ROOT, sub)))).toBe(true);
+    for (const sub of MANDALA_SUBDIRS) {
+      expect(probedPaths.some((p) => p.includes(path.join(MANDALA_ROOT, sub)))).toBe(true);
     }
   });
 
@@ -65,7 +65,7 @@ describe('detectDevBrainFolders', () => {
 // ─── loadTaskCards ───────────────────────────────────────────────────────────
 
 describe('loadTaskCards', () => {
-  const inboxUri = makeUri('/workspace/.meridian/inbox');
+  const inboxUri = makeUri('/workspace/.mandala/inbox');
 
   it('returns empty array when folder is empty', async () => {
     const mockFs = {
@@ -160,7 +160,7 @@ type: chore
 // ─── loadDiaryEntries ────────────────────────────────────────────────────────
 
 describe('loadDiaryEntries', () => {
-  const diaryUri = makeUri('/workspace/.meridian/diary');
+  const diaryUri = makeUri('/workspace/.mandala/diary');
 
   it('returns empty array when folder is empty', async () => {
     const mockFs = {
@@ -240,13 +240,13 @@ type: chore
   });
 });
 
-// ─── migrateToMeridianFolder ─────────────────────────────────────────────────
+// ─── migrateToMandalaFolder ─────────────────────────────────────────────────
 
-describe('migrateToMeridianFolder', () => {
-  const { migrateToMeridianFolder } = require('./workspace');
+describe('migrateToMandalaFolder', () => {
+  const { migrateToMandalaFolder } = require('./workspace');
   const root = makeUri('/workspace');
 
-  it('moves __inbox/__todo/ contents to .meridian/inbox/', async () => {
+  it('moves __inbox/__todo/ contents to .mandala/inbox/', async () => {
     const mockFs = {
       readDirectory: jest.fn().mockImplementation((uri: { fsPath: string }) => {
         if (uri.fsPath.endsWith('__todo')) return Promise.resolve([['T-001.md', 1]]);
@@ -257,14 +257,14 @@ describe('migrateToMeridianFolder', () => {
       writeFile: jest.fn().mockResolvedValue(undefined),
       delete: jest.fn().mockResolvedValue(undefined),
     };
-    const report = await migrateToMeridianFolder(root as any, mockFs as any);
+    const report = await migrateToMandalaFolder(root as any, mockFs as any);
     expect(report.moved.some((p: string) => p.includes('T-001.md'))).toBe(true);
   });
 
-  it('moves diary/ contents to .meridian/diary/', async () => {
+  it('moves diary/ contents to .mandala/diary/', async () => {
     const mockFs = {
       readDirectory: jest.fn().mockImplementation((uri: { fsPath: string }) => {
-        if (uri.fsPath.endsWith('diary') && !uri.fsPath.includes('.meridian'))
+        if (uri.fsPath.endsWith('diary') && !uri.fsPath.includes('.mandala'))
           return Promise.resolve([['2026-05-09.md', 1]]);
         return Promise.resolve([]);
       }),
@@ -273,11 +273,11 @@ describe('migrateToMeridianFolder', () => {
       writeFile: jest.fn().mockResolvedValue(undefined),
       delete: jest.fn().mockResolvedValue(undefined),
     };
-    const report = await migrateToMeridianFolder(root as any, mockFs as any);
+    const report = await migrateToMandalaFolder(root as any, mockFs as any);
     expect(report.moved.some((p: string) => p.includes('2026-05-09.md'))).toBe(true);
   });
 
-  it('moves .agents/ contents to .meridian/agents/', async () => {
+  it('moves .agents/ contents to .mandala/agents/', async () => {
     const mockFs = {
       readDirectory: jest.fn().mockImplementation((uri: { fsPath: string }) => {
         if (uri.fsPath.endsWith('.agents'))
@@ -289,7 +289,7 @@ describe('migrateToMeridianFolder', () => {
       writeFile: jest.fn().mockResolvedValue(undefined),
       delete: jest.fn().mockResolvedValue(undefined),
     };
-    const report = await migrateToMeridianFolder(root as any, mockFs as any);
+    const report = await migrateToMandalaFolder(root as any, mockFs as any);
     expect(report.moved.length).toBeGreaterThan(0);
   });
 
@@ -301,7 +301,7 @@ describe('migrateToMeridianFolder', () => {
       writeFile: jest.fn(),
       delete: jest.fn(),
     };
-    const report = await migrateToMeridianFolder(root as any, mockFs as any);
+    const report = await migrateToMandalaFolder(root as any, mockFs as any);
     expect(report.moved).toHaveLength(0);
     expect(report.skipped).toHaveLength(0);
   });
@@ -317,7 +317,7 @@ describe('migrateToMeridianFolder', () => {
       writeFile: jest.fn(),
       delete: jest.fn(),
     };
-    const report = await migrateToMeridianFolder(root as any, mockFs as any);
+    const report = await migrateToMandalaFolder(root as any, mockFs as any);
     expect(report.skipped.some((p: string) => p.includes('broken.md'))).toBe(true);
   });
 });
@@ -325,7 +325,7 @@ describe('migrateToMeridianFolder', () => {
 // ─── initDevBrainFolders ─────────────────────────────────────────────────────
 
 describe('initDevBrainFolders', () => {
-  it('creates .meridian/ subdirs and seed files', async () => {
+  it('creates .mandala/ subdirs and seed files', async () => {
     const root = makeUri('/workspace');
     const mockFs = {
       createDirectory: jest.fn().mockResolvedValue(undefined),
@@ -335,9 +335,9 @@ describe('initDevBrainFolders', () => {
     const created: string[] = mockFs.createDirectory.mock.calls.map(
       (c: [{ fsPath: string }]) => c[0].fsPath
     );
-    expect(created.some((p) => p.includes(path.join('.meridian', 'inbox')))).toBe(true);
-    expect(created.some((p) => p.includes(path.join('.meridian', 'diary')))).toBe(true);
-    expect(created.some((p) => p.includes(path.join('.meridian', 'agents')))).toBe(true);
+    expect(created.some((p) => p.includes(path.join('.mandala', 'inbox')))).toBe(true);
+    expect(created.some((p) => p.includes(path.join('.mandala', 'diary')))).toBe(true);
+    expect(created.some((p) => p.includes(path.join('.mandala', 'agents')))).toBe(true);
     expect(mockFs.writeFile).toHaveBeenCalledTimes(2);
   });
 });
