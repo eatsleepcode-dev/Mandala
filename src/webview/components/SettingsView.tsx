@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { vscode } from '../vscode';
-import type { IntegrationSettings, CustomIntegration, HostMessage } from '../../shared/types';
+import type { IntegrationSettings, CustomIntegration, HostMessage, ThemeOverride } from '../../shared/types';
 import { KNOWN_INTEGRATIONS } from '../../shared/types';
 
 interface Props {
   settings: IntegrationSettings;
+  themeOverride?: ThemeOverride;
+  hasGettingStartedExamples?: boolean;
   onSave: (settings: IntegrationSettings) => void;
+  onThemeOverrideChange?: (override: ThemeOverride) => void;
+  onSeedExamples?: () => void;
+  onRemoveExamples?: () => void;
 }
 
 interface AddForm {
@@ -16,7 +21,15 @@ interface AddForm {
 
 const EMPTY_FORM: AddForm = { label: '', source: '', target: '' };
 
-export function SettingsView({ settings, onSave }: Props) {
+export function SettingsView({
+  settings,
+  themeOverride = 'auto',
+  hasGettingStartedExamples = false,
+  onSave,
+  onThemeOverrideChange = () => undefined,
+  onSeedExamples = () => undefined,
+  onRemoveExamples = () => undefined,
+}: Props) {
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState<AddForm>(EMPTY_FORM);
 
@@ -71,6 +84,42 @@ export function SettingsView({ settings, onSave }: Props) {
 
   return (
     <div className="settings-view">
+      <section className="settings-section">
+        <h2>Theme</h2>
+        <p className="settings-hint">Choose how the Mandala dashboard should be themed.</p>
+        <label className="settings-theme-row">
+          <span>Dashboard Theme</span>
+          <select
+            value={themeOverride}
+            onChange={(e) => onThemeOverrideChange(e.target.value as ThemeOverride)}
+          >
+            <option value="auto">VS Code Default</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+            <option value="neuromancer">Neuromancer</option>
+          </select>
+        </label>
+      </section>
+
+      <section className="settings-section">
+        <h2>Getting Started</h2>
+        <p className="settings-hint">
+          Add a small sample diary, sprint, story-map, and tech-debt set to explore the dashboard.
+          Mandala tracks these example files and can remove them later without touching your own notes.
+        </p>
+        <div className="settings-example-actions">
+          {hasGettingStartedExamples ? (
+            <button className="settings-example-btn danger" onClick={onRemoveExamples}>
+              Remove Getting Started Examples
+            </button>
+          ) : (
+            <button className="settings-example-btn" onClick={onSeedExamples}>
+              Add Getting Started Examples
+            </button>
+          )}
+        </div>
+      </section>
+
       <section className="settings-section">
         <h2>AI Tool Integrations</h2>
         <p className="settings-hint">
@@ -178,7 +227,7 @@ export function SettingsView({ settings, onSave }: Props) {
           </form>
         ) : (
           <button className="settings-add-btn" onClick={() => setAdding(true)}>
-            Add
+            Add Custom Integration
           </button>
         )}
       </section>

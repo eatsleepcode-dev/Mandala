@@ -1,0 +1,1 @@
+Read `.agents/SPRINT_REGISTER.md` and `.agents/TECH_DEBT.md` then produce a concise status report showing: current sprint and its progress, next sprint and its blockers, open tech debt items by severity, and score progression to date. $ARGUMENTS

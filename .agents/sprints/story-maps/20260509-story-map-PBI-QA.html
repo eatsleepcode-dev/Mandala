@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PBI-QA Story Map — Sprint 20</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+  header {
+    background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+    color: white;
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  header h1 { font-size: 1.4rem; font-weight: 600; }
+  header p { font-size: 0.82rem; opacity: 0.75; margin-top: 3px; }
+  .header-meta { font-size: 0.75rem; opacity: 0.6; margin-top: 6px; }
+
+  .legend {
+    display: flex;
+    gap: 18px;
+    padding: 12px 32px;
+    background: white;
+    border-bottom: 1px solid #dde;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #444; }
+  .swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+  .swatch-skeleton { background: #1a6b3c; }
+  .swatch-sprint { background: #0f6cbf; }
+  .swatch-backlog { background: #8a8fa8; }
+  .swatch-deferred { background: #c0392b; }
+  .legend-sep { color: #ccc; }
+
+  .map-container {
+    overflow-x: auto;
+    padding: 24px 32px 40px;
+  }
+
+  /* ---- BACKBONE ---- */
+  .backbone {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(180px, 1fr));
+    gap: 8px;
+    margin-bottom: 0;
+  }
+  .activity {
+    background: #0f3460;
+    color: white;
+    border-radius: 8px 8px 0 0;
+    padding: 12px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    position: relative;
+    min-height: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .activity .act-num {
+    font-size: 0.65rem;
+    opacity: 0.6;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+
+  /* ---- WALKING SKELETON STRIPE ---- */
+  .skeleton-stripe {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(180px, 1fr));
+    gap: 8px;
+    background: #e8f5ee;
+    border-left: 4px solid #1a6b3c;
+    border-right: 4px solid #1a6b3c;
+    padding: 6px 0;
+    margin-bottom: 0;
+  }
+  .skeleton-label {
+    grid-column: 1 / -1;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #1a6b3c;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 10px 4px;
+  }
+
+  /* ---- SPRINT SLICE ---- */
+  .sprint-stripe {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(180px, 1fr));
+    gap: 8px;
+    background: #eaf2fb;
+    border-left: 4px solid #0f6cbf;
+    border-right: 4px solid #0f6cbf;
+    padding: 6px 0;
+    margin-bottom: 0;
+  }
+  .sprint-label {
+    grid-column: 1 / -1;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #0f6cbf;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 10px 4px;
+  }
+
+  /* ---- BACKLOG ---- */
+  .backlog-stripe {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(180px, 1fr));
+    gap: 8px;
+    background: #f5f5f8;
+    border-left: 4px solid #8a8fa8;
+    border-right: 4px solid #8a8fa8;
+    padding: 6px 0;
+    margin-bottom: 0;
+  }
+  .backlog-label {
+    grid-column: 1 / -1;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #6b7080;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 10px 4px;
+  }
+
+  /* bottom border closure */
+  .stripe-end {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(180px, 1fr));
+    gap: 8px;
+    height: 6px;
+  }
+  .stripe-end.skeleton-end { border-left: 4px solid #1a6b3c; border-right: 4px solid #1a6b3c; border-bottom: 4px solid #1a6b3c; border-radius: 0 0 6px 6px; }
+  .stripe-end.sprint-end   { border-left: 4px solid #0f6cbf; border-right: 4px solid #0f6cbf; border-bottom: 4px solid #0f6cbf; border-radius: 0 0 6px 6px; }
+  .stripe-end.backlog-end  { border-left: 4px solid #8a8fa8; border-right: 4px solid #8a8fa8; border-bottom: 4px solid #8a8fa8; border-radius: 0 0 6px 6px; }
+
+  /* ---- STORY CARD ---- */
+  .col { padding: 0 6px 8px; display: flex; flex-direction: column; gap: 6px; }
+
+  .card {
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 0.75rem;
+    line-height: 1.45;
+    position: relative;
+    cursor: default;
+    transition: transform 0.12s, box-shadow 0.12s;
+    border: 1px solid transparent;
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.14); }
+
+  .card-skeleton {
+    background: #d4eddf;
+    border-color: #1a6b3c;
+  }
+  .card-sprint {
+    background: #dbeaf8;
+    border-color: #0f6cbf;
+  }
+  .card-backlog {
+    background: #ebebf0;
+    border-color: #b0b5c8;
+    opacity: 0.82;
+  }
+  .card-deferred {
+    background: #fde8e6;
+    border-color: #c0392b;
+    opacity: 0.72;
+  }
+
+  .card-id {
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+  .card-skeleton .card-id { color: #1a6b3c; }
+  .card-sprint .card-id   { color: #0f6cbf; }
+  .card-backlog .card-id  { color: #6b7080; }
+  .card-deferred .card-id { color: #c0392b; }
+
+  .card-title { font-weight: 600; margin-bottom: 3px; color: #1a1a2e; }
+  .card-actor { font-size: 0.68rem; color: #555; font-style: italic; }
+
+  .bone { font-size: 0.9rem; }
+  .cycle-badge {
+    display: inline-block;
+    background: #0f3460;
+    color: white;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 10px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+  .skeleton-badge {
+    background: #1a6b3c;
+  }
+
+  .empty { min-height: 10px; }
+
+  /* ---- TOYOTA KATA ---- */
+  .kata-box {
+    margin: 20px 32px 0;
+    background: #fff;
+    border: 1px solid #dde;
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .kata-section h3 { font-size: 0.75rem; font-weight: 700; color: #0f3460; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+  .kata-section p  { font-size: 0.78rem; color: #333; line-height: 1.55; }
+
+  /* ---- ACTORS ---- */
+  .actors-bar {
+    display: flex;
+    gap: 12px;
+    padding: 10px 32px;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+    flex-wrap: wrap;
+  }
+  .actor-pill {
+    font-size: 0.72rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .actor-de  { background: #d4eddf; color: #1a6b3c; }
+  .actor-pbd { background: #dbeaf8; color: #0f6cbf; }
+  .actor-pe  { background: #fef3cd; color: #8a6200; }
+  .actor-it  { background: #fde8e6; color: #c0392b; }
+
+  .spacer { height: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>PBI-QA — Agentic QA Framework for Power BI &nbsp;·&nbsp; Story Map</h1>
+    <p>Jeff Patton walking skeleton view &nbsp;·&nbsp; ADR-061 Accepted &nbsp;·&nbsp; Sprint 20 task card: <code>__inbox/__todo/20260509/task-PBI-QA.md</code></p>
+    <p class="header-meta">Sprint 20 scope: 9 TDD cycles &nbsp;|&nbsp; 1 new notebook &nbsp;|&nbsp; Baseline: 1407 tests</p>
+  </div>
+</header>
+
+<div class="actors-bar">
+  <span style="font-size:0.72rem;color:#888;font-weight:600;">ACTORS:</span>
+  <span class="actor-pill actor-de">Data Engineer</span>
+  <span class="actor-pill actor-pbd">Power BI Developer</span>
+  <span class="actor-pill actor-pe">Platform Engineer</span>
+  <span class="actor-pill actor-it">IT Consultant</span>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="swatch swatch-skeleton"></div> Walking skeleton (🦴 Sprint 20)</div>
+  <div class="legend-item"><div class="swatch swatch-sprint"></div> Sprint 20 (non-skeleton)</div>
+  <div class="legend-item"><div class="swatch swatch-backlog"></div> Backlog (future sprint)</div>
+  <div class="legend-item"><div class="swatch swatch-deferred"></div> Deferred (needs Foundry / TMSL)</div>
+  <span class="legend-sep">|</span>
+  <div class="legend-item"><span class="bone">🦴</span> = walking skeleton story</div>
+  <div class="legend-item"><span style="background:#0f3460;color:white;font-size:0.6rem;padding:1px 5px;border-radius:10px;">C1</span> = Sprint 20 cycle number</div>
+</div>
+
+<div class="map-container">
+
+  <!-- ═══════════════ BACKBONE ═══════════════ -->
+  <div class="backbone">
+    <div class="activity"><div class="act-num">A1</div>Configure Infrastructure</div>
+    <div class="activity"><div class="act-num">A2</div>Discover Report Structure</div>
+    <div class="activity"><div class="act-num">A3</div>Generate Test Plan</div>
+    <div class="activity"><div class="act-num">A4</div>Execute Visual Tests</div>
+    <div class="activity"><div class="act-num">A5</div>Review Failures</div>
+    <div class="activity"><div class="act-num">A6</div>Deploy Fixes</div>
+    <div class="activity"><div class="act-num">A7</div>Monitor QA Health</div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- ═══════════════ WALKING SKELETON ═══════════════ -->
+  <div class="skeleton-stripe">
+    <div class="skeleton-label" style="grid-column:1/-1">🦴 Walking Skeleton — the thinnest slice that proves the architecture works end-to-end</div>
+
+    <!-- A1 -->
+    <div class="col">
+      <div class="card card-skeleton">
+        <div class="card-id">US-001 <span class="bone">🦴</span> <span class="cycle-badge skeleton-badge">C1</span></div>
+        <div class="card-title">Provision QA Delta tables</div>
+        <div class="card-actor">Data Engineer</div>
+      </div>
+    </div>
+
+    <!-- A2 -->
+    <div class="col">
+      <div class="card card-skeleton">
+        <div class="card-id">US-004 <span class="bone">🦴</span> <span class="cycle-badge skeleton-badge">C2</span></div>
+        <div class="card-title">Parse visual.json &amp; seed QA_Visual_Tests</div>
+        <div class="card-actor">Data Engineer</div>
+      </div>
+    </div>
+
+    <!-- A3 — skeleton now unblocked (Foundry provisioned 2026-05-09) -->
+    <div class="col">
+      <div class="card card-backlog">
+        <div class="card-id">US-007 <span class="bone">🦴</span> ✅ Foundry</div>
+        <div class="card-title">SQL baseline agent (unblocked)</div>
+        <div class="card-actor">Data Engineer</div>
+      </div>
+    </div>
+
+    <!-- A4 -->
+    <div class="col">
+      <div class="card card-skeleton">
+        <div class="card-id">US-010 <span class="bone">🦴</span> <span class="cycle-badge skeleton-badge">C4</span></div>
+        <div class="card-title">Baseline visual data vs Gold SQL</div>
+        <div class="card-actor">Data Engineer</div>
+      </div>
+    </div>
+
+    <!-- A5 -->
+    <div class="col">
+      <div class="card card-skeleton">
+        <div class="card-id">US-021 <span class="bone">🦴</span> <span class="cycle-badge skeleton-badge">C7</span></div>
+        <div class="card-title">Print failure summary to stdout</div>
+        <div class="card-actor">Data Engineer</div>
+      </div>
+    </div>
+
+    <!-- A6 -->
+    <div class="col">
+      <div class="card card-skeleton">
+        <div class="card-id">US-022 <span class="bone">🦴</span> <span class="cycle-badge skeleton-badge">C8</span></div>
+        <div class="card-title">retest_measure() — fix validation, no TMSL</div>
+        <div class="card-actor">Power BI Developer</div>
+      </div>
+    </div>
+
+    <!-- A7 -->
+    <div class="col">
+      <div class="card card-skeleton">
+        <div class="card-id">US-023 <span class="bone">🦴</span> <span class="cycle-badge skeleton-badge">C7</span></div>
+        <div class="card-title">Pass/fail count to stdout</div>
+        <div class="card-actor">Platform Engineer</div>
+      </div>
+    </div>
+  </div>
+  <div class="stripe-end skeleton-end"></div>
+
+  <div class="spacer"></div>
+
+  <!-- ═══════════════ SPRINT 20 (non-skeleton) ═══════════════ -->
+  <div class="sprint-stripe">
+    <div class="sprint-label" style="grid-column:1/-1">Sprint 20 — remaining cycles (non-skeleton, flesh on the bones)</div>
+
+    <!-- A1 — nothing here that's non-skeleton sprint 20 -->
+    <div class="col"></div>
+
+    <!-- A2 -->
+    <div class="col">
+      <div class="card card-sprint">
+        <div class="card-id">US-024 <span class="cycle-badge">C3</span></div>
+        <div class="card-title">PBIR offline sort &amp; filter assertions</div>
+        <div class="card-actor">Power BI Developer</div>
+      </div>
+    </div>
+
+    <!-- A3 — none in sprint 20 (needs Foundry) -->
+    <div class="col"></div>
+
+    <!-- A4 -->
+    <div class="col">
+      <div class="card card-sprint">
+        <div class="card-id">US-011 <span class="cycle-badge">C5</span></div>
+        <div class="card-title">Cross-filter + remove_filters() guard</div>
+        <div class="card-actor">Data Engineer</div>
+      </div>
+      <div class="card card-sprint">
+        <div class="card-id">US-013 <span class="cycle-badge">C6</span></div>
+        <div class="card-title">Full execution loop — per-row isolation</div>
+        <div class="card-actor">Data Engineer</div>
+      </div>
+    </div>
+
+    <!-- A5 -->
+    <div class="col">
+      <div class="card card-sprint">
+        <div class="card-id">US-016 <span class="cycle-badge">C9</span></div>
+        <div class="card-title">CI hard-fail — sys.exit(1) + structured stdout</div>
+        <div class="card-actor">IT Consultant</div>
+      </div>
+    </div>
+
+    <!-- A6 — none in sprint 20 -->
+    <div class="col"></div>
+
+    <!-- A7 — none in sprint 20 -->
+    <div class="col"></div>
+  </div>
+  <div class="stripe-end sprint-end"></div>
+
+  <div class="spacer"></div>
+
+  <!-- ═══════════════ BACKLOG ═══════════════ -->
+  <div class="backlog-stripe">
+    <div class="backlog-label" style="grid-column:1/-1">Backlog — future sprints (ordered by value)</div>
+
+    <!-- A1 -->
+    <div class="col">
+      <div class="card card-backlog">
+        <div class="card-id">US-002</div>
+        <div class="card-title">PBIP Git integration for DEV report</div>
+        <div class="card-actor">Data Engineer</div>
+      </div>
+      <div class="card card-backlog" style="border-left:3px solid #27ae60">
+        <div class="card-id" style="color:#1a6b3c">US-003 ✅ DONE</div>
+        <div class="card-title">Foundry v2 provisioned — gpt-4o live</div>
+        <div class="card-actor">Platform Engineer</div>
+      </div>
+    </div>
+
+    <!-- A2 -->
+    <div class="col">
+      <div class="card card-backlog">
+        <div class="card-id">US-005</div>
+        <div class="card-title">Extract measure expressions via sempy-labs</div>
+        <div class="card-actor">Data Engineer</div>
+      </div>
+      <div class="card card-backlog">
+        <div class="card-id">US-006</div>
+        <div class="card-title">Parse page.json interaction overrides</div>
+        <div class="card-actor">Data Engineer</div>
+      </div>
+    </div>
+
+    <!-- A3 -->
+    <div class="col">
+      <div class="card card-backlog" style="border-left:3px solid #27ae60">
+        <div class="card-id" style="color:#1a6b3c">US-007 ✅ Unblocked</div>
+        <div class="card-title">SQL baseline agent (schema-grounded)</div>
+        <div class="card-actor">Data Engineer</div>
+      </div>
+      <div class="card card-backlog">
+        <div class="card-id">US-008</div>
+        <div class="card-title">Sample live filter values from Gold layer</div>
+        <div class="card-actor">Data Engineer</div>
+      </div>
+      <div class="card card-backlog">
+        <div class="card-id">US-009</div>
+        <div class="card-title">BPA scan gate before UI tests</div>
+        <div class="card-actor">Power BI Developer</div>
+      </div>
+    </div>
+
+    <!-- A4 -->
+    <div class="col">
+      <div class="card card-backlog">
+        <div class="card-id">US-012</div>
+        <div class="card-title">Drill-through navigation &amp; filter context</div>
+        <div class="card-actor">Data Engineer</div>
+      </div>
+      <div class="card card-backlog">
+        <div class="card-id">US-020</div>
+        <div class="card-title">Incremental (PR-scoped) testing</div>
+        <div class="card-actor">Platform Engineer</div>
+      </div>
+    </div>
+
+    <!-- A5 -->
+    <div class="col">
+      <div class="card card-backlog" style="border-left:3px solid #27ae60">
+        <div class="card-id" style="color:#1a6b3c">US-014 ✅ Unblocked</div>
+        <div class="card-title">Foundry RCA agent — diagnosis + DAX fix</div>
+        <div class="card-actor">Power BI Developer</div>
+      </div>
+      <div class="card card-backlog">
+        <div class="card-id">US-015</div>
+        <div class="card-title">HITL ipywidgets approval UI in notebook</div>
+        <div class="card-actor">Power BI Developer</div>
+      </div>
+    </div>
+
+    <!-- A6 -->
+    <div class="col">
+      <div class="card card-deferred">
+        <div class="card-id">US-017 🚫 TMSL</div>
+        <div class="card-title">Deploy DAX via TMSL to XMLA endpoint</div>
+        <div class="card-actor">Power BI Developer</div>
+      </div>
+      <div class="card card-backlog" style="border-left:3px solid #27ae60">
+        <div class="card-id" style="color:#1a6b3c">US-018 ✅ Unblocked</div>
+        <div class="card-title">Durable HITL — async approval via Teams</div>
+        <div class="card-actor">IT Consultant</div>
+      </div>
+      <div class="card card-deferred">
+        <div class="card-id">US-025 🚫 pbi_fixer</div>
+        <div class="card-title">pbi_fixer fork — one-click visual fix</div>
+        <div class="card-actor">Power BI Developer</div>
+      </div>
+    </div>
+
+    <!-- A7 -->
+    <div class="col">
+      <div class="card card-backlog">
+        <div class="card-id">US-019</div>
+        <div class="card-title">QA health dashboard (Power BI over QA_Test_Executions)</div>
+        <div class="card-actor">Platform Engineer</div>
+      </div>
+    </div>
+  </div>
+  <div class="stripe-end backlog-end"></div>
+
+</div><!-- /map-container -->
+
+<!-- Toyota Kata + Current Condition -->
+<div class="kata-box">
+  <div class="kata-section">
+    <h3>🎯 Challenge (Toyota Kata)</h3>
+    <p>Zero broken Power BI reports reach production. Every DAX measure is independently validated against the Gold Lakehouse SQL source of truth before any report is published, and every test failure surfaces a machine-generated fix for human review within minutes.</p>
+  </div>
+  <div class="kata-section">
+    <h3>📍 Current Condition → Target Condition (Sprint 20)</h3>
+    <p>
+      <strong>Now:</strong> 0 visual tests automated. Manual QA only. Failures detected by end users. MTTR for DAX bugs: hours.<br><br>
+      <strong>After Sprint 20:</strong> ≥1 visual validated end-to-end against Gold SQL. <code>QA_Test_Executions</code> Delta table receiving results. Variance ε = 0.01 enforced. Pass/fail count in ADO log. <code>retest_measure()</code> callable in notebook before TMSL built.
+    </p>
+  </div>
+</div>
+
+<div style="padding:16px 32px;font-size:0.72rem;color:#888;">
+  Generated 2026-05-09 · Data Platform · ADR-061 · Story map rev 2 · 25 user stories total (9 in Sprint 20, 16 backlog) · ✅ Foundry v2 provisioned 2026-05-09: af-duk-dev-dataplatform / gpt-4o 2024-11-20 / azure-ai-projects SDK
+</div>
+
+</body>
+</html>

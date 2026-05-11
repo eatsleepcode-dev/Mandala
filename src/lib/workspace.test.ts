@@ -1,11 +1,14 @@
 import * as path from 'path';
 import {
   detectDevBrainFolders,
+  hasGettingStartedExamples,
   loadTaskCards,
   loadDiaryEntries,
   initDevBrainFolders,
   MANDALA_SUBDIRS,
   MANDALA_ROOT,
+  removeGettingStartedExamples,
+  seedGettingStartedExamples,
 } from './workspace';
 
 const makeUri = (fsPath: string) => ({ fsPath });
@@ -389,7 +392,7 @@ describe('migrateToMandalaFolder', () => {
 // ─── initDevBrainFolders ─────────────────────────────────────────────────────
 
 describe('initDevBrainFolders', () => {
-  it('creates .mandala/ subdirs and seed files', async () => {
+  it('creates .mandala/ subdirs without seeding example files by default', async () => {
     const root = makeUri('/workspace');
     const mockFs = {
       createDirectory: jest.fn().mockResolvedValue(undefined),
@@ -405,6 +408,63 @@ describe('initDevBrainFolders', () => {
     expect(created.some((p) => p.includes(path.join('.mandala', 'agents')))).toBe(true);
     expect(created.some((p) => p.includes(path.join('.mandala', 'tech-debt')))).toBe(true);
     expect(created.some((p) => p.includes(path.join('.mandala', 'sprints')))).toBe(true);
-    expect(mockFs.writeFile).toHaveBeenCalledTimes(2);
+    expect(mockFs.writeFile).not.toHaveBeenCalled();
+  });
+
+  it('can initialize with getting started examples', async () => {
+    const root = makeUri('/workspace');
+    const mockFs = {
+      createDirectory: jest.fn().mockResolvedValue(undefined),
+      writeFile: jest.fn().mockResolvedValue(undefined),
+    };
+
+    await initDevBrainFolders(root as any, mockFs as any, { includeExamples: true });
+    expect(mockFs.writeFile).toHaveBeenCalled();
+    const writtenPaths: string[] = mockFs.writeFile.mock.calls.map((c: [{ fsPath: string }]) => c[0].fsPath);
+    expect(writtenPaths.some((p) => p.includes(path.join('.mandala', 'inbox')))).toBe(true);
+    expect(writtenPaths.some((p) => p.includes(path.join('.mandala', 'diary')))).toBe(true);
+    expect(writtenPaths.some((p) => p.includes(path.join('.mandala', '.getting-started.json')))).toBe(true);
+  });
+});
+
+describe('getting started examples', () => {
+  const root = makeUri('/workspace');
+
+  it('seeds starter files and writes a manifest', async () => {
+    const mockFs = {
+      createDirectory: jest.fn().mockResolvedValue(undefined),
+      writeFile: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const count = await seedGettingStartedExamples(root as any, mockFs as any);
+    expect(count).toBeGreaterThan(0);
+    expect(mockFs.writeFile).toHaveBeenCalled();
+    const writtenPaths: string[] = mockFs.writeFile.mock.calls.map((c: [{ fsPath: string }]) => c[0].fsPath);
+    expect(writtenPaths.some((p) => p.endsWith(path.join('.mandala', '.getting-started.json')))).toBe(true);
+  });
+
+  it('detects when starter examples exist', async () => {
+    const mockFs = {
+      readFile: jest.fn().mockResolvedValue(md(JSON.stringify({ version: 1, files: ['.mandala/inbox/example.md'] }))),
+    };
+
+    await expect(hasGettingStartedExamples(root as any, mockFs as any)).resolves.toBe(true);
+  });
+
+  it('removes only manifest-tracked starter files', async () => {
+    const manifest = JSON.stringify({
+      version: 1,
+      files: ['.mandala/inbox/example.md', '.mandala/diary/example.md'],
+    });
+    const mockFs = {
+      readFile: jest.fn().mockResolvedValue(md(manifest)),
+      delete: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const removed = await removeGettingStartedExamples(root as any, mockFs as any);
+    expect(removed).toBe(2);
+    const deletedPaths: string[] = mockFs.delete.mock.calls.map((c: [{ fsPath: string }]) => c[0].fsPath);
+    expect(deletedPaths.some((p) => p.endsWith(path.join('.mandala', 'inbox', 'example.md')))).toBe(true);
+    expect(deletedPaths.some((p) => p.endsWith(path.join('.mandala', '.getting-started.json')))).toBe(true);
   });
 });

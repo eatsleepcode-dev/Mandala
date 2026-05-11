@@ -1,22 +1,27 @@
 import * as vscode from 'vscode';
 import {
   detectDevBrainFolders,
+  hasGettingStartedExamples,
   loadTaskCards,
   loadDiaryEntries,
+  loadAgentResources,
   migrateToMandalaFolder,
+  removeGettingStartedExamples,
+  seedGettingStartedExamples,
 } from '../lib/workspace';
 import {
   loadIntegrationConfig,
   saveIntegrationConfig,
   syncIntegrations,
 } from '../lib/integrations';
-import type { WebviewMessage, KnownIntegrationFlags, IntegrationSettings } from '../shared/types';
+import type { WebviewMessage, KnownIntegrationFlags, IntegrationSettings, ThemeOverride } from '../shared/types';
 
 export class BrainProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'mandalaDashboard';
 
   private _view?: vscode.WebviewView;
   private _disposables: vscode.Disposable[] = [];
+  private _startupStartedAt?: number;
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
@@ -53,6 +58,7 @@ export class BrainProvider implements vscode.WebviewViewProvider {
     vscode.workspace.onDidChangeConfiguration(async (e) => {
       if (e.affectsConfiguration('mandala')) {
         await this._pushSettings();
+        await this._pushTheme();
         // Also trigger sync if integration flags changed
         if (e.affectsConfiguration('mandala.integrations')) {
           const wsConfig = vscode.workspace.getConfiguration('mandala.integrations');
@@ -105,14 +111,17 @@ export class BrainProvider implements vscode.WebviewViewProvider {
 
           case 'initWorkspace': {
             const { initDevBrainFolders } = await import('../lib/workspace');
-            await initDevBrainFolders(this._workspaceRoot, vscode.workspace.fs);
+            await initDevBrainFolders(this._workspaceRoot, vscode.workspace.fs, {
+              includeExamples: message.withExamples === true,
+            });
             
             this._view?.webview.postMessage({
               command: 'initState',
               initialized: true,
               hasMigratableData: false,
             });
-            
+
+            await this._pushExampleState();
             await this._pushData();
             return;
           }
@@ -137,7 +146,28 @@ export class BrainProvider implements vscode.WebviewViewProvider {
               initialized: true,
               hasMigratableData: false,
             });
-            
+
+            await this._pushExampleState();
+            await this._pushData();
+            return;
+          }
+
+          case 'seedExamples': {
+            const count = await seedGettingStartedExamples(this._workspaceRoot, vscode.workspace.fs);
+            vscode.window.showInformationMessage(`Mandala added ${count} getting started example files.`);
+            await this._pushExampleState();
+            await this._pushData();
+            return;
+          }
+
+          case 'removeExamples': {
+            const removed = await removeGettingStartedExamples(this._workspaceRoot, vscode.workspace.fs);
+            if (removed > 0) {
+              vscode.window.showInformationMessage(`Mandala removed ${removed} getting started example files.`);
+            } else {
+              vscode.window.showInformationMessage('No Mandala-managed getting started examples were found to remove.');
+            }
+            await this._pushExampleState();
             await this._pushData();
             return;
           }
@@ -195,8 +225,86 @@ export class BrainProvider implements vscode.WebviewViewProvider {
             return;
 
           case 'openGuide': {
-            const guideUri = vscode.Uri.joinPath(this._extensionUri, 'docs', 'USER_GUIDE.md');
-            vscode.commands.executeCommand('markdown.showPreview', guideUri);
+            const workspaceGuideUri = vscode.Uri.joinPath(this._workspaceRoot, '__guides', 'agent-guide.html');
+            try {
+              await vscode.workspace.fs.stat(workspaceGuideUri);
+              const doc = await vscode.workspace.openTextDocument(workspaceGuideUri);
+              await vscode.window.showTextDocument(doc, { preview: false });
+            } catch {
+              const guideUri = vscode.Uri.joinPath(this._extensionUri, 'docs', 'USER_GUIDE.md');
+              await vscode.commands.executeCommand('markdown.showPreview', guideUri);
+            }
+            return;
+          }
+
+          case 'setThemeOverride': {
+            const cfg = vscode.workspace.getConfiguration('mandala');
+            await cfg.update('themeOverride', message.override, vscode.ConfigurationTarget.Workspace);
+            await this._pushTheme();
+            return;
+          }
+
+          case 'runSdlcStep': {
+            const prompt = message.suggestedSlash.trim();
+
+            const openChatCommands = async (slashPrompt: string): Promise<{ opened: boolean; prefilled: boolean }> => {
+              const availableCommands = new Set(await vscode.commands.getCommands(true));
+              const attempts: Array<{ id: string; args: unknown[]; prefilled: boolean }> = [
+                { id: 'workbench.action.chat.open', args: [{ query: slashPrompt }], prefilled: true },
+                { id: 'github.copilot.chat.open', args: [{ query: slashPrompt }], prefilled: true },
+                { id: 'workbench.action.quickchat.open', args: [{ query: slashPrompt }], prefilled: true },
+                { id: 'github.copilot.chat.open', args: [slashPrompt], prefilled: true },
+                { id: 'workbench.action.chat.open', args: [], prefilled: false },
+                { id: 'github.copilot.chat.open', args: [], prefilled: false },
+              ];
+
+              for (const attempt of attempts) {
+                if (!availableCommands.has(attempt.id)) {
+                  continue;
+                }
+
+                try {
+                  await vscode.commands.executeCommand(attempt.id, ...attempt.args);
+                  return { opened: true, prefilled: attempt.prefilled };
+                } catch {
+                  // Try next available chat command signature.
+                }
+              }
+
+              return { opened: false, prefilled: false };
+            };
+
+            const chatResult = await openChatCommands(prompt);
+            if (chatResult.opened) {
+              if (!chatResult.prefilled) {
+                await vscode.env.clipboard.writeText(prompt);
+                vscode.window.showInformationMessage(
+                  `Opened chat for SDLC ${message.step}. ${prompt} was copied to your clipboard.`
+                );
+              } else {
+                vscode.window.showInformationMessage(`SDLC ${message.step} step opened in chat with ${prompt}`);
+              }
+              return;
+            }
+
+            if (message.fallbackPath) {
+              try {
+                const doc = await vscode.workspace.openTextDocument(message.fallbackPath);
+                await vscode.window.showTextDocument(doc, { preview: false });
+                await vscode.env.clipboard.writeText(prompt);
+                vscode.window.showInformationMessage(
+                  `Opened workflow file for SDLC ${message.step}. ${prompt} was copied to your clipboard.`
+                );
+                return;
+              } catch {
+                // Fall through to warning message below.
+              }
+            }
+
+            await vscode.env.clipboard.writeText(prompt);
+            vscode.window.showWarningMessage(
+              `Unable to open chat directly. ${prompt} was copied to your clipboard.`
+            );
             return;
           }
         }
@@ -207,6 +315,9 @@ export class BrainProvider implements vscode.WebviewViewProvider {
   }
 
   private async _sendInitialData(): Promise<void> {
+    this._startupStartedAt = Date.now();
+    this._emitProgress('Checking workspace state');
+
     const detection = await detectDevBrainFolders(
       this._workspaceRoot,
       vscode.workspace.fs
@@ -238,10 +349,19 @@ export class BrainProvider implements vscode.WebviewViewProvider {
     });
 
     // Send current integration settings
+    this._emitProgress('Loading integration settings');
     await this._pushSettings();
+    this._emitProgress('Applying theme');
+    await this._pushTheme();
 
     if (detection.found) {
+      this._emitProgress('Checking starter content');
+      await this._pushExampleState();
+      this._emitProgress('Hydrating dashboard data');
       await this._pushData();
+    } else {
+      this._emitProgress('Ready for workspace setup');
+      this._startupStartedAt = undefined;
     }
   }
 
@@ -269,7 +389,17 @@ export class BrainProvider implements vscode.WebviewViewProvider {
     this._view?.webview.postMessage({ command: 'loadSettings', settings });
   }
 
+  private async _pushExampleState(): Promise<void> {
+    const hasExamples = await hasGettingStartedExamples(this._workspaceRoot, vscode.workspace.fs);
+    this._view?.webview.postMessage({
+      command: 'loadExampleState',
+      hasGettingStartedExamples: hasExamples,
+    });
+  }
+
   private async _pushData(): Promise<void> {
+    this._emitProgress('Loading cards, diary, and sprints');
+
     const fs = vscode.workspace.fs;
     const root = this._workspaceRoot;
     const cfg = vscode.workspace.getConfiguration('mandala');
@@ -286,17 +416,53 @@ export class BrainProvider implements vscode.WebviewViewProvider {
 
     const { loadTechDebtCards, loadSprintRecords } = await import('../lib/workspace');
 
-    const [cards, entries, techDebtCards, sprintRecords] = await Promise.all([
+    const [cards, entries, techDebtCards, sprintRecords, workspaceAgentResources] = await Promise.all([
       loadTaskCards(inboxUri, fs),
       loadDiaryEntries(diaryUri, fs),
       loadTechDebtCards(techDebtUri, fs),
       loadSprintRecords(sprintsUri, fs),
+      loadAgentResources(root, fs),
     ]);
+
+    const extensionAgentResources = await loadAgentResources(this._extensionUri, fs);
+    const hasWorkspaceAgentData =
+      workspaceAgentResources.workflows.length > 0 ||
+      workspaceAgentResources.skills.length > 0 ||
+      workspaceAgentResources.tasks.length > 0 ||
+      workspaceAgentResources.guides.length > 0 ||
+      workspaceAgentResources.registry.length > 0;
+
+    const agentResources = hasWorkspaceAgentData
+      ? workspaceAgentResources
+      : extensionAgentResources;
+
+    this._emitProgress('Composing views');
 
     this._view?.webview.postMessage({ command: 'loadStoryMap', cards });
     this._view?.webview.postMessage({ command: 'loadDiary', entries });
     this._view?.webview.postMessage({ command: 'loadTechDebt', cards: techDebtCards });
     this._view?.webview.postMessage({ command: 'loadSprints', records: sprintRecords });
+    this._view?.webview.postMessage({ command: 'loadAgentResources', resources: agentResources });
+    this._emitProgress('Ready');
+    this._startupStartedAt = undefined;
+  }
+
+  private _emitProgress(step: string): void {
+    const elapsedMs = this._startupStartedAt !== undefined
+      ? Date.now() - this._startupStartedAt
+      : undefined;
+
+    this._view?.webview.postMessage({ command: 'loadProgress', step, elapsedMs });
+
+    if (elapsedMs !== undefined) {
+      console.info(`[Mandala startup] ${step} (${elapsedMs}ms)`);
+    }
+  }
+
+  private async _pushTheme(): Promise<void> {
+    const cfg = vscode.workspace.getConfiguration('mandala');
+    const override = cfg.get<ThemeOverride>('themeOverride', 'auto');
+    this._view?.webview.postMessage({ command: 'loadTheme', override });
   }
 }
 

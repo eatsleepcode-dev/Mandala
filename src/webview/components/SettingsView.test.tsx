@@ -57,14 +57,14 @@ describe('SettingsView', () => {
 
   it('shows an Add row button', () => {
     render(<SettingsView settings={defaultSettings()} onSave={jest.fn()} />);
-    expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add custom integration/i })).toBeInTheDocument();
   });
 
   it('calls onSave with new custom entry after filling in add form', () => {
     const onSave = jest.fn();
     render(<SettingsView settings={defaultSettings()} onSave={onSave} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /add/i }));
+    fireEvent.click(screen.getByRole('button', { name: /add custom integration/i }));
 
     const form = screen.getByRole('form', { name: /new integration/i });
     fireEvent.change(within(form).getByPlaceholderText(/label/i), {
@@ -110,8 +110,38 @@ describe('SettingsView', () => {
   it('does not call onSave when add form is cancelled', () => {
     const onSave = jest.fn();
     render(<SettingsView settings={defaultSettings()} onSave={onSave} />);
-    fireEvent.click(screen.getByRole('button', { name: /add/i }));
+    fireEvent.click(screen.getByRole('button', { name: /add custom integration/i }));
     fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
     expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('offers adding getting started examples when they are not present', () => {
+    const onSeedExamples = jest.fn();
+    render(
+      <SettingsView
+        settings={defaultSettings()}
+        onSave={jest.fn()}
+        hasGettingStartedExamples={false}
+        onSeedExamples={onSeedExamples}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /add getting started examples/i }));
+    expect(onSeedExamples).toHaveBeenCalled();
+  });
+
+  it('offers removing getting started examples when they are present', () => {
+    const onRemoveExamples = jest.fn();
+    render(
+      <SettingsView
+        settings={defaultSettings()}
+        onSave={jest.fn()}
+        hasGettingStartedExamples
+        onRemoveExamples={onRemoveExamples}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /remove getting started examples/i }));
+    expect(onRemoveExamples).toHaveBeenCalled();
   });
 });

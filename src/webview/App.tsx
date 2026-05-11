@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useRef, useState } from 'react';
 import { vscode } from './vscode';
 import { Sidebar } from './components/Sidebar';
 import { StoryMapView } from './components/StoryMapView';
@@ -7,11 +7,14 @@ import { TechDebtView } from './components/TechDebtView';
 import { SprintsView } from './components/SprintsView';
 import { InboxView } from './components/InboxView';
 import { SettingsView } from './components/SettingsView';
+import { AgentsView } from './components/AgentsView';
 import type {
+  AgentResources,
   HostMessage,
   TaskCard,
   DiaryEntry,
   IntegrationSettings,
+  ThemeOverride,
   TechDebtCard,
   SprintRecord,
 } from '../shared/types';
@@ -30,15 +33,32 @@ const DEFAULT_SETTINGS: IntegrationSettings = {
   custom: [],
 };
 
+const EMPTY_AGENT_RESOURCES: AgentResources = {
+  workflows: [],
+  skills: [],
+  tasks: [],
+  guides: [],
+  registry: [],
+};
+
 type Phase =
   | { status: 'loading' }
   | { status: 'setup'; hasMigratableData: boolean }
-  | { status: 'ready'; cards: TaskCard[]; entries: DiaryEntry[]; techDebtCards: TechDebtCard[]; sprintRecords: SprintRecord[] };
+  | {
+      status: 'ready';
+      cards: TaskCard[];
+      entries: DiaryEntry[];
+      techDebtCards: TechDebtCard[];
+      sprintRecords: SprintRecord[];
+      agentResources: AgentResources;
+    };
 
 interface AppState {
   phase: Phase;
   activeView: ViewId;
   settings: IntegrationSettings;
+  themeOverride: ThemeOverride;
+  hasGettingStartedExamples: boolean;
 }
 
 type Action =
@@ -47,14 +67,27 @@ type Action =
   | { type: 'LOAD_DIARY'; entries: DiaryEntry[] }
   | { type: 'LOAD_TECH_DEBT'; cards: TechDebtCard[] }
   | { type: 'LOAD_SPRINTS'; records: SprintRecord[] }
+  | { type: 'LOAD_AGENT_RESOURCES'; resources: AgentResources }
   | { type: 'LOAD_SETTINGS'; settings: IntegrationSettings }
+  | { type: 'LOAD_THEME'; override: ThemeOverride }
+  | { type: 'LOAD_EXAMPLE_STATE'; hasGettingStartedExamples: boolean }
   | { type: 'SET_VIEW'; view: ViewId };
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'INIT':
       return action.initialized
-        ? { ...state, phase: { status: 'ready', cards: [], entries: [], techDebtCards: [], sprintRecords: [] } }
+        ? {
+            ...state,
+            phase: {
+              status: 'ready',
+              cards: [],
+              entries: [],
+              techDebtCards: [],
+              sprintRecords: [],
+              agentResources: EMPTY_AGENT_RESOURCES,
+            },
+          }
         : { ...state, phase: { status: 'setup', hasMigratableData: action.hasMigratableData } };
 
     case 'LOAD_STORY_MAP':
@@ -73,8 +106,18 @@ function reducer(state: AppState, action: Action): AppState {
       if (state.phase.status !== 'ready') return state;
       return { ...state, phase: { ...state.phase, sprintRecords: action.records } };
 
+    case 'LOAD_AGENT_RESOURCES':
+      if (state.phase.status !== 'ready') return state;
+      return { ...state, phase: { ...state.phase, agentResources: action.resources } };
+
     case 'LOAD_SETTINGS':
       return { ...state, settings: action.settings };
+
+    case 'LOAD_THEME':
+      return { ...state, themeOverride: action.override };
+
+    case 'LOAD_EXAMPLE_STATE':
+      return { ...state, hasGettingStartedExamples: action.hasGettingStartedExamples };
 
     case 'SET_VIEW':
       return { ...state, activeView: action.view };
@@ -87,18 +130,51 @@ function reducer(state: AppState, action: Action): AppState {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function App() {
+  const isJsdom =
+    typeof navigator !== 'undefined' && /jsdom/i.test(navigator.userAgent);
+  const isTestEnv =
+    isJsdom || typeof (globalThis as { acquireVsCodeApi?: unknown }).acquireVsCodeApi !== 'function';
+  const minLoadingMs = isTestEnv ? 0 : 450;
+
+  const loadingSteps = [
+    'Booting dashboard shell',
+    'Reading workspace signals',
+    'Loading workflows and skills',
+    'Preparing guides and task cards',
+  ];
+
   const [state, dispatch] = useReducer(reducer, {
     phase: { status: 'loading' },
     activeView: 'storymap',
     settings: DEFAULT_SETTINGS,
+    themeOverride: 'auto',
+    hasGettingStartedExamples: false,
   });
+  const [loadingMessage, setLoadingMessage] = useState('Starting extension');
+  const [loadingElapsedMs, setLoadingElapsedMs] = useState<number | undefined>(undefined);
+  const [loadingStepIndex, setLoadingStepIndex] = useState(0);
+  const [contentVisible, setContentVisible] = useState(false);
+  const loadingStartedAtRef = useRef(Date.now());
+  const initTimerRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       const msg = event.data as HostMessage;
       switch (msg.command) {
         case 'initState':
-          dispatch({ type: 'INIT', initialized: msg.initialized, hasMigratableData: msg.hasMigratableData });
+          if (initTimerRef.current !== undefined) {
+            window.clearTimeout(initTimerRef.current);
+          }
+          const elapsed = Date.now() - loadingStartedAtRef.current;
+          const waitMs = Math.max(0, minLoadingMs - elapsed);
+          if (waitMs === 0) {
+            dispatch({ type: 'INIT', initialized: msg.initialized, hasMigratableData: msg.hasMigratableData });
+            initTimerRef.current = undefined;
+          } else {
+            initTimerRef.current = window.setTimeout(() => {
+              dispatch({ type: 'INIT', initialized: msg.initialized, hasMigratableData: msg.hasMigratableData });
+            }, waitMs);
+          }
           break;
         case 'loadStoryMap':
           dispatch({ type: 'LOAD_STORY_MAP', cards: msg.cards });
@@ -112,27 +188,110 @@ export default function App() {
         case 'loadSprints':
           dispatch({ type: 'LOAD_SPRINTS', records: msg.records });
           break;
+        case 'loadAgentResources':
+          dispatch({ type: 'LOAD_AGENT_RESOURCES', resources: msg.resources });
+          break;
         case 'loadSettings':
           dispatch({ type: 'LOAD_SETTINGS', settings: msg.settings });
+          break;
+        case 'loadTheme':
+          dispatch({ type: 'LOAD_THEME', override: msg.override });
+          break;
+        case 'loadExampleState':
+          dispatch({ type: 'LOAD_EXAMPLE_STATE', hasGettingStartedExamples: msg.hasGettingStartedExamples });
+          break;
+        case 'loadProgress':
+          setLoadingMessage(msg.step);
+          setLoadingElapsedMs(msg.elapsedMs);
           break;
       }
     };
     window.addEventListener('message', handler);
     vscode.postMessage({ command: 'ready' });
-    return () => window.removeEventListener('message', handler);
-  }, []);
+    return () => {
+      window.removeEventListener('message', handler);
+      if (initTimerRef.current !== undefined) {
+        window.clearTimeout(initTimerRef.current);
+      }
+    };
+  }, [minLoadingMs]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-mandala-theme', state.themeOverride);
+  }, [state.themeOverride]);
+
+  useEffect(() => {
+    if (state.phase.status !== 'loading') {
+      setLoadingStepIndex(0);
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setLoadingStepIndex((prev) => (prev + 1) % loadingSteps.length);
+    }, 900);
+
+    return () => window.clearInterval(timer);
+  }, [state.phase.status, loadingSteps.length]);
+
+  useEffect(() => {
+    if (state.phase.status === 'loading') {
+      setContentVisible(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => setContentVisible(true), 16);
+    return () => window.clearTimeout(timer);
+  }, [state.phase.status]);
+
+  const loadingIconClass = (() => {
+    const step = loadingMessage.toLowerCase();
+    if (step.includes('workspace')) return 'codicon-folder-library';
+    if (step.includes('setting')) return 'codicon-settings-gear';
+    if (step.includes('theme')) return 'codicon-symbol-color';
+    if (step.includes('cards') || step.includes('diary') || step.includes('sprints')) return 'codicon-database';
+    if (step.includes('composing')) return 'codicon-layout';
+    if (step.includes('ready')) return 'codicon-pass-filled';
+    return 'codicon-sync';
+  })();
 
   const openFile = (path: string) => vscode.postMessage({ command: 'openFile', path });
+  const runSdlcStep = (
+    step: 'plan' | 'execute' | 'validate' | 'close',
+    suggestedSlash: string,
+    fallbackPath?: string
+  ) => vscode.postMessage({ command: 'runSdlcStep', step, suggestedSlash, fallbackPath });
+  const setThemeOverride = (override: ThemeOverride) =>
+    vscode.postMessage({ command: 'setThemeOverride', override });
 
   const { phase, activeView, settings } = state;
 
   if (phase.status === 'loading') {
-    return <div className="mandala-loading">Loading…</div>;
+    return (
+      <div className="mandala-loading" role="status" aria-live="polite">
+        <div className="mandala-loading-glow" aria-hidden="true" />
+        <h1 className="mandala-loading-title">Mandala is waking up</h1>
+        <p className="mandala-loading-subtitle">
+          <span className={`codicon ${loadingIconClass} mandala-loading-icon`} aria-hidden="true" />
+          {loadingMessage || loadingSteps[loadingStepIndex]}…
+          {loadingElapsedMs !== undefined ? (
+            <span className="mandala-loading-ms">{loadingElapsedMs}ms</span>
+          ) : null}
+        </p>
+        <div className="mandala-loading-track" aria-hidden="true">
+          <div className="mandala-loading-bar" />
+        </div>
+        <div className="mandala-loading-grid" aria-hidden="true">
+          <div className="mandala-loading-card" />
+          <div className="mandala-loading-card" />
+          <div className="mandala-loading-card" />
+        </div>
+      </div>
+    );
   }
 
   if (phase.status === 'setup') {
     return (
-      <div className="mandala-setup">
+      <div className={`mandala-setup mandala-boot-target${contentVisible ? ' is-visible' : ''}`}>
         <h1>Mandala</h1>
         {phase.hasMigratableData ? (
           <>
@@ -144,9 +303,14 @@ export default function App() {
         ) : (
           <>
             <p>No .mandala/ workspace found.</p>
-            <button onClick={() => vscode.postMessage({ command: 'initWorkspace' })}>
-              Initialize .mandala/
-            </button>
+            <div className="mandala-setup-actions">
+              <button onClick={() => vscode.postMessage({ command: 'initWorkspace' })}>
+                Initialize Empty Workspace
+              </button>
+              <button onClick={() => vscode.postMessage({ command: 'initWorkspace', withExamples: true })}>
+                Initialize with Examples
+              </button>
+            </div>
           </>
         )}
       </div>
@@ -154,9 +318,14 @@ export default function App() {
   }
 
   return (
-    <div className="mandala-dashboard">
+    <div className={`mandala-dashboard mandala-boot-target${contentVisible ? ' is-visible' : ''}`}>
       <Sidebar active={activeView} onSelect={(v) => dispatch({ type: 'SET_VIEW', view: v })} />
       <main className="mandala-main">
+        {state.hasGettingStartedExamples && (
+          <div className="mandala-example-badge-row" role="status" aria-live="polite">
+            <span className="mandala-example-badge">Starter Examples Active</span>
+          </div>
+        )}
         {activeView === 'storymap' && (
           <StoryMapView cards={phase.cards} onOpenFile={openFile} />
         )}
@@ -171,6 +340,27 @@ export default function App() {
         )}
         {activeView === 'inbox' && (
           <InboxView cards={phase.cards} onOpenFile={openFile} />
+        )}
+        {activeView === 'agents' && (
+          <AgentsView
+            resources={phase.agentResources}
+            onOpenFile={openFile}
+            onRunSdlcStep={runSdlcStep}
+          />
+        )}
+        {activeView === 'settings' && (
+          <SettingsView
+            settings={settings}
+            themeOverride={state.themeOverride}
+            hasGettingStartedExamples={state.hasGettingStartedExamples}
+            onThemeOverrideChange={setThemeOverride}
+            onSeedExamples={() => vscode.postMessage({ command: 'seedExamples' })}
+            onRemoveExamples={() => vscode.postMessage({ command: 'removeExamples' })}
+            onSave={(nextSettings) => {
+              dispatch({ type: 'LOAD_SETTINGS', settings: nextSettings });
+              vscode.postMessage({ command: 'saveSettings', settings: nextSettings });
+            }}
+          />
         )}
       </main>
     </div>

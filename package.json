@@ -27,6 +27,8 @@
     "onStartupFinished",
     "onCommand:mandala.openDashboard",
     "onCommand:mandala.initWorkspace",
+    "onCommand:mandala.seedGettingStartedExamples",
+    "onCommand:mandala.removeGettingStartedExamples",
     "onView:mandalaDashboard"
   ],
   "main": "./dist/extension.js",
@@ -59,6 +61,14 @@
       {
         "command": "mandala.initWorkspace",
         "title": "Mandala: Initialize Dev-Brain Workspace"
+      },
+      {
+        "command": "mandala.seedGettingStartedExamples",
+        "title": "Mandala: Add Getting Started Examples"
+      },
+      {
+        "command": "mandala.removeGettingStartedExamples",
+        "title": "Mandala: Remove Getting Started Examples"
       }
     ],
     "menus": {
@@ -68,6 +78,12 @@
         },
         {
           "command": "mandala.initWorkspace"
+        },
+        {
+          "command": "mandala.seedGettingStartedExamples"
+        },
+        {
+          "command": "mandala.removeGettingStartedExamples"
         }
       ]
     },
@@ -83,6 +99,17 @@
           "type": "string",
           "default": ".mandala/inbox",
           "description": "Workspace-relative path to the sprint task card folder (default: .mandala/inbox)"
+        },
+        "mandala.themeOverride": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "light",
+            "dark",
+            "neuromancer"
+          ],
+          "description": "Theme mode for the Mandala dashboard. 'auto' follows VS Code theme colors, 'light' and 'dark' force those palettes, and 'neuromancer' applies the cyberpunk override."
         },
         "mandala.integrations.claude": {
           "type": "boolean",

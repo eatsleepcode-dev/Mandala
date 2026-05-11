@@ -1,0 +1,103 @@
+# .pre-commit-config.yaml
+# ─────────────────────────────────────────────────────────────────
+# Install:  pip install pre-commit && pre-commit install
+# Run all:  pre-commit run --all-files
+#
+# Requires (local machine / CI agent):
+#   pip install pre-commit flake8 diagrams graphviz
+#   graphviz dot binary in PATH (winget install graphviz / brew install graphviz)
+# ─────────────────────────────────────────────────────────────────
+
+default_stages: [pre-commit]
+
+repos:
+  # ── Standard file hygiene ──────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: "diagrams/.*\\.png$"
+      - id: end-of-file-fixer
+        exclude: "diagrams/.*\\.png$"
+      - id: check-yaml
+      - id: check-json
+        files: "workspace/.*\\.json$"
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: "diagrams/.*\\.png$"
+
+  # ── Python linting ─────────────────────────────────────────────
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        args:
+          - --max-line-length=120
+          - --extend-ignore=E203,W503,E501
+        files: "^(src|tests|scripts|diagrams)/.*\\.py$"
+        exclude: "__pycache__"
+
+  # ── Ruff (fast lint — bugbear, security, complexity) ───────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff
+        args:
+          - --select=E,W,B,S,C90
+          - --ignore=S101,S603,S607
+          - --max-line-length=120
+        files: "^(src|tests|scripts)/.*\\.py$"
+
+  # ── Security — bandit ──────────────────────────────────────────
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.9
+    hooks:
+      - id: bandit
+        args: ["-r", "src/", "-ll"]
+        pass_filenames: false
+
+  # ── Secret scanning — gitleaks ─────────────────────────────────
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.2
+    hooks:
+      - id: gitleaks
+
+  # ── Local hooks ────────────────────────────────────────────────
+  - repo: local
+    hooks:
+      # Build Fabric Notebook items from src/notebooks/*.py
+      - id: build-notebooks
+        name: "Build Fabric Notebook items (src → workspace)"
+        language: python
+        entry: python scripts/build_notebooks.py
+        pass_filenames: false
+        files: "^src/notebooks/nb_.*\\.py$"
+        stages: [pre-commit]
+
+      # Regenerate architecture PNGs when diagram scripts change
+      - id: build-diagrams
+        name: "Regenerate architecture diagrams (→ diagrams/*.png)"
+        language: python
+        entry: python diagrams/build_all.py
+        pass_filenames: false
+        files: "^diagrams/.*\\.py$"
+        stages: [pre-commit]
+        additional_dependencies:
+          - diagrams
+          - graphviz
+
+      # Full Python test suite (offline — no Azure/Spark required, ~10 s)
+      - id: pytest
+        name: "pytest — full test suite"
+        language: python
+        entry: python -m pytest tests/ -q --tb=short --timeout=30
+        pass_filenames: false
+        stages: [pre-commit]
+        additional_dependencies:
+          - pytest
+          - pytest-timeout
+          - faker
+          - phonenumbers
+          - validators
+          - requests

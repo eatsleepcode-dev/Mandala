@@ -81,6 +81,37 @@ export function activate(context: vscode.ExtensionContext): void {
       vscode.window.showInformationMessage('Mandala: .mandala/ workspace initialized.');
     })
   );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('mandala.seedGettingStartedExamples', async () => {
+      const root = getWorkspaceRoot();
+      if (!root) {
+        vscode.window.showWarningMessage('Mandala requires an open workspace folder.');
+        return;
+      }
+
+      const { seedGettingStartedExamples } = await import('./lib/workspace');
+      const count = await seedGettingStartedExamples(root, vscode.workspace.fs);
+      vscode.window.showInformationMessage(`Mandala added ${count} getting started example files.`);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('mandala.removeGettingStartedExamples', async () => {
+      const root = getWorkspaceRoot();
+      if (!root) {
+        vscode.window.showWarningMessage('Mandala requires an open workspace folder.');
+        return;
+      }
+
+      const { removeGettingStartedExamples } = await import('./lib/workspace');
+      const removed = await removeGettingStartedExamples(root, vscode.workspace.fs);
+      const message = removed > 0
+        ? `Mandala removed ${removed} getting started example files.`
+        : 'No Mandala-managed getting started examples were found to remove.';
+      vscode.window.showInformationMessage(message);
+    })
+  );
 }
 
 export function deactivate(): void {}

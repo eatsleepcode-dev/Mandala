@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Guide — data-platform</title>
+<style>
+  /* ── DARK THEME (default) ─────────────────────────────────── */
+  :root,
+  [data-theme="dark"] {
+    --bg:      #1e1e1e;
+    --bg2:     #252526;
+    --bg3:     #2d2d30;
+    --border:  #3e3e42;
+    --text:    #cccccc;
+    --muted:   #858585;
+    --accent:  #0e639c;
+    --accent2: #4fc3f7;
+    --green:   #4caf50;
+    --yellow:  #ff9800;
+    --red:     #f44336;
+    --orange:  #ff9800;
+    --purple:  #9c27b0;
+    --teal:    #009688;
+    --code-fg: #4fc3f7;
+    --code-bg: #3c3c3c;
+    --bg-sidebar: #252526;
+    --bg-panel: #2d2d30;
+    --bg-card: #3c3c3c;
+    --bg-card-hover: #464646;
+    --border-light: #555;
+    --badge-creation-bg:   #1a3a2a; --badge-creation-fg:   #3fb950; --badge-creation-bd:   #2a5a3a;
+    --badge-hardening-bg:  #2a2a1a; --badge-hardening-fg:  #d29922; --badge-hardening-bd:  #4a4a2a;
+    --badge-gate-bg:       #2a1a2a; --badge-gate-fg:       #bc8cff; --badge-gate-bd:       #4a2a4a;
+    --badge-hitl-bg:       #1a2a3a; --badge-hitl-fg:       #e3b341; --badge-hitl-bd:       #2a4a5a;
+    --badge-auto-bg:       #0d2137; --badge-auto-fg:       #58a6ff; --badge-auto-bd:       #1f4068;
+    --callout-info-bg:  #0d2137; --callout-info-fg:  #79c0ff; --callout-info-bd:  #388bfd;
+    --callout-warn-bg:  #2a1f00; --callout-warn-fg:  #e3b341; --callout-warn-bd:  #e3b341;
+    --hitl-hard-bg: #2a1111; --hitl-hard-bd: #6b1d1d;
+    --hitl-soft-bg: #2a2200; --hitl-soft-bd: #5a4400;
+    --hitl-free-bg: #0d2a12; --hitl-free-bd: #1a5a22;
+  }
+  /* ── LIGHT THEME ──────────────────────────────────────────── */
+  [data-theme="light"] {
+    --bg:      #ffffff;
+    --bg2:     #f6f8fa;
+    --bg3:     #edf0f4;
+    --border:  #d0d7de;
+    --text:    #1f2328;
+    --muted:   #656d76;
+    --accent:  #0969da;
+    --accent2: #0550ae;
+    --green:   #1a7f37;
+    --yellow:  #9a6700;
+    --red:     #d1242f;
+    --orange:  #bc4c00;
+    --purple:  #8250df;
+    --teal:    #1a7f37;
+    --code-fg: #0550ae;
+    --code-bg: #edf0f4;
+    --badge-creation-bg:   #dafbe1; --badge-creation-fg:   #1a7f37; --badge-creation-bd:   #a8e6b3;
+    --badge-hardening-bg:  #fff8c5; --badge-hardening-fg:  #9a6700; --badge-hardening-bd:  #f0ce7a;
+    --badge-gate-bg:       #fbefff; --badge-gate-fg:       #8250df; --badge-gate-bd:       #d8b4fe;
+    --badge-hitl-bg:       #fff1e5; --badge-hitl-fg:       #bc4c00; --badge-hitl-bd:       #ffc78e;
+    --badge-auto-bg:       #ddf4ff; --badge-auto-fg:       #0969da; --badge-auto-bd:       #80ccff;
+    --callout-info-bg:  #ddf4ff; --callout-info-fg:  #0969da; --callout-info-bd:  #0969da;
+    --callout-warn-bg:  #fff8c5; --callout-warn-fg:  #9a6700; --callout-warn-bd:  #9a6700;
+    --hitl-hard-bg: #fff0f0; --hitl-hard-bd: #ffb3b3;
+    --hitl-soft-bg: #fffbe5; --hitl-soft-bd: #ffe066;
+    --hitl-free-bg: #eafbee; --hitl-free-bd: #a8e6b3;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { transition: background 0.2s, color 0.2s; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    display: flex;
+    min-height: 100vh;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  /* ── SIDEBAR ──────────────────────────────────────────────── */
+  :root { --sidebar-w: 270px; }
+  nav {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    overflow-y: auto;
+    padding: 0 0 2rem 0;
+    z-index: 100;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .nav-header {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg2);
+    z-index: 10;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    transition: background 0.2s;
+  }
+  .nav-header-text { flex: 1; min-width: 0; }
+  .nav-header h2 { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+  .nav-header p { font-size: 0.75rem; color: var(--muted); margin-top: 1px; }
+  .theme-toggle {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--muted);
+    transition: background 0.15s, border-color 0.15s;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .theme-toggle:hover { background: var(--accent); border-color: var(--accent); color: white; }
+  .search-box { padding: 0.5rem 1rem 0.3rem; }
+  .search-box input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.38rem 0.7rem;
+    color: var(--text);
+    font-size: 0.8rem;
+    outline: none;
+    transition: background 0.2s, border-color 0.15s;
+  }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-box input::placeholder { color: var(--muted); }
+  .nav-section { padding: 0.6rem 0 0; }
+  .nav-section-label {
+    padding: 0.25rem 1rem;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.28rem 1rem;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.79rem;
+    transition: background 0.1s, color 0.1s;
+    line-height: 1.4;
+    opacity: 0.85;
+  }
+  nav a:hover { background: var(--bg3); color: var(--accent2); opacity: 1; }
+  nav a .icon { font-size: 0.85rem; min-width: 16px; }
+  .badge-key-row { display: flex; align-items: center; padding: 0.22rem 1rem; font-size: 0.79rem; opacity: 0.85; }
+  nav a .nb-group, .nav-section .nb-group { margin-left: auto; display: flex; gap: 0.25rem; align-items: center; flex-shrink: 0; }
+  nav a .nb, .nav-section .nb { /* nav badge */
+    font-size: 0.57rem;
+    padding: 1px 5px;
+    border-radius: 8px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .nb-c  { background: var(--badge-creation-bg);  color: var(--badge-creation-fg);  border: 1px solid var(--badge-creation-bd); }
+  .nb-h  { background: var(--badge-hardening-bg); color: var(--badge-hardening-fg); border: 1px solid var(--badge-hardening-bd); }
+  .nb-g  { background: var(--badge-gate-bg);      color: var(--badge-gate-fg);      border: 1px solid var(--badge-gate-bd); }
+  .nb-hi { background: var(--badge-hitl-bg);      color: var(--badge-hitl-fg);      border: 1px solid var(--badge-hitl-bd); }
+  .nb-a  { background: var(--badge-auto-bg);      color: var(--badge-auto-fg);      border: 1px solid var(--badge-auto-bd); }
+
+  /* ── MAIN ─────────────────────────────────────────────────── */
+  main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    max-width: 1200px;
+    padding: 0 2.5rem 4rem;
+  }
+
+  /* ── TOPBAR (prototype-converged shell) ───────────────────── */
+  .topbar {
+    height: 38px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    margin: 0 -2.5rem;
+  }
+  .topbar-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .topbar-badge {
+    background: #2d6a30;
+    color: #4caf50;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .topbar-score {
+    margin-left: auto;
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .topbar-score span { color: var(--green); font-weight: 600; }
+  .topbar-date {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'SFMono-Regular', Consolas, monospace;
+  }
+
+  /* ── HERO ─────────────────────────────────────────────────── */
+  .hero {
+    padding: 1.25rem 0 1.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 { font-size: 2rem; font-weight: 700; }
+  .hero h1 span { color: var(--accent2); }
+  .hero p { color: var(--muted); margin-top: 0.5rem; font-size: 0.95rem; max-width: 640px; }
+  .hero-meta { display: flex; gap: 1.5rem; margin-top: 1rem; flex-wrap: wrap; }
+  .hero-meta .stat { font-size: 0.8rem; color: var(--muted); }
+  .hero-meta .stat strong { color: var(--text); font-weight: 600; }
+
+  /* ── SECTIONS ─────────────────────────────────────────────── */
+  section { margin-bottom: 3.5rem; scroll-margin-top: 1.5rem; }
+  section h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.3rem;
+  }
+
+  /* ── BADGES ───────────────────────────────────────────────── */
+  .badge {
+    font-size: 0.62rem;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+  }
+  .badge-creation  { background: var(--badge-creation-bg);  color: var(--badge-creation-fg);  border: 1px solid var(--badge-creation-bd); }
+  .badge-hardening { background: var(--badge-hardening-bg); color: var(--badge-hardening-fg); border: 1px solid var(--badge-hardening-bd); }
+  .badge-gatekeeper{ background: var(--badge-gate-bg);      color: var(--badge-gate-fg);      border: 1px solid var(--badge-gate-bd); }
+  .badge-hitl      { background: var(--badge-hitl-bg);      color: var(--badge-hitl-fg);      border: 1px solid var(--badge-hitl-bd); }
+  .badge-auto      { background: var(--badge-auto-bg);      color: var(--badge-auto-fg);      border: 1px solid var(--badge-auto-bd); }
+  .badge-high      { background: #3a0d0d; color: var(--red);    border: 1px solid #6b1d1d; }
+  .badge-med       { background: #2a2200; color: var(--yellow);  border: 1px solid #5a4400; }
+  .badge-low       { background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
+  .badge-open      { background: #2a0d0d; color: var(--red);    border: 1px solid #5a1d1d; }
+  .badge-resolved  { background: var(--bg3); color: var(--teal); border: 1px solid var(--border); }
+  [data-theme="light"] .badge-high   { background: #fff0f0; color: var(--red);    border-color: #ffb3b3; }
+  [data-theme="light"] .badge-med    { background: #fffbe5; color: var(--yellow); border-color: #ffe066; }
+  [data-theme="light"] .badge-open   { background: #fff0f0; color: var(--red);    border-color: #ffb3b3; }
+  [data-theme="light"] .badge-resolved { background: #eafbee; color: var(--teal); border-color: #a8e6b3; }
+
+  /* ── CARDS ────────────────────────────────────────────────── */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.1rem 1.2rem;
+    transition: border-color 0.15s, background 0.2s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    margin-bottom: 0.7rem;
+    flex-wrap: wrap;
+  }
+  .cmd-name {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--accent2);
+    background: var(--badge-auto-bg);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--badge-auto-bd);
+    white-space: nowrap;
+  }
+  .card-badges { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-left: auto; align-items: center; }
+  .card-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+  .card-triggers { margin-top: 0.7rem; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .trigger-chip {
+    font-size: 0.67rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--bg3);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    font-family: 'SFMono-Regular', Consolas, monospace;
+  }
+  .card-usage {
+    margin-top: 0.6rem;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.5rem 0.7rem;
+    font-size: 0.76rem;
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    color: var(--code-fg);
+    line-height: 1.6;
+    transition: background 0.2s;
+  }
+  .td-file {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: 0.73rem;
+    color: var(--teal);
+    margin-top: 0.5rem;
+    opacity: 0.8;
+  }
+
+  /* ── LIFECYCLE ────────────────────────────────────────────── */
+  .lifecycle {
+    display: flex;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1.2rem;
+    transition: background 0.2s;
+  }
+  .lifecycle-phase { flex: 1; padding: 1rem; border-right: 1px solid var(--border); min-width: 0; }
+  .lifecycle-phase:last-child { border-right: none; }
+  .phase-name {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .phase-name.plan   { color: var(--accent2); }
+  .phase-name.build  { color: var(--green); }
+  .phase-name.gate   { color: var(--yellow); }
+  .phase-name.close  { color: var(--purple); }
+  .phase-cmds { list-style: none; }
+  .phase-cmds li { font-size: 0.76rem; color: var(--muted); padding: 2px 0; font-family: 'SFMono-Regular', Consolas, monospace; }
+  .phase-cmds li::before { content: "→ "; color: var(--border); }
+  .phase-cmds a { color: var(--accent); text-decoration: none; }
+  .phase-cmds a:hover { text-decoration: underline; }
+
+  /* ── TABLES ───────────────────────────────────────────────── */
+  table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  thead tr { border-bottom: 2px solid var(--border); }
+  th { text-align: left; padding: 0.5rem 0.8rem; color: var(--muted); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  td { padding: 0.52rem 0.8rem; border-bottom: 1px solid var(--border); vertical-align: middle; line-height: 1.4; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg2); }
+  .td-cmd { font-family: 'SFMono-Regular', Consolas, monospace; color: var(--accent2); font-weight: 600; }
+  .commit-type { display: inline-block; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.72rem; font-weight: 700; padding: 1px 7px; border-radius: 4px; }
+  .ct-red    { background: #3a0d0d; color: var(--red);    border: 1px solid #6b1d1d; }
+  .ct-green  { background: #0d3a1a; color: var(--green);  border: 1px solid #1d6b2a; }
+  .ct-ref    { background: #1a1a3a; color: #79c0ff;       border: 1px solid #2a2a6b; }
+  .ct-tidy   { background: #2a1a3a; color: var(--purple); border: 1px solid #4a2a6b; }
+  .ct-plan   { background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
+  .ct-hand   { background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
+  [data-theme="light"] .ct-red   { background: #fff0f0; color: var(--red);    border-color: #ffb3b3; }
+  [data-theme="light"] .ct-green { background: #eafbee; color: var(--green);  border-color: #a8e6b3; }
+  [data-theme="light"] .ct-ref   { background: #ddf4ff; color: var(--accent2); border-color: #80ccff; }
+  [data-theme="light"] .ct-tidy  { background: #fbefff; color: var(--purple); border-color: #d8b4fe; }
+
+  /* ── QUALITY GATES ────────────────────────────────────────── */
+  .gates-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 0.8rem; }
+  .gate-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 0.9rem 1rem; transition: background 0.2s; }
+  .gate-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px;
+    background: var(--accent);
+    color: white;
+    border-radius: 50%;
+    font-size: 0.72rem; font-weight: 700;
+    margin-right: 0.5rem;
+  }
+  .gate-name { font-size: 0.87rem; font-weight: 600; color: var(--text); }
+  .gate-cmd { margin-top: 0.5rem; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.72rem; color: var(--muted); background: var(--bg3); padding: 0.3rem 0.5rem; border-radius: 3px; word-break: break-all; line-height: 1.5; }
+  .gate-note { margin-top: 0.4rem; font-size: 0.75rem; color: var(--muted); }
+
+  /* ── VIBE MODES ───────────────────────────────────────────── */
+  .vibe-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .vibe-card { background: var(--bg2); border-radius: 8px; padding: 1.2rem; border: 1px solid var(--border); transition: background 0.2s; }
+  .vibe-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .vibe-creation   { border-top: 3px solid var(--green);  }
+  .vibe-creation .vibe-title   { color: var(--green); }
+  .vibe-hardening  { border-top: 3px solid var(--yellow); }
+  .vibe-hardening .vibe-title  { color: var(--yellow); }
+  .vibe-gatekeeper { border-top: 3px solid var(--purple); }
+  .vibe-gatekeeper .vibe-title { color: var(--purple); }
+  .vibe-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+  .vibe-commands { margin-top: 0.7rem; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+
+  /* ── KEY FILES ────────────────────────────────────────────── */
+  .files-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 0.8rem; }
+  .file-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 0.9rem 1rem; transition: background 0.2s; }
+  .file-path { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.78rem; color: var(--teal); margin-bottom: 0.4rem; }
+  .file-desc { font-size: 0.79rem; color: var(--muted); }
+
+  /* ── CALLOUTS ─────────────────────────────────────────────── */
+  .callout {
+    border-radius: 6px;
+    padding: 0.85rem 1.1rem;
+    font-size: 0.83rem;
+    margin-bottom: 1rem;
+    border-left: 3px solid;
+    line-height: 1.6;
+    transition: background 0.2s;
+  }
+  .callout-info { background: var(--callout-info-bg); border-color: var(--callout-info-bd); color: var(--callout-info-fg); }
+  .callout-warn { background: var(--callout-warn-bg); border-color: var(--callout-warn-bd); color: var(--callout-warn-fg); }
+  .callout code { font-family: 'SFMono-Regular', Consolas, monospace; background: rgba(127,127,127,0.15); padding: 1px 5px; border-radius: 3px; }
+
+  /* ── INLINE CODE ──────────────────────────────────────────── */
+  code {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: 0.84em;
+    background: var(--bg3);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--code-fg);
+    transition: background 0.2s;
+  }
+
+  /* ── HITL ITEMS ───────────────────────────────────────────── */
+  .hitl-item {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.6rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    transition: background 0.2s;
+  }
+  .hitl-hard { background: var(--hitl-hard-bg); border-color: var(--hitl-hard-bd); }
+  .hitl-soft { background: var(--hitl-soft-bg); border-color: var(--hitl-soft-bd); }
+  .hitl-free { background: var(--hitl-free-bg); border-color: var(--hitl-free-bd); }
+  .hitl-icon { font-size: 1.1rem; margin-top: 2px; flex-shrink: 0; }
+  .hitl-body { flex: 1; }
+  .hitl-header { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.25rem; }
+  .hitl-title { font-size: 0.84rem; font-weight: 600; color: var(--text); }
+  .hitl-body p { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+  /* ── TRIGGER CARDS ────────────────────────────────────────── */
+  .trigger-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+  .trigger-card {
+    background: var(--bg2);
+    border: 1px solid var(--badge-auto-bd);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    transition: background 0.2s, border-color 0.15s;
+  }
+  .trigger-card:hover { border-color: var(--accent); }
+  .trigger-card-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
+  .trigger-auto-label {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em;
+    padding: 2px 7px; border-radius: 8px;
+    background: var(--badge-auto-bg); color: var(--badge-auto-fg); border: 1px solid var(--badge-auto-bd);
+  }
+  .trigger-phrase-grid { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
+  .trigger-phrase {
+    font-size: 0.7rem; padding: 3px 9px; border-radius: 10px;
+    background: var(--bg3); color: var(--muted); border: 1px solid var(--border);
+    font-family: 'SFMono-Regular', Consolas, monospace;
+  }
+  .trigger-note { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+  /* ── TECH DEBT POINTER ────────────────────────────────────── */
+  .td-pointer {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1.2rem 1.5rem; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+    transition: background 0.2s;
+  }
+  .td-pointer-counts { display: flex; gap: 1.2rem; }
+  .td-count { text-align: center; }
+  .td-count-num { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+  .td-count-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-top: 2px; }
+  .td-count-high .td-count-num  { color: var(--red); }
+  .td-count-med  .td-count-num  { color: var(--yellow); }
+  .td-count-low  .td-count-num  { color: var(--muted); }
+  .td-count-open .td-count-num  { color: var(--text); }
+  .td-pointer-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  .td-pointer-actions p { font-size: 0.82rem; color: var(--muted); }
+  .td-cmds { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.3rem; }
+  .td-cmd-pill {
+    font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.78rem;
+    padding: 3px 10px; border-radius: 6px;
+    background: var(--badge-auto-bg); color: var(--badge-auto-fg); border: 1px solid var(--badge-auto-bd);
+  }
+
+  /* ── SCROLLBAR ────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* ── DETAILS / SUMMARY ────────────────────────────────────── */
+  details { margin-top: 0.4rem; }
+  details summary {
+    cursor: pointer; list-style: none;
+    padding: 0.35rem 0; font-size: 0.78rem; color: var(--accent);
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before { content: "▶"; font-size: 0.58rem; transition: transform 0.15s; }
+  details[open] summary::before { transform: rotate(90deg); }
+  details .detail-body {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
+    padding: 0.7rem; font-size: 0.77rem; color: var(--muted);
+    line-height: 1.6; margin-top: 0.3rem; transition: background 0.2s;
+  }
+
+  /* ── SDLC TABS ───────────────────────────────────────────── */
+  .tab-group { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: background 0.2s; }
+  .tab-nav { display: flex; border-bottom: 1px solid var(--border); background: var(--bg3); overflow-x: auto; transition: background 0.2s; }
+  .tab-btn {
+    padding: 0.65rem 1.2rem; font-size: 0.82rem; font-weight: 600; white-space: nowrap;
+    background: none; border: none; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; cursor: pointer; color: var(--muted);
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+  .tab-pane { display: none; padding: 1.4rem 1.6rem; }
+  .tab-pane.active { display: block; }
+
+  /* ── SDLC FLOW ─────────────────────────────────────────────── */
+  .sdlc-flow { display: flex; flex-direction: column; }
+  .sdlc-step {
+    display: flex; gap: 1rem;
+    padding: 1rem 1.2rem; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg3); transition: background 0.2s, border-color 0.15s;
+  }
+  .sdlc-step:hover { border-color: var(--accent); }
+  .sdlc-arrow { display: flex; justify-content: center; padding: 0.25rem 0; }
+  .sdlc-arrow::after { content: "↓"; color: var(--muted); font-size: 1rem; }
+  .sdlc-step-left {
+    display: flex; flex-direction: column; align-items: center; gap: 0.3rem; min-width: 52px;
+  }
+  .sdlc-step-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700; color: white; flex-shrink: 0;
+    background: var(--accent);
+  }
+  .sdlc-step-phase { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: var(--muted); text-align: center; }
+  .sdlc-step-right { flex: 1; min-width: 0; }
+  .sdlc-step-title { font-size: 0.88rem; font-weight: 700; color: var(--text); margin-bottom: 0.3rem; }
+  .sdlc-step-desc { font-size: 0.79rem; color: var(--muted); line-height: 1.55; margin-bottom: 0.5rem; }
+  .sdlc-gates { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0.4rem 0; }
+  .sdlc-gate-pill {
+    font-size: 0.67rem; padding: 2px 8px; border-radius: 4px;
+    background: var(--bg); border: 1px solid var(--border); color: var(--muted);
+    font-family: 'SFMono-Regular', Consolas, monospace;
+  }
+  .sdlc-hitl {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    font-size: 0.67rem; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+    background: var(--badge-hitl-bg); color: var(--badge-hitl-fg); border: 1px solid var(--badge-hitl-bd);
+  }
+  .sdlc-auto {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    font-size: 0.67rem; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+    background: var(--badge-auto-bg); color: var(--badge-auto-fg); border: 1px solid var(--badge-auto-bd);
+  }
+  .sdlc-hints { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.45rem; }
+  .sdlc-daily-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+  .sdlc-daily-card {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+    padding: 1rem; transition: background 0.2s;
+  }
+  .sdlc-daily-card-title { font-size: 0.85rem; font-weight: 700; color: var(--text); margin-bottom: 0.4rem; }
+  .sdlc-daily-card-desc { font-size: 0.77rem; color: var(--muted); line-height: 1.5; }
+  .sdlc-daily-card-cmds { margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+
+  /* ── RESPONSIVE ───────────────────────────────────────────── */
+  @media (max-width: 900px) {
+    nav { display: none; }
+    main { margin-left: 0; padding: 1rem 1.2rem; }
+    .vibe-grid { grid-template-columns: 1fr; }
+    .lifecycle { flex-direction: column; }
+    .lifecycle-phase { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  /* ── Utility classes (replaces inline styles) ───────────── */
+  .u-pb-05{padding-bottom:0.5rem}
+  .u-fs075-muted{font-size:0.75rem;color:var(--muted)}
+  .u-mb-12{margin-bottom:1.2rem}
+  .u-bg-muted{background:var(--muted)}
+  .u-bl-green{border-left:3px solid var(--green)}
+  .u-bg-green{background:var(--green)}
+  .u-text-green{color:var(--green)}
+  .u-badge-mini{font-size:0.55rem;margin-top:4px}
+  .u-bl-accent2{border-left:3px solid var(--accent2)}
+  .u-bg-accent2{background:var(--accent2)}
+  .u-text-accent2{color:var(--accent2)}
+  .u-commit-mini{font-size:0.65rem;padding:1px 5px}
+  .u-bl-yellow{border-left:3px solid var(--yellow)}
+  .u-bg-yellow-darktext{background:var(--yellow);color:#1a1a00}
+  .u-text-yellow{color:var(--yellow)}
+  .u-mt-04{margin-top:0.4rem}
+  .u-bl-purple{border-left:3px solid var(--purple)}
+  .u-bg-purple{background:var(--purple)}
+  .u-text-purple{color:var(--purple)}
+  .u-bl-teal{border-left:3px solid var(--teal)}
+  .u-bg-teal-darktext{background:var(--teal);color:#001a0a}
+  .u-text-teal{color:var(--teal)}
+  .u-mt-05{margin-top:0.5rem}
+  .u-bt-accent2{border-top:3px solid var(--accent2)}
+  .u-bt-green{border-top:3px solid var(--green)}
+  .u-bt-yellow{border-top:3px solid var(--yellow)}
+  .u-bt-purple{border-top:3px solid var(--purple)}
+  .u-bl-red{border-left:3px solid var(--red)}
+  .u-bg-red{background:var(--red)}
+  .u-text-red{color:var(--red)}
+  .u-mr-4{margin-right:4px}
+  .u-h3-tdd{font-size:0.9rem;margin:1.2rem 0 0.8rem;color:var(--muted);font-weight:600}
+  .u-code-sm{font-size:0.76rem}
+  .u-fs08-muted{font-size:0.8rem;color:var(--muted)}
+  .u-va-middle{vertical-align:middle}
+  .u-mb-1{margin-bottom:1rem}
+  .u-text-muted{color:var(--muted)}
+  .u-h3-snap{font-size:0.88rem;margin:1.2rem 0 0.7rem;color:var(--muted);font-weight:600}
+  .u-fs081{font-size:0.81rem}
+  .u-note-muted{font-size:0.82rem;color:var(--muted);margin-bottom:1rem}
+  .u-link-mono-accent2{color:var(--accent2);font-family:monospace}
+  .u-muted-fs08{color:var(--muted);font-size:0.8rem}
+  .u-fs08{font-size:0.8rem}
+  .u-text-accent{color:var(--accent)}
+  .u-mt-1{margin-top:1rem}
+  .u-fs058{font-size:0.58rem}
+</style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ════════════════════════════════════════════════ -->
+<nav>
+  <div class="nav-header">
+    <div class="nav-header-text">
+      <h2>Agent Guide</h2>
+      <p>data-platform · vnext</p>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark">☀️</button>
+  </div>
+  <div class="search-box">
+    <input type="text" id="navSearch" placeholder="Filter…" oninput="filterNav(this.value)">
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Overview</div>
+    <a href="#overview"><span class="icon">🏠</span>Introduction</a>
+    <a href="#sdlc"><span class="icon">🗺️</span>SDLC — End-to-End</a>
+    <a href="#lifecycle"><span class="icon">🔄</span>Sprint Lifecycle</a>
+    <a href="#vibe-modes"><span class="icon">🎯</span>Vibe Modes</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Auto-Triggered</div>
+    <a href="#triggers-auto"><span class="icon">⚡</span>About Auto-Triggers</a>
+    <a href="#trigger-chat-handoff"><span class="icon">🤝</span>/chat-handoff <span class="nb-group"><span class="nb nb-a">AUTO</span></span></a>
+    <a href="#trigger-lessons"><span class="icon">📚</span>/lessons-to-guardrails <span class="nb-group"><span class="nb nb-a">AUTO</span></span></a>
+    <a href="#trigger-token-budget"><span class="icon">💰</span>/token-budget <span class="nb-group"><span class="nb nb-a">AUTO</span></span></a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Slash Commands</div>
+    <a href="#cmd-day-plan"><span class="icon">📅</span>/day-plan <span class="nb-group"><span class="nb nb-hi">HITL</span><span class="nb nb-c">C</span></span></a>
+    <a href="#cmd-user-story-map"><span class="icon">🗺️</span>/user-story-map <span class="nb-group"><span class="nb nb-c">C</span></span></a>
+    <a href="#cmd-build-sprint"><span class="icon">🏗️</span>/build-sprint <span class="nb-group"><span class="nb nb-c">C</span></span></a>
+    <a href="#cmd-run-sprint"><span class="icon">▶️</span>/run-sprint <span class="nb-group"><span class="nb nb-h">H</span></span></a>
+    <a href="#cmd-sprint-close"><span class="icon">✅</span>/sprint-close <span class="nb-group"><span class="nb nb-hi">HITL</span><span class="nb nb-g">G</span></span></a>
+    <a href="#cmd-sprint-status"><span class="icon">📊</span>/sprint-status</a>
+    <a href="#cmd-tdd"><span class="icon">🔴</span>/tdd <span class="nb-group"><span class="nb nb-h">H</span></span></a>
+    <a href="#cmd-sniff-test"><span class="icon">👃</span>/sniff-test <span class="nb-group"><span class="nb nb-h">H</span></span></a>
+    <a href="#cmd-quality-gates"><span class="icon">🚦</span>/quality-gates <span class="nb-group"><span class="nb nb-g">G</span></span></a>
+    <a href="#cmd-pre-mortem"><span class="icon">🔮</span>/pre-mortem <span class="nb-group"><span class="nb nb-c">C</span></span></a>
+    <a href="#cmd-roast"><span class="icon">🔥</span>/roast <span class="nb-group"><span class="nb nb-g">G</span></span></a>
+    <a href="#cmd-code-review"><span class="icon">👀</span>/code-review <span class="nb-group"><span class="nb nb-g">G</span></span></a>
+    <a href="#cmd-write-adr"><span class="icon">📋</span>/write-adr <span class="nb-group"><span class="nb nb-c">C</span></span></a>
+    <a href="#cmd-tech-debt"><span class="icon">💳</span>/tech-debt</a>
+    <a href="#cmd-tidy-first"><span class="icon">🧹</span>/tidy-first <span class="nb-group"><span class="nb nb-h">H</span></span></a>
+    <a href="#cmd-vet-library"><span class="icon">🔬</span>/vet-library <span class="nb-group"><span class="nb nb-c">C</span></span></a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Reference</div>
+    <a href="#quality-gates-ref"><span class="icon">🚦</span>7-Gate Model</a>
+    <a href="#hitl-gates"><span class="icon">🚧</span>HITL Gates</a>
+    <a href="#key-files"><span class="icon">📁</span>Key Files</a>
+    <a href="#tech-debt-ref"><span class="icon">💳</span>Tech Debt</a>
+    <a href="#triggers-ref"><span class="icon">⚡</span>All Triggers</a>
+    <a href="#conventions"><span class="icon">📐</span>Conventions</a>
+  </div>
+
+  <div class="nav-section u-pb-05">
+    <div class="nav-section-label">Badge key</div>
+    <div class="badge-key-row"><span class="u-fs075-muted">Creation</span><span class="nb-group"><span class="nb nb-c" title="Vibe: CREATION — planning, scaffolding, new artefacts">C</span></span></div>
+    <div class="badge-key-row"><span class="u-fs075-muted">Hardening</span><span class="nb-group"><span class="nb nb-h" title="Vibe: HARDENING — coding, TDD, iterative improvement">H</span></span></div>
+    <div class="badge-key-row"><span class="u-fs075-muted">Gatekeeper</span><span class="nb-group"><span class="nb nb-g" title="Vibe: GATEKEEPER — reviews, audits, quality gates">G</span></span></div>
+    <div class="badge-key-row"><span class="u-fs075-muted">HITL gate</span><span class="nb-group"><span class="nb nb-hi" title="Requires explicit human approval before proceeding">HITL</span></span></div>
+    <div class="badge-key-row"><span class="u-fs075-muted">Auto-trigger</span><span class="nb-group"><span class="nb nb-a" title="Auto-triggered — no slash command needed">AUTO</span></span></div>
+  </div>
+</nav>
+
+<!-- ══ MAIN ═══════════════════════════════════════════════════ -->
+<main>
+
+  <div class="topbar">
+    <div class="topbar-title">Phoric Dev-Brain</div>
+    <div class="topbar-badge">Prototype-aligned</div>
+    <div class="topbar-score">Build Score: <span>87</span></div>
+    <div class="topbar-date">2026-05-11</div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero" id="overview">
+    <h1>Agent Guide — <span>data-platform</span></h1>
+    <p>Complete reference for all slash commands, workflows, HITL gates, quality gates, auto-triggers, and conventions.</p>
+    <div class="hero-meta">
+      <div class="stat"><strong>23</strong> workflows</div>
+      <div class="stat"><strong>19</strong> slash commands</div>
+      <div class="stat"><strong>3</strong> auto-triggers</div>
+      <div class="stat"><strong>7</strong> quality gates</div>
+      <div class="stat"><strong>3</strong> vibe modes</div>
+      <div class="stat"><strong>Branch:</strong> vnext</div>
+      <div class="stat"><strong>Updated:</strong> 2026-05-09</div>
+    </div>
+  </div>
+
+  <!-- ── SDLC ─────────────────────────────────────────────────── -->
+  <section id="sdlc">
+    <h2>🗺️ SDLC — End-to-End Flow</h2>
+    <div class="callout callout-info u-mb-12">
+      Three views of the same process: the full sprint journey from gap to live, the daily session rhythm, and how tech debt flows through the system. <strong>HITL gates</strong> are shown where human approval is mandatory.
+    </div>
+    <div class="tab-group" id="sdlc-tabs">
+      <div class="tab-nav" role="tablist">
+        <button class="tab-btn active" data-tab="e2e" role="tab">End-to-End</button>
+        <button class="tab-btn" data-tab="daily" role="tab">Daily Cycle</button>
+        <button class="tab-btn" data-tab="tdloop" role="tab">Tech Debt Loop</button>
+      </div>
+
+      <!-- Tab 1: End-to-End -->
+      <div class="tab-pane active" id="tab-e2e">
+        <div class="sdlc-flow">
+
+          <div class="sdlc-step">
+            <div class="sdlc-step-left">
+              <div class="sdlc-step-num u-bg-muted">1</div>
+              <div class="sdlc-step-phase">Backlog</div>
+            </div>
+            <div class="sdlc-step-right">
+              <div class="sdlc-step-title">Gap Identification</div>
+              <div class="sdlc-step-desc">Gap added to <code>.agents/ROADMAP.md</code> with a GAP-NN ID. If an architectural decision is required, <code>/write-adr</code> must be accepted before the sprint can be marked READY. Check the register and next sprint blockers with <code>/sprint-status</code>.</div>
+              <div class="sdlc-cmds">
+                <a class="trigger-chip" href="#cmd-sprint-status">/sprint-status</a>
+                <a class="trigger-chip" href="#cmd-write-adr">/write-adr</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="sdlc-arrow"></div>
+
+          <div class="sdlc-step u-bl-green">
+            <div class="sdlc-step-left">
+              <div class="sdlc-step-num u-bg-green">2</div>
+              <div class="sdlc-step-phase u-text-green">Plan</div>
+              <span class="badge badge-creation u-badge-mini">C</span>
+            </div>
+            <div class="sdlc-step-right">
+              <div class="sdlc-step-title">Sprint Planning</div>
+              <div class="sdlc-step-desc">Optionally run <code>/user-story-map</code> first to capture WHO needs this and WHY (Jeff Patton + Toyota Kata framing) before planning HOW. Run pre-mortem to surface failure modes. Vet any new library dependencies. Build the sprint task card — no implementation code is written at this stage. HITL approves the task card before the first RED commit.</div>
+              <div class="sdlc-cmds">
+                <a class="trigger-chip" href="#cmd-user-story-map">/user-story-map GAP-NN</a>
+                <a class="trigger-chip" href="#cmd-pre-mortem">/pre-mortem</a>
+                <a class="trigger-chip" href="#cmd-vet-library">/vet-library</a>
+                <a class="trigger-chip" href="#cmd-build-sprint">/build-sprint GAP-NN</a>
+              </div>
+              <div class="sdlc-hints"><span class="sdlc-hitl">🔴 HITL — confirm task card before first commit</span></div>
+            </div>
+          </div>
+
+          <div class="sdlc-arrow"></div>
+
+          <div class="sdlc-step u-bl-accent2">
+            <div class="sdlc-step-left">
+              <div class="sdlc-step-num u-bg-accent2">3</div>
+              <div class="sdlc-step-phase u-text-accent2">Build</div>
+              <span class="badge badge-hardening u-badge-mini">H</span>
+            </div>
+            <div class="sdlc-step-right">
+              <div class="sdlc-step-title">Sprint Execution — TDD Cycles</div>
+              <div class="sdlc-step-desc">Agent executes freely within a task. Each feature follows
+                <span class="commit-type ct-red u-commit-mini">RED</span> →
+                <span class="commit-type ct-green u-commit-mini">GREEN</span> →
+                <span class="commit-type ct-ref u-commit-mini">REFACTOR</span>.
+                <code>/sniff-test</code> after every GREEN. Structural changes (renames, extractions) go through <code>/tidy-first</code> in separate commits before behaviour changes.</div>
+              <div class="sdlc-cmds">
+                <a class="trigger-chip" href="#cmd-run-sprint">/run-sprint GAP-NN</a>
+                <a class="trigger-chip" href="#cmd-tdd">/tdd</a>
+                <a class="trigger-chip" href="#cmd-sniff-test">/sniff-test</a>
+                <a class="trigger-chip" href="#cmd-tidy-first">/tidy-first</a>
+              </div>
+              <div class="sdlc-hints"><span class="sdlc-hitl">🟡 SOFT HITL — "Continue? [y/n]" on each task boundary</span></div>
+            </div>
+          </div>
+
+          <div class="sdlc-arrow"></div>
+
+          <div class="sdlc-step u-bl-yellow">
+            <div class="sdlc-step-left">
+              <div class="sdlc-step-num u-bg-yellow-darktext">4</div>
+              <div class="sdlc-step-phase u-text-yellow">Gate</div>
+              <span class="badge badge-gatekeeper u-badge-mini">G</span>
+            </div>
+            <div class="sdlc-step-right">
+              <div class="sdlc-step-title">Quality Gates — all 7 must pass</div>
+              <div class="sdlc-gates">
+                <span class="sdlc-gate-pill">1 · gitleaks</span>
+                <span class="sdlc-gate-pill">2 · bandit</span>
+                <span class="sdlc-gate-pill">3 · ruff</span>
+                <span class="sdlc-gate-pill">4 · mypy</span>
+                <span class="sdlc-gate-pill">5 · pytest ≥80%</span>
+                <span class="sdlc-gate-pill">6 · CHANGELOG</span>
+                <span class="sdlc-gate-pill">7 · manual review</span>
+              </div>
+              <div class="sdlc-step-desc u-mt-04">Failures block progression. Issues are either fixed immediately or raised as TD items (auto-refreshes the guide snapshot). Human approval required — agent cannot self-sign-off.</div>
+              <div class="sdlc-cmds">
+                <a class="trigger-chip" href="#cmd-quality-gates">/quality-gates</a>
+                <a class="trigger-chip" href="#cmd-roast">/roast</a>
+                <a class="trigger-chip" href="#cmd-code-review">/code-review</a>
+                <a class="trigger-chip" href="#cmd-tech-debt">/tech-debt raise</a>
+              </div>
+              <div class="sdlc-hints">
+                <span class="sdlc-hitl">🔴 HITL — human approval required before close</span>
+                <span class="sdlc-auto">⚡ AUTO — TD raise refreshes guide</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="sdlc-arrow"></div>
+
+          <div class="sdlc-step u-bl-purple">
+            <div class="sdlc-step-left">
+              <div class="sdlc-step-num u-bg-purple">5</div>
+              <div class="sdlc-step-phase u-text-purple">Close</div>
+              <span class="badge badge-gatekeeper u-badge-mini">G</span>
+            </div>
+            <div class="sdlc-step-right">
+              <div class="sdlc-step-title">Sprint Close — 11 Steps</div>
+              <div class="sdlc-step-desc">DoD audit → update SPRINT_REGISTER → write CHANGELOG entry (4-check validation) → close resolved TDs → raise deferred TDs → apply pending lessons → <strong>agent-guide.html snapshot refreshed automatically</strong> → HITL confirmation → <code>git push origin vnext</code>.</div>
+              <div class="sdlc-cmds">
+                <a class="trigger-chip" href="#cmd-sprint-close">/sprint-close sprint-N</a>
+              </div>
+              <div class="sdlc-hints">
+                <span class="sdlc-hitl">🔴 HITL — push requires explicit approval</span>
+                <span class="sdlc-auto">⚡ AUTO — guide snapshot refreshed in commit</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="sdlc-arrow"></div>
+
+          <div class="sdlc-step u-bl-teal">
+            <div class="sdlc-step-left">
+              <div class="sdlc-step-num u-bg-teal-darktext">6</div>
+              <div class="sdlc-step-phase u-text-teal">Live</div>
+            </div>
+            <div class="sdlc-step-right">
+              <div class="sdlc-step-title">CI/CD Pipeline → Production</div>
+              <div class="sdlc-step-desc">Azure Pipelines orchestrates: <code>Build_And_Test</code> → <code>Deploy_Dev</code> → <code>Bootstrap_Dev</code> → <code>Smoke_Test</code> → <code>Deploy_UAT</code> → <em>(manual approval gate)</em> → <code>Deploy_Prod</code>. Fabric notebooks published via <code>fab workspace publish</code>. DirectLake Power BI refreshes via semantic model.</div>
+              <div class="sdlc-cmds">
+                <span class="trigger-chip">azure-pipelines.yml</span>
+                <span class="trigger-chip">fab workspace publish</span>
+                <span class="trigger-chip">00-deploy.ps1</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Tab 2: Daily Cycle -->
+      <div class="tab-pane" id="tab-daily">
+        <div class="callout callout-info u-mb-12">
+          The sprint is the authoritative unit of work. The daily cycle is a scheduling view — tasks are picked from the active sprint plan, not chosen ad-hoc.
+        </div>
+        <div class="sdlc-daily-grid">
+
+          <div class="sdlc-daily-card u-bt-accent2">
+            <div class="sdlc-daily-card-title">🌅 Session Start</div>
+            <div class="sdlc-daily-card-desc">Read the most recent handoff note for context. Run <code>/day-plan</code> — reads sprint register, open TDs, branch state, and inbox. Reviews any loose inbox files (HITL before moving).</div>
+            <div class="sdlc-daily-card-cmds">
+              <a class="trigger-chip" href="#cmd-chat-handoff">/chat-handoff last</a>
+              <a class="trigger-chip" href="#cmd-day-plan">/day-plan</a>
+            </div>
+            <div class="u-mt-05"><span class="sdlc-hitl">🔴 HITL — review plan + inbox moves</span></div>
+          </div>
+
+          <div class="sdlc-daily-card u-bt-green">
+            <div class="sdlc-daily-card-title">⚙️ Execute Tasks</div>
+            <div class="sdlc-daily-card-desc">Pick next <code>⬜ TODO</code> from day plan (or use <code>/run-day-plan</code> to auto-select and execute). Complete the task. Plan auto-ticked with commit SHA. Repeat. Run <code>/token-budget</code> after 10+ tool calls.</div>
+            <div class="sdlc-daily-card-cmds">
+              <a class="trigger-chip" href="#cmd-sprint-status">/run-day-plan</a>
+              <a class="trigger-chip" href="#cmd-token-budget">/token-budget</a>
+            </div>
+            <div class="u-mt-05"><span class="sdlc-hitl">🟡 SOFT HITL — "Continue? [y/n]"</span></div>
+          </div>
+
+          <div class="sdlc-daily-card u-bt-yellow">
+            <div class="sdlc-daily-card-title">🔍 Light Review</div>
+            <div class="sdlc-daily-card-desc">Run <code>/sniff-test</code> on changed files. Convert any new lessons to guardrails with <code>/lessons-to-guardrails</code> — raises TD items for deferred work (auto-refreshes guide). Save the full 7-gate run for sprint close.</div>
+            <div class="sdlc-daily-card-cmds">
+              <a class="trigger-chip" href="#cmd-sniff-test">/sniff-test</a>
+              <a class="trigger-chip" href="#cmd-lessons">/lessons-to-guardrails</a>
+            </div>
+            <div class="u-mt-05"><span class="sdlc-auto">⚡ AUTO — TD raise refreshes guide</span></div>
+          </div>
+
+          <div class="sdlc-daily-card u-bt-purple">
+            <div class="sdlc-daily-card-title">🌙 Session End</div>
+            <div class="sdlc-daily-card-desc">Run <code>/chat-handoff</code> — generates handoff note, committed with <code>[skip ci]</code>. If all sprint tasks are done, prompt for <code>/sprint-close</code>. Push always requires explicit HITL approval.</div>
+            <div class="sdlc-daily-card-cmds">
+              <a class="trigger-chip" href="#cmd-chat-handoff">/chat-handoff</a>
+              <a class="trigger-chip" href="#cmd-sprint-close">/sprint-close</a>
+            </div>
+            <div class="u-mt-05"><span class="sdlc-hitl">🔴 HITL — push always requires approval</span></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Tab 3: Tech Debt Loop -->
+      <div class="tab-pane" id="tab-tdloop">
+        <div class="callout callout-info u-mb-12">
+          Tech debt is a first-class artefact. Every <code>/tech-debt raise</code> and <code>/tech-debt close</code> auto-refreshes the agent-guide.html snapshot in the same commit — the guide stays current after every TD operation.
+        </div>
+        <div class="sdlc-flow">
+
+          <div class="sdlc-step u-bl-red">
+            <div class="sdlc-step-left">
+              <div class="sdlc-step-num u-bg-red">↑</div>
+              <div class="sdlc-step-phase u-text-red">Raise</div>
+            </div>
+            <div class="sdlc-step-right">
+              <div class="sdlc-step-title">TD Raised</div>
+              <div class="sdlc-step-desc">Triggered from <code>/quality-gates</code>, <code>/roast</code>, <code>/sprint-close</code>, or ad-hoc. Agent appends entry to <code>.agents/TECH_DEBT.md</code> with severity, problem description, suggested sprint, and acceptance criteria. Guide snapshot refreshed in the same commit.</div>
+              <div class="sdlc-cmds">
+                <a class="trigger-chip" href="#cmd-tech-debt">/tech-debt raise</a>
+              </div>
+              <div class="sdlc-hints"><span class="sdlc-auto">⚡ AUTO — guide snapshot refreshed on every raise</span></div>
+            </div>
+          </div>
+
+          <div class="sdlc-arrow"></div>
+
+          <div class="sdlc-step u-bl-accent2">
+            <div class="sdlc-step-left">
+              <div class="sdlc-step-num u-bg-accent2">→</div>
+              <div class="sdlc-step-phase u-text-accent2">Assign</div>
+            </div>
+            <div class="sdlc-step-right">
+              <div class="sdlc-step-title">Assigned to Sprint</div>
+              <div class="sdlc-step-desc"><strong>HIGH</strong> — next sprint. <strong>MEDIUM</strong> — within 2 sprints. <strong>LOW</strong> — backlogged. TD ID referenced in the task card execution checklist and SPRINT_REGISTER <code>tds_closed</code> field.</div>
+              <div class="sdlc-cmds">
+                <a class="trigger-chip" href="#cmd-sprint-status">/sprint-status</a>
+                <a class="trigger-chip" href="#cmd-build-sprint">/build-sprint</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="sdlc-arrow"></div>
+
+          <div class="sdlc-step u-bl-teal">
+            <div class="sdlc-step-left">
+              <div class="sdlc-step-num u-bg-teal-darktext">✓</div>
+              <div class="sdlc-step-phase u-text-teal">Close</div>
+            </div>
+            <div class="sdlc-step-right">
+              <div class="sdlc-step-title">TD Closed</div>
+              <div class="sdlc-step-desc">Resolution paragraph added. Acceptance criteria ticked. Status set to ✅ Done. Resolved date + sprint recorded. Guide snapshot refreshed in the same commit — counts and open-items table updated automatically.</div>
+              <div class="sdlc-cmds">
+                <a class="trigger-chip" href="#cmd-tech-debt">/tech-debt close TD-NNN</a>
+              </div>
+              <div class="sdlc-hints"><span class="sdlc-auto">⚡ AUTO — guide snapshot refreshed on every close</span></div>
+            </div>
+          </div>
+
+          <div class="sdlc-arrow"></div>
+
+          <div class="sdlc-step u-bl-purple">
+            <div class="sdlc-step-left">
+              <div class="sdlc-step-num u-bg-purple">S</div>
+              <div class="sdlc-step-phase u-text-purple">Sprint</div>
+            </div>
+            <div class="sdlc-step-right">
+              <div class="sdlc-step-title">Sprint Close — Full TD Review</div>
+              <div class="sdlc-step-desc">Sprint close (Step 6) audits every open TD: closes those resolved in the sprint, raises new TDs for deferred items. Each raise/close triggers a guide refresh. A final unconditional refresh is also included in the sprint close commit (Step 10).</div>
+              <div class="sdlc-cmds">
+                <a class="trigger-chip" href="#cmd-sprint-close">/sprint-close sprint-N</a>
+              </div>
+              <div class="sdlc-hints"><span class="sdlc-auto">⚡ AUTO — guide snapshot refreshed in sprint close commit</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── SPRINT LIFECYCLE ──────────────────────────────────── -->
+  <section id="lifecycle">
+    <h2>🔄 Sprint Lifecycle</h2>
+    <div class="callout callout-info">
+      The sprint is the authoritative unit of work. Day plans are scheduling views. If conflict arises, the sprint task card wins.
+    </div>
+    <div class="lifecycle">
+      <div class="lifecycle-phase">
+        <div class="phase-name plan"><span class="nb nb-c u-mr-4">C</span>Plan</div>
+        <ul class="phase-cmds">
+          <li><a href="#cmd-day-plan">/day-plan</a></li>
+          <li><a href="#cmd-write-adr">/write-adr</a></li>
+          <li><a href="#cmd-pre-mortem">/pre-mortem</a></li>
+          <li><a href="#cmd-build-sprint">/build-sprint</a></li>
+          <li><a href="#cmd-vet-library">/vet-library</a></li>
+          <li><a href="#cmd-token-budget">/token-budget</a></li>
+        </ul>
+      </div>
+      <div class="lifecycle-phase">
+        <div class="phase-name build"><span class="nb nb-h u-mr-4">H</span>Build</div>
+        <ul class="phase-cmds">
+          <li><a href="#cmd-run-sprint">/run-sprint</a></li>
+          <li><a href="#cmd-tdd">/tdd</a></li>
+          <li><a href="#cmd-sniff-test">/sniff-test</a></li>
+          <li><a href="#cmd-tidy-first">/tidy-first</a></li>
+        </ul>
+      </div>
+      <div class="lifecycle-phase">
+        <div class="phase-name gate"><span class="nb nb-g u-mr-4">G</span>Gate</div>
+        <ul class="phase-cmds">
+          <li><a href="#cmd-quality-gates">/quality-gates</a></li>
+          <li><a href="#cmd-roast">/roast</a></li>
+          <li><a href="#cmd-code-review">/code-review</a></li>
+          <li><a href="#cmd-lessons">/lessons-to-guardrails</a></li>
+          <li><a href="#cmd-tech-debt">/tech-debt raise</a></li>
+        </ul>
+      </div>
+      <div class="lifecycle-phase">
+        <div class="phase-name close"><span class="nb nb-g u-mr-4">G</span>Close</div>
+        <ul class="phase-cmds">
+          <li><a href="#cmd-sprint-close">/sprint-close</a></li>
+          <li><a href="#cmd-sprint-status">/sprint-status</a></li>
+          <li><a href="#cmd-chat-handoff">/chat-handoff</a></li>
+          <li><a href="#cmd-token-budget">/token-budget</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="u-h3-tdd">Commit Sequence — one TDD cycle</h3>
+    <table>
+      <thead><tr><th>#</th><th>Commit pattern</th><th>When</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><span class="commit-type ct-red">RED</span> &nbsp;<code class="u-code-sm">test(nb_foo): RED — &lt;desc&gt;</code></td><td class="u-fs08-muted">Failing test written</td></tr>
+        <tr><td>2</td><td><span class="commit-type ct-green">GREEN</span> &nbsp;<code class="u-code-sm">feat(nb_foo): GREEN — &lt;desc&gt;</code></td><td class="u-fs08-muted">Test passes</td></tr>
+        <tr><td>3</td><td><span class="commit-type ct-ref">REFACTOR</span> &nbsp;<code class="u-code-sm">refactor(nb_foo): REFACTOR — &lt;desc&gt;</code></td><td class="u-fs08-muted">Code cleaned</td></tr>
+        <tr><td>4</td><td><span class="commit-type ct-tidy">TIDY</span> &nbsp;<code class="u-code-sm">tidy: L-NNN &lt;desc&gt;</code></td><td class="u-fs08-muted">Lesson applied</td></tr>
+        <tr><td>5</td><td><span class="commit-type ct-plan">PLAN</span> &nbsp;<code class="u-code-sm">chore(plan): tick task X [skip ci]</code></td><td class="u-fs08-muted">Day plan ticked</td></tr>
+        <tr><td>6</td><td><span class="commit-type ct-hand">HANDOFF</span> &nbsp;<code class="u-code-sm">chore(handoff): session handoff &lt;sha&gt; [skip ci]</code></td><td class="u-fs08-muted">End of session</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── VIBE MODES ────────────────────────────────────────── -->
+  <section id="vibe-modes">
+    <h2>🎯 Vibe Modes</h2>
+    <div class="vibe-grid">
+      <div class="vibe-card vibe-creation">
+        <div class="vibe-title">CREATION <span class="badge badge-creation u-va-middle">C</span></div>
+        <div class="vibe-desc">Planning and scaffolding only. No implementation code. Produces: task cards, ADRs, migration SQL, pre-mortem output. Agent may ask freely. No HITL for file writes.</div>
+        <div class="vibe-commands">
+          <span class="trigger-chip">/build-sprint</span>
+          <span class="trigger-chip">/write-adr</span>
+          <span class="trigger-chip">/pre-mortem</span>
+          <span class="trigger-chip">/vet-library</span>
+          <span class="trigger-chip">/day-plan</span>
+        </div>
+      </div>
+      <div class="vibe-card vibe-hardening">
+        <div class="vibe-title">HARDENING <span class="badge badge-hardening u-va-middle">H</span></div>
+        <div class="vibe-desc">Active implementation. RED→GREEN→REFACTOR cycles. Agent executes freely within a task. HITL required before crossing task boundaries, writing to shared state, or pushing.</div>
+        <div class="vibe-commands">
+          <span class="trigger-chip">/run-sprint</span>
+          <span class="trigger-chip">/tdd</span>
+          <span class="trigger-chip">/tidy-first</span>
+          <span class="trigger-chip">/sniff-test</span>
+          <span class="trigger-chip">/lessons-to-guardrails</span>
+        </div>
+      </div>
+      <div class="vibe-card vibe-gatekeeper">
+        <div class="vibe-title">GATEKEEPER <span class="badge badge-gatekeeper u-va-middle">G</span></div>
+        <div class="vibe-desc">Verification and audit only. No new code. Produces pass/fail verdicts. All gate failures block until resolved. Human approval required before sprint can be COMPLETE.</div>
+        <div class="vibe-commands">
+          <span class="trigger-chip">/quality-gates</span>
+          <span class="trigger-chip">/sprint-close</span>
+          <span class="trigger-chip">/roast</span>
+          <span class="trigger-chip">/code-review</span>
+          <span class="trigger-chip">/token-budget</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── AUTO-TRIGGERED COMMANDS ──────────────────────────── -->
+  <section id="triggers-auto">
+    <h2>⚡ Auto-Triggered Commands</h2>
+    <div class="callout callout-info">
+      These three workflows fire when you say a natural language phrase — no slash command needed.
+      All other workflows require explicit slash command invocation.
+    </div>
+    <div class="trigger-cards">
+
+      <div class="trigger-card" id="trigger-chat-handoff">
+        <div class="trigger-card-header">
+          <span class="cmd-name">/chat-handoff</span>
+          <span class="trigger-auto-label">⚡ AUTO</span>
+        </div>
+        <div class="trigger-note">Generates a self-contained handoff note and commits it to <code>.agents/handoffs/</code>. Use at end of session or to seed a new one.</div>
+        <div class="trigger-phrase-grid">
+          <span class="trigger-phrase">chat handoff</span>
+          <span class="trigger-phrase">chat handover</span>
+          <span class="trigger-phrase">handoff note</span>
+          <span class="trigger-phrase">new session</span>
+          <span class="trigger-phrase">start fresh</span>
+          <span class="trigger-phrase">reset session</span>
+        </div>
+      </div>
+
+      <div class="trigger-card" id="trigger-lessons">
+        <div class="trigger-card-header">
+          <span class="cmd-name">/lessons-to-guardrails</span>
+          <span class="trigger-auto-label">⚡ AUTO</span>
+        </div>
+        <div class="trigger-note">Converts retrospective lessons in <code>.agents/LESSONS.md</code> into structural guardrails (code, templates, checklists, or deferred TD items).</div>
+        <div class="trigger-phrase-grid">
+          <span class="trigger-phrase">lessons to guardrails</span>
+          <span class="trigger-phrase">tidy pass</span>
+          <span class="trigger-phrase">apply lessons</span>
+          <span class="trigger-phrase">tidy first</span>
+          <span class="trigger-phrase">lessons learned</span>
+          <span class="trigger-phrase">guardrail</span>
+        </div>
+      </div>
+
+      <div class="trigger-card" id="trigger-token-budget">
+        <div class="trigger-card-header">
+          <span class="cmd-name">/token-budget</span>
+          <span class="trigger-auto-label">⚡ AUTO</span>
+        </div>
+        <div class="trigger-note">Audits and reduces AI context/token usage. Run before a new sprint, after 10+ tool calls, or when the agent starts losing track of earlier decisions.</div>
+        <div class="trigger-phrase-grid">
+          <span class="trigger-phrase">session getting expensive</span>
+          <span class="trigger-phrase">context audit</span>
+          <span class="trigger-phrase">compact before sprint</span>
+          <span class="trigger-phrase">token budget</span>
+          <span class="trigger-phrase">context window</span>
+          <span class="trigger-phrase">reduce tokens</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── ALL SLASH COMMANDS ────────────────────────────────── -->
+  <section id="commands">
+    <h2>⚡ Slash Commands Reference</h2>
+
+    <div class="card" id="cmd-day-plan" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/day-plan</div>
+        <div class="card-badges">
+          <span class="badge badge-creation">CREATION</span>
+          <span class="badge badge-hitl">HITL</span>
+        </div>
+      </div>
+      <div class="card-desc">Generates the day's execution plan. Reads live repo state (branch, HEAD, tests, ruff), sprint register, tech debt, today's task folder, and runs an inbox triage scan. If the current sprint is <strong>READY</strong> (not yet started), flags whether a story map exists for the gap and recommends <code>/user-story-map</code> if not. Outputs a structured markdown plan with YAML frontmatter.</div>
+      <div class="card-usage">/day-plan</div>
+      <details>
+        <summary>Plan frontmatter fields (15)</summary>
+        <div class="detail-body">
+          <code>type</code> · <code>date</code> · <code>branch</code> · <code>sprint</code> · <code>sprint_status</code> (READY|IN PROGRESS|COMPLETE) · <code>scope</code> · <code>repos</code> · <code>head_sha</code> · <code>test_baseline</code> · <code>lint_status</code> · <code>task_card</code> · <code>carried_over</code> · <code>inbox_actioned</code> · <code>open_tds</code> · <code>hitl_gates</code><br><br>
+          <strong>Inbox scan (Step 2b):</strong> Surfaces loose files/non-<code>__</code> folders in <code>__inbox\</code>. Actions: <code>[move]</code> → today · <code>[ref]</code> → <code>__reference/</code> · <code>[skip]</code> · <code>[all-ref]</code>. HITL gate before any move. <code>__errors/</code> and <code>__todo/*/</code> always skipped.
+        </div>
+      </details>
+      <div class="td-file">.agents/workflows/day-plan.md</div>
+    </div>
+
+    <div class="card" id="cmd-user-story-map" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/user-story-map</div>
+        <div class="card-badges"><span class="badge badge-creation">CREATION</span></div>
+      </div>
+      <div class="card-desc">Builds a Jeff Patton story map with Toyota Kata framing for a gap or feature area. Answers WHO needs this and WHY before WHAT is built. Produces both <code>__inbox/__todo/{YYYYMMDD}/story-map-{gap-id}.md</code> and <code>__inbox/__todo/{YYYYMMDD}/story-map-{gap-id}.html</code>, then seeds the walking skeleton into <code>/build-sprint</code>. Run this before <code>/build-sprint</code> for larger or ambiguous gaps.</div>
+      <div class="card-usage">/user-story-map GAP-22
+/user-story-map GAP-22 source:docs/adr/ADR-058.md</div>
+      <details>
+        <summary>10 steps (Patton + Kata + HTML)</summary>
+        <div class="detail-body">
+          1 — State the Challenge (long-term aspiration)<br>2 — Grasp the Current Condition (measurable facts)<br>
+          3 — Identify Actors<br>4 — Build the Backbone (activities, user perspective)<br>
+          5 — Map Tasks under each Activity<br>6 — Write User Stories (acceptance criteria + hypothesis)<br>
+          7 — Identify the Walking Skeleton<br>8 — Set Target Condition for Sprint 1<br>
+          9 — Write story map document (.md)<br>
+          9.5 — Generate visual story board (.html)<br>
+          10 — Hand off to /build-sprint
+        </div>
+      </details>
+      <div class="td-file">.agents/workflows/user-story-map.md</div>
+    </div>
+
+    <div class="card" id="cmd-build-sprint" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/build-sprint</div>
+        <div class="card-badges"><span class="badge badge-creation">CREATION</span></div>
+      </div>
+      <div class="card-desc">Builds a sprint task card before any code is written. If a story map exists for the gap, imports the Target Condition from it. Phases: context health → pre-mortem → elephant register → migration SQL → execution checklist. No implementation code written here.</div>
+      <div class="card-usage">/build-sprint GAP-07
+/build-sprint GAP-08 sprint-7</div>
+      <details>
+        <summary>6 phases</summary>
+        <div class="detail-body">
+          0 — Context health check<br>1 — Read GAP + ADR requirements<br>2 — Pre-mortem<br>
+          3 — Elephant register<br>4 — Migration SQL (DDL only)<br>5 — Execution checklist → HITL confirm
+        </div>
+      </details>
+      <div class="td-file">.agents/workflows/build-sprint.md</div>
+    </div>
+
+    <div class="card" id="cmd-run-sprint" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/run-sprint</div>
+        <div class="card-badges">
+          <span class="badge badge-creation">CREATION</span>
+          <span class="badge badge-hardening">HARDENING</span>
+          <span class="badge badge-gatekeeper">GATEKEEPER</span>
+        </div>
+      </div>
+      <div class="card-desc">Full sprint execution against a task card from <code>/build-sprint</code>. Runs TDD cycles, applies lessons → guardrails, runs quality gates, wires into sprint-close. Agent executes freely within a task; asks before crossing boundaries or pushing.</div>
+      <div class="card-usage">/run-sprint GAP-07
+/run-sprint GAP-07 task-3   # resume from task</div>
+      <div class="td-file">.agents/workflows/run-sprint.md</div>
+    </div>
+
+    <div class="card" id="cmd-sprint-close" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/sprint-close</div>
+        <div class="card-badges">
+          <span class="badge badge-gatekeeper">GATEKEEPER</span>
+          <span class="badge badge-hitl">HITL</span>
+        </div>
+      </div>
+      <div class="card-desc">Closes a completed sprint. 11-step process: verify complete → full gate suite → update SPRINT_REGISTER → update CHANGELOG → close resolved TDs → raise deferred TDs → context reset. Human approval required.</div>
+      <div class="card-usage">/sprint-close sprint-7</div>
+      <div class="td-file">.agents/workflows/sprint-close.md</div>
+    </div>
+
+    <div class="card" id="cmd-sprint-status" class="u-mb-1">
+      <div class="card-header"><div class="cmd-name">/sprint-status</div></div>
+      <div class="card-desc">Reads <code>.agents/SPRINT_REGISTER.md</code> and <code>.agents/TECH_DEBT.md</code>. Produces current sprint progress, next sprint blockers, open tech debt by severity, score progression.</div>
+      <div class="card-usage">/sprint-status</div>
+      <div class="td-file">.claude/commands/sprint-status.md (inline)</div>
+    </div>
+
+    <div class="card" id="cmd-tdd" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/tdd</div>
+        <div class="card-badges"><span class="badge badge-hardening">HARDENING</span></div>
+      </div>
+      <div class="card-desc">TDD for data-platform notebooks and utilities. Enforces <span class="commit-type ct-red u-commit-mini">RED</span> → <span class="commit-type ct-green u-commit-mini">GREEN</span> → <span class="commit-type ct-ref u-commit-mini">REFACTOR</span> — never combined. Stop-and-think rule for DDL/column renames.</div>
+      <div class="card-usage">/tdd target: src/notebooks/nb_foo.py test: tests/test_nb_foo.py</div>
+      <details>
+        <summary>TDD rules + DDL stop-and-think</summary>
+        <div class="detail-body">
+          <strong>RED:</strong> <code>test(nb_foo): RED — desc</code><br>
+          <strong>GREEN:</strong> <code>feat(nb_foo): GREEN — desc</code><br>
+          <strong>REFACTOR:</strong> <code>refactor(nb_foo): REFACTOR — desc</code><br><br>
+          <strong>DDL:</strong> Write Live DEV migration SQL first. Update nb_bootstrap.py + view + all SELECTs/INSERTs atomically.<br>
+          <strong>Pre-existing failures:</strong> Record baseline before any edit.
+        </div>
+      </details>
+      <div class="td-file">.agents/workflows/tdd.md</div>
+    </div>
+
+    <div class="card" id="cmd-sniff-test" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/sniff-test</div>
+        <div class="card-badges"><span class="badge badge-hardening">HARDENING</span></div>
+      </div>
+      <div class="card-desc">Quick smell check before any commit. Checks: import guards, hardcoded names, audit columns, SQL injection patterns, Spark config method, test coverage. Run after every GREEN commit.</div>
+      <div class="card-usage">/sniff-test src/notebooks/nb_landing_to_bronze.py</div>
+      <div class="td-file">.agents/workflows/sniff-test.md</div>
+    </div>
+
+    <div class="card" id="cmd-quality-gates" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/quality-gates</div>
+        <div class="card-badges"><span class="badge badge-gatekeeper">GATEKEEPER</span></div>
+      </div>
+      <div class="card-desc">Runs the 7-gate quality model. Mandatory before any merge. All gates must pass; any failure blocks the PR.</div>
+      <div class="card-usage">/quality-gates
+/quality-gates --fix   # ruff auto-fix first</div>
+      <div class="td-file">.agents/workflows/quality-gates.md</div>
+    </div>
+
+    <div class="card" id="cmd-pre-mortem" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/pre-mortem</div>
+        <div class="card-badges"><span class="badge badge-creation">CREATION</span></div>
+      </div>
+      <div class="card-desc">Tests planning assumptions before executing complex changes (complexity &gt; 5). Surfaces failure modes, dependency risks, data loss scenarios, and rollback paths. Run before <code>/build-sprint</code>.</div>
+      <div class="card-usage">/pre-mortem   # context: the change</div>
+      <div class="td-file">.agents/workflows/pre-mortem.md</div>
+    </div>
+
+    <div class="card" id="cmd-roast" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/roast</div>
+        <div class="card-badges"><span class="badge badge-gatekeeper">GATEKEEPER</span></div>
+      </div>
+      <div class="card-desc">Ruthless adversarial audit of AI-generated code. Fresh context, no prior assumptions. Looks for over-engineering, missing error handling, security issues, coverage gaps.</div>
+      <div class="card-usage">/roast   # target: file or function</div>
+      <div class="td-file">.agents/workflows/roast.md</div>
+    </div>
+
+    <div class="card" id="cmd-code-review" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/code-review</div>
+        <div class="card-badges"><span class="badge badge-gatekeeper">GATEKEEPER</span></div>
+      </div>
+      <div class="card-desc">Pre-PR checklist for notebooks and utilities. Checks conventions, Spark config, audit columns, import guards, SQL injection guards, test pairing.</div>
+      <div class="card-usage">/code-review</div>
+      <div class="td-file">.agents/workflows/code-review.md</div>
+    </div>
+
+    <div class="card" id="cmd-write-adr" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/write-adr</div>
+        <div class="card-badges"><span class="badge badge-creation">CREATION</span></div>
+      </div>
+      <div class="card-desc">Scaffolds a new ADR with the next number, standard structure (Status · Context · Decision · Consequences · Alternatives), and status gate. Run before <code>/build-sprint</code> when an ADR is required.</div>
+      <div class="card-usage">/write-adr Bronze profiling strategy GAP-07</div>
+      <details>
+        <summary>ADR numbering</summary>
+        <div class="detail-body">
+          Current: ADR-001 — ADR-061. Next: ADR-062.<br>
+          ADR-058 (OIDC / Workload Identity Federation) required before Sprint 20 (GAP-22).<br>
+          Path: <code>docs/adr/ADR-NNN-title.md</code>
+        </div>
+      </details>
+      <div class="td-file">.agents/workflows/write-adr.md</div>
+    </div>
+
+    <div class="card" id="cmd-tech-debt" class="u-mb-1">
+      <div class="card-header"><div class="cmd-name">/tech-debt</div></div>
+      <div class="card-desc">Raise, close, or query tech debt items in <code>.agents/TECH_DEBT.md</code>. Severity: HIGH/MEDIUM/LOW. Status: Open / In Progress / Resolved. Each item linked to a sprint/gap ID.</div>
+      <div class="card-usage">/tech-debt raise
+/tech-debt close TD-015
+/tech-debt query HIGH</div>
+      <div class="td-file">.agents/workflows/tech-debt.md</div>
+    </div>
+
+    <div class="card" id="cmd-tidy-first" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/tidy-first</div>
+        <div class="card-badges"><span class="badge badge-hardening">HARDENING</span></div>
+      </div>
+      <div class="card-desc">Kent Beck's Tidy First — structural changes (renames, extractions, moves) in separate commits from behavioural changes. Tidy commit: always first, always green, always &lt;30 min.</div>
+      <div class="card-usage">/tidy-first</div>
+      <div class="td-file">.agents/workflows/tidy-first.md</div>
+    </div>
+
+    <div class="card" id="cmd-lessons" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/lessons-to-guardrails</div>
+        <div class="card-badges">
+          <span class="badge badge-hardening">HARDENING</span>
+          <span class="badge badge-auto">⚡ AUTO</span>
+        </div>
+      </div>
+      <div class="card-desc">Converts retrospective lessons into structural guardrails. Classifies each lesson: A=Code · B=Template · C=Checklist · D=Knowledge. Applies &lt;30 min tidyings as separate commits; defers larger fixes as TD items.</div>
+      <div class="card-usage">/lessons-to-guardrails</div>
+      <div class="card-triggers">
+        <span class="trigger-chip">lessons to guardrails</span>
+        <span class="trigger-chip">tidy pass</span>
+        <span class="trigger-chip">apply lessons</span>
+        <span class="trigger-chip">tidy first</span>
+        <span class="trigger-chip">lessons learned</span>
+        <span class="trigger-chip">guardrail</span>
+      </div>
+      <div class="td-file">.agents/workflows/lessons-to-guardrails.md · <em class="u-text-muted">no .claude/commands stub</em></div>
+    </div>
+
+    <div class="card" id="cmd-vet-library" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/vet-library</div>
+        <div class="card-badges"><span class="badge badge-creation">CREATION</span></div>
+      </div>
+      <div class="card-desc">Vets a new Python/PySpark library before adding to <code>requirements-ci.txt</code> or a Fabric environment. Checks: licence, maintenance, Fabric compatibility, CI impact, security advisories. Produces Go/No-Go.</div>
+      <div class="card-usage">/vet-library whylogs GAP-07</div>
+      <div class="td-file">.agents/workflows/vet-library.md</div>
+    </div>
+
+    <div class="card" id="cmd-token-budget" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/token-budget</div>
+        <div class="card-badges">
+          <span class="badge badge-gatekeeper">GATEKEEPER</span>
+          <span class="badge badge-auto">⚡ AUTO</span>
+        </div>
+      </div>
+      <div class="card-desc">Audits and reduces AI context/token usage. Covers Claude Code, VS Code Copilot, and Gemini. Run before a new sprint, after 10+ tool calls, or when the agent starts forgetting decisions.</div>
+      <div class="card-usage">/token-budget</div>
+      <div class="card-triggers">
+        <span class="trigger-chip">session getting expensive</span>
+        <span class="trigger-chip">context audit</span>
+        <span class="trigger-chip">compact before sprint</span>
+        <span class="trigger-chip">token budget</span>
+        <span class="trigger-chip">context window</span>
+        <span class="trigger-chip">reduce tokens</span>
+      </div>
+      <div class="td-file">.agents/workflows/token-budget.md</div>
+    </div>
+
+    <div class="card" id="cmd-chat-handoff" class="u-mb-1">
+      <div class="card-header">
+        <div class="cmd-name">/chat-handoff</div>
+        <div class="card-badges"><span class="badge badge-auto">⚡ AUTO</span></div>
+      </div>
+      <div class="card-desc">Generates a self-contained handoff note and commits it to <code>.agents/handoffs/YYYY-MM-DD_HHMMSS_branch_sha.md</code>. Gathers live values: branch, HEAD, tests, TDs, last/next sprint.</div>
+      <div class="card-usage">/chat-handoff
+/chat-handoff last   # read most recent note</div>
+      <div class="card-triggers">
+        <span class="trigger-chip">chat handoff</span>
+        <span class="trigger-chip">chat handover</span>
+        <span class="trigger-chip">handoff note</span>
+        <span class="trigger-chip">new session</span>
+        <span class="trigger-chip">start fresh</span>
+        <span class="trigger-chip">reset session</span>
+      </div>
+      <div class="td-file">.agents/workflows/chat-handoff.md</div>
+    </div>
+  </section>
+
+  <!-- ── 7 QUALITY GATES ───────────────────────────────────── -->
+  <section id="quality-gates-ref">
+    <h2>🚦 7-Gate Quality Model</h2>
+    <div class="callout callout-warn">
+      All 7 gates must pass before merge. Record <code>py -m pytest tests/ -q --tb=no</code> baseline before any edit.
+    </div>
+    <div class="gates-grid">
+      <div class="gate-card"><div><span class="gate-num">1</span><span class="gate-name">Secret Scan</span></div><div class="gate-cmd">gitleaks detect --verbose</div><div class="gate-note">No secrets in any tracked file.</div></div>
+      <div class="gate-card"><div><span class="gate-num">2</span><span class="gate-name">Security Lint</span></div><div class="gate-cmd">bandit -r src/ -ll -f text</div><div class="gate-note">No HIGH/MEDIUM. LOW with justification.</div></div>
+      <div class="gate-card"><div><span class="gate-num">3</span><span class="gate-name">Ruff</span></div><div class="gate-cmd">ruff check src/ tests/ scripts/ --select=E,W,B,S,C90 --ignore=S101,S603,S607</div><div class="gate-note">Zero violations. See user memory for noqa rules.</div></div>
+      <div class="gate-card"><div><span class="gate-num">4</span><span class="gate-name">mypy</span></div><div class="gate-cmd">mypy src/notebooks/ --ignore-missing-imports --no-strict-optional</div><div class="gate-note">No type errors. <code># type: ignore[name-defined]</code> for Fabric-only symbols.</div></div>
+      <div class="gate-card"><div><span class="gate-num">5</span><span class="gate-name">pytest</span></div><div class="gate-cmd">pytest tests/ --cov=src/notebooks --cov-report=term-missing --cov-fail-under=80 -v</div><div class="gate-note">≥80% coverage. 1375 passing, 7 skipped (vnext baseline).</div></div>
+      <div class="gate-card"><div><span class="gate-num">6</span><span class="gate-name">CHANGELOG</span></div><div class="gate-cmd">cat CHANGELOG.md | head -40</div><div class="gate-note">Entry for every merged sprint.</div></div>
+      <div class="gate-card"><div><span class="gate-num">7</span><span class="gate-name">Manual Review</span></div><div class="gate-cmd">/code-review  or  /roast</div><div class="gate-note">Human approval required. No AI self-sign-off.</div></div>
+    </div>
+  </section>
+
+  <!-- ── HITL GATES ────────────────────────────────────────── -->
+  <section id="hitl-gates">
+    <h2>🚧 HITL Gates</h2>
+    <div class="callout callout-info">
+      Agent executes freely within a task. HITL is required at these boundaries.
+    </div>
+    <div class="hitl-item hitl-hard">
+      <div class="hitl-icon">🔴</div>
+      <div class="hitl-body">
+        <div class="hitl-header"><span class="hitl-title">Sprint open / close</span><span class="badge badge-open">HARD</span></div>
+        <p>Agent cannot mark READY→IN PROGRESS or IN PROGRESS→COMPLETE without explicit confirmation. <code>/sprint-close</code> is the gate.</p>
+      </div>
+    </div>
+    <div class="hitl-item hitl-hard">
+      <div class="hitl-icon">🔴</div>
+      <div class="hitl-body">
+        <div class="hitl-header"><span class="hitl-title">git push / git push --force</span><span class="badge badge-open">HARD</span></div>
+        <p>Never push without asking. <code>[skip ci]</code> commits still require human approval before push.</p>
+      </div>
+    </div>
+    <div class="hitl-item hitl-hard">
+      <div class="hitl-icon">🔴</div>
+      <div class="hitl-body">
+        <div class="hitl-header"><span class="hitl-title">Inbox file moves</span><span class="badge badge-open">HARD</span></div>
+        <p>Agent surfaces inbox items but never moves or deletes without explicit per-item confirmation (or bulk <code>[all-ref]</code>).</p>
+      </div>
+    </div>
+    <div class="hitl-item hitl-soft">
+      <div class="hitl-icon">🟡</div>
+      <div class="hitl-body">
+        <div class="hitl-header"><span class="hitl-title">Design confirm before first RED commit</span><span class="badge badge-med">SOFT</span></div>
+        <p>In <code>/tdd</code> and <code>/run-sprint</code>: agent presents test design + function signature. User approves before writing the failing test.</p>
+      </div>
+    </div>
+    <div class="hitl-item hitl-soft">
+      <div class="hitl-icon">🟡</div>
+      <div class="hitl-body">
+        <div class="hitl-header"><span class="hitl-title">Crossing task boundary</span><span class="badge badge-med">SOFT</span></div>
+        <p>After completing a task, agent asks "Continue with Y? [y/n]" before proceeding.</p>
+      </div>
+    </div>
+    <div class="hitl-item hitl-soft">
+      <div class="hitl-icon">🟡</div>
+      <div class="hitl-body">
+        <div class="hitl-header"><span class="hitl-title">Writing to shared state</span><span class="badge badge-med">SOFT</span></div>
+        <p><code>SPRINT_REGISTER.md</code>, <code>TECH_DEBT.md</code>, <code>CHANGELOG.md</code>, <code>.agents/handoffs/</code> — agent asks before any write that is not a draft.</p>
+      </div>
+    </div>
+    <div class="hitl-item hitl-soft">
+      <div class="hitl-icon">🟡</div>
+      <div class="hitl-body">
+        <div class="hitl-header"><span class="hitl-title">DDL / column renames</span><span class="badge badge-med">SOFT</span><span class="badge badge-auto u-fs058">STOP-AND-THINK</span></div>
+        <p>Agent writes Live DEV migration SQL first. No code changes until SQL is approved.</p>
+      </div>
+    </div>
+    <div class="hitl-item hitl-free">
+      <div class="hitl-icon">🟢</div>
+      <div class="hitl-body">
+        <div class="hitl-header"><span class="hitl-title">File edits within changeset</span><span class="badge badge-resolved">FREE</span></div>
+        <p>No HITL required for edits to files already in scope for the current task.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── KEY FILES ─────────────────────────────────────────── -->
+  <section id="key-files">
+    <h2>📁 Key Files</h2>
+    <div class="files-grid">
+      <div class="file-card"><div class="file-path">.agents/SPRINT_REGISTER.md</div><div class="file-desc">Authoritative sprint history. PLANNED → IN PROGRESS → COMPLETE. Read by /sprint-status, /build-sprint, /sprint-close, /day-plan.</div></div>
+      <div class="file-card"><div class="file-path">.agents/TECH_DEBT.md</div><div class="file-desc">Live TD register. HIGH/MEDIUM/LOW. TD-001 through TD-023+. Source of truth — the guide snapshot goes stale.</div></div>
+      <div class="file-card"><div class="file-path">.agents/LESSONS.md</div><div class="file-desc">Retrospective lessons. PENDING → ✅ APPLIED / 📋 TD-NNN. Processed by /lessons-to-guardrails at sprint close.</div></div>
+      <div class="file-card"><div class="file-path">.agents/handoffs/</div><div class="file-desc"><code>YYYY-MM-DD_HHMMSS_branch_sha.md</code>. Read by <code>/chat-handoff last</code>. Committed with [skip ci].</div></div>
+      <div class="file-card"><div class="file-path">.agents/ROADMAP.md</div><div class="file-desc">GAP-01 through GAP-25 definitions and V-next backlog priority order.</div></div>
+      <div class="file-card"><div class="file-path">.agents/workflows/</div><div class="file-desc">23 workflow source files. Source of truth for all slash commands. Never edit .claude/commands/ stubs directly.</div></div>
+      <div class="file-card"><div class="file-path">.claude/commands/</div><div class="file-desc">19 one-liner stubs. Pattern: <code>Follow the instructions in .agents/workflows/X.md $ARGUMENTS</code></div></div>
+      <div class="file-card"><div class="file-path">__inbox/__todo/YYYYMMDD/</div><div class="file-desc">Story maps (<code>story-map-GAP-NN.md</code> + <code>story-map-GAP-NN.html</code>), sprint task cards, and day plans per date. Read by /user-story-map, /build-sprint, /run-sprint, and /day-plan.</div></div>
+      <div class="file-card"><div class="file-path">__reference/</div><div class="file-desc">Parked reference material. 48 files + 22 folders from former __inbox/ root.</div></div>
+      <div class="file-card"><div class="file-path">CLAUDE.md</div><div class="file-desc">Auto-loaded every Claude session. Overview, conventions, quality gates, pitfalls. Target ≤200 lines.</div></div>
+      <div class="file-card"><div class="file-path">.github/copilot-instructions.md</div><div class="file-desc">Loads every Copilot turn. Architecture, conventions, build/test commands. Target ≤150 lines.</div></div>
+      <div class="file-card"><div class="file-path">diary/</div><div class="file-desc">48 auto-generated diary entries. DuckDB-queryable JSON+Markdown. Daily/weekly/monthly rollups.</div></div>
+      <div class="file-card"><div class="file-path">docs/adr/</div><div class="file-desc">ADR-001 through ADR-061. Next: ADR-062. ADR-058 (OIDC/Workload Identity Federation) required before Sprint 20 (GAP-22).</div></div>
+      <div class="file-card"><div class="file-path">config/seed-dev.json</div><div class="file-desc">Control DB seed. Destructive on re-run (truncate + insert). 13 control tables.</div></div>
+    </div>
+  </section>
+
+  <!-- ── TECH DEBT ─────────────────────────────────────────── -->
+  <section id="tech-debt-ref">
+    <h2>💳 Tech Debt</h2>
+    <div class="callout callout-warn">
+      This snapshot is a <strong>point-in-time record</strong>. The guide is a static HTML file — it cannot read <code>.agents/TECH_DEBT.md</code> at runtime. Refresh this snapshot by asking the agent: <em>"update the tech debt snapshot in agent-guide.html"</em>, or run <code>/tech-debt query</code> for live data without updating this file.
+    </div>
+    <div class="td-pointer">
+      <div class="td-pointer-counts">
+        <div class="td-count td-count-high"><div class="td-count-num">1</div><div class="td-count-label">HIGH</div></div>
+        <div class="td-count td-count-med"><div class="td-count-num">5</div><div class="td-count-label">MED</div></div>
+        <div class="td-count td-count-low"><div class="td-count-num">9</div><div class="td-count-label">LOW</div></div>
+        <div class="td-count td-count-open"><div class="td-count-num">15</div><div class="td-count-label">OPEN</div></div>
+      </div>
+      <div class="td-pointer-actions">
+        <p>Live register: <code>.agents/TECH_DEBT.md</code></p>
+        <div class="td-cmds">
+          <span class="td-cmd-pill">/tech-debt query HIGH</span>
+          <span class="td-cmd-pill">/tech-debt raise</span>
+          <span class="td-cmd-pill">/tech-debt close TD-NNN</span>
+          <span class="td-cmd-pill">/sprint-status</span>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="u-h3-snap">Snapshot — 2026-05-09 (15 open of 79 total)</h3>
+    <table>
+      <thead><tr><th>ID</th><th>Title</th><th>Sev</th></tr></thead>
+      <tbody>
+        <tr><td class="td-cmd">TD-064</td><td class="u-fs081">GAP-05 live commissioning — apply SQL schema, smoke, nb_env_setup, Power BI, Delta retirement</td><td><span class="badge badge-high">HIGH</span></td></tr>
+        <tr><td class="td-cmd">TD-045</td><td class="u-fs081">WI token fetched once per source — expires mid-loop on long JDBC ingestion runs</td><td><span class="badge badge-med">MED</span></td></tr>
+        <tr><td class="td-cmd">TD-065</td><td class="u-fs081">pytest coverage gate missing from CI/CD Build stage</td><td><span class="badge badge-med">MED</span></td></tr>
+        <tr><td class="td-cmd">TD-066</td><td class="u-fs081">ADO approval gate missing between Dev and UAT deployment stages</td><td><span class="badge badge-med">MED</span></td></tr>
+        <tr><td class="td-cmd">TD-078</td><td class="u-fs081"><code>control.annotations</code> table exists in live DEV but missing from <code>nb_bootstrap.py</code> DDL</td><td><span class="badge badge-med">MED</span></td></tr>
+        <tr><td class="td-cmd">TD-079</td><td class="u-fs081"><code>azure-pipelines.yml</code> Smoke_Livy stage awaiting HITL validation against live DEV workspace</td><td><span class="badge badge-med">MED</span></td></tr>
+        <tr><td class="td-cmd">TD-034</td><td class="u-fs081">Centralise Spark Environment in config/code workspace</td><td><span class="badge badge-low">LOW</span></td></tr>
+        <tr><td class="td-cmd">TD-063</td><td class="u-fs081"><code>apply_layer_spark_config</code> uses <code>setLocalProperty</code> — verify correct Fabric API for resource profiles</td><td><span class="badge badge-low">LOW</span></td></tr>
+        <tr><td class="td-cmd">TD-067</td><td class="u-fs081">Review nb_orchestrator.py retry logic against native Fabric notebook retry policy</td><td><span class="badge badge-low">LOW</span></td></tr>
+        <tr><td class="td-cmd">TD-068</td><td class="u-fs081">Assert Workspace Outbound Access Protection (OAP) active in provisioning script</td><td><span class="badge badge-low">LOW</span></td></tr>
+        <tr><td class="td-cmd">TD-070</td><td class="u-fs081">En dashes (–) in docstring parameter separators across notebooks</td><td><span class="badge badge-low">LOW</span></td></tr>
+        <tr><td class="td-cmd">TD-071</td><td class="u-fs081"><code>_resolve_landing_files_root</code> duplicated in two notebooks</td><td><span class="badge badge-low">LOW</span></td></tr>
+        <tr><td class="td-cmd">TD-072</td><td class="u-fs081"><code>NB_SOURCE_TO_LANDING</code> missing <code>IsActive</code> filter and ControlLog writes</td><td><span class="badge badge-low">LOW</span></td></tr>
+        <tr><td class="td-cmd">TD-076</td><td class="u-fs081">Live DEV migration SQL for <code>ObjectConfig.CleansingRules</code> not yet applied</td><td><span class="badge badge-low">LOW</span></td></tr>
+        <tr><td class="td-cmd">TD-077</td><td class="u-fs081"><code>scripts/deploy_fabric_cli.sh</code> — Fabric CLI deployment path not yet implemented</td><td><span class="badge badge-low">LOW</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── TRIGGER INDEX ─────────────────────────────────────── -->
+  <section id="triggers-ref">
+    <h2>⚡ Full Trigger Index</h2>
+    <p class="u-note-muted">Only 3 workflows have natural language triggers defined in frontmatter. All others require explicit slash command invocation.</p>
+    <table>
+      <thead><tr><th>Phrase</th><th>Invokes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>chat handoff</code> · <code>chat handover</code> · <code>handoff note</code> · <code>new session</code> · <code>start fresh</code> · <code>reset session</code></td>
+          <td><span class="badge badge-auto">⚡</span> <a href="#cmd-chat-handoff" class="u-link-mono-accent2">/chat-handoff</a></td>
+        </tr>
+        <tr>
+          <td><code>lessons to guardrails</code> · <code>tidy pass</code> · <code>apply lessons</code> · <code>tidy first</code> · <code>lessons learned</code> · <code>guardrail</code></td>
+          <td><span class="badge badge-auto">⚡</span> <a href="#cmd-lessons" class="u-link-mono-accent2">/lessons-to-guardrails</a></td>
+        </tr>
+        <tr>
+          <td><code>session getting expensive</code> · <code>context audit</code> · <code>compact before sprint</code> · <code>token budget</code> · <code>context window</code> · <code>reduce tokens</code></td>
+          <td><span class="badge badge-auto">⚡</span> <a href="#cmd-token-budget" class="u-link-mono-accent2">/token-budget</a></td>
+        </tr>
+        <tr>
+          <td class="u-muted-fs08">Start of session (implicit convention)</td>
+          <td class="u-fs08"><a href="#cmd-day-plan" class="u-text-accent">/day-plan</a> → <a href="#cmd-chat-handoff" class="u-text-accent">/chat-handoff last</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout callout-info u-mt-1">
+      Triggers are defined in workflow frontmatter <code>triggers:</code> arrays in <code>.agents/workflows/</code>.
+    </div>
+  </section>
+
+  <!-- ── CONVENTIONS ───────────────────────────────────────── -->
+  <section id="conventions">
+    <h2>📐 Key Conventions</h2>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-header"><div class="cmd-name">Import guards</div><div class="card-badges"><span class="badge badge-hardening">REQUIRED</span></div></div>
+        <div class="card-desc">Every notebook must wrap Fabric/PySpark imports to keep 1375 pytest tests passing locally.</div>
+        <div class="card-usage">try:
+    import sempy_labs
+    from pyspark.sql import SparkSession
+except ImportError:
+    sempy_labs = None</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="cmd-name">SQL injection guard</div><div class="card-badges"><span class="badge badge-open">SECURITY</span></div></div>
+        <div class="card-desc">Required everywhere SQL is constructed with user/config data.</div>
+        <div class="card-usage"># Strings
+value.replace(chr(39), chr(39)*2)
+# IDs
+int(some_id)</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="cmd-name">Bronze audit columns</div><div class="card-badges"><span class="badge badge-hardening">REQUIRED</span></div></div>
+        <div class="card-desc">Every Bronze table must include all three audit columns.</div>
+        <div class="card-usage">_AUDIT_COLS = (
+    "_ingested_at",
+    "_source_system",
+    "_pipeline_id"
+)</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="cmd-name">Gold V-Order</div><div class="card-badges"><span class="badge badge-open">MANDATORY</span></div></div>
+        <div class="card-desc">DirectLake Power BI has no import cache fallback. Never disable V-Order in Gold.</div>
+        <div class="card-usage">spark.conf.set(
+    "spark.sql.parquet.vorder.enabled",
+    "true"
+)</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="cmd-name">No hardcoded names</div><div class="card-badges"><span class="badge badge-hardening">REQUIRED</span></div></div>
+        <div class="card-desc">Lakehouse names, workspace IDs, environment strings are always parameters. Driven by Control DB at runtime.</div>
+        <div class="card-usage"># ❌ WRONG
+df.write.saveAsTable("lh_bronze.my_table")
+# ✅ RIGHT
+df.write.saveAsTable(f"{lakehouse}.{table}")</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="cmd-name">Python interpreter</div></div>
+        <div class="card-desc">Use full path. <code>py.exe</code> may resolve to wrong version.</div>
+        <div class="card-usage">C:\Users\scottm\AppData\Local\Programs\
+  Python\Python311\python.exe -m pytest</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ── THEME ──────────────────────────────────────────────────────
+const themeBtn = document.querySelector('.theme-toggle');
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  themeBtn.textContent = t === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('agent-guide-theme', t);
+}
+function toggleTheme() {
+  applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+}
+(function init() {
+  const saved = localStorage.getItem('agent-guide-theme');
+  if (saved) applyTheme(saved);
+  else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) applyTheme('light');
+  else applyTheme('dark');
+})();
+
+// ── NAV FILTER ─────────────────────────────────────────────────
+function filterNav(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('nav a').forEach(a => {
+    a.style.display = (!q || a.textContent.toLowerCase().includes(q)) ? '' : 'none';
+  });
+}
+
+// ── SMOOTH SCROLL ──────────────────────────────────────────────
+document.querySelectorAll('nav a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const t = document.querySelector(a.getAttribute('href'));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// ── SDLC TABS ─────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const group = btn.closest('.tab-group');
+    const tabId = btn.dataset.tab;
+    group.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+    group.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + tabId));
+  });
+});
+
+// ── ACTIVE SECTION HIGHLIGHT ───────────────────────────────────
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const id = '#' + entry.target.id;
+    document.querySelectorAll('nav a').forEach(a => {
+      const active = a.getAttribute('href') === id;
+      a.style.color      = active ? 'var(--accent2)' : '';
+      a.style.background = active ? 'var(--bg3)' : '';
+      a.style.opacity    = active ? '1' : '';
+    });
+  });
+}, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+document.querySelectorAll('section[id], div[id]').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

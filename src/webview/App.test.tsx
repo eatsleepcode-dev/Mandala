@@ -33,7 +33,14 @@ describe('App', () => {
   it('renders the setup screen when initState.initialized is false', () => {
     render(<App />);
     fireHostMessage({ command: 'initState', initialized: false, hasMigratableData: false });
-    expect(screen.getByText(/initialize/i)).toBeInTheDocument();
+    expect(screen.getByText(/no \.mandala\/ workspace found/i)).toBeInTheDocument();
+  });
+
+  it('offers empty and example workspace initialization from setup', () => {
+    render(<App />);
+    fireHostMessage({ command: 'initState', initialized: false, hasMigratableData: false });
+    expect(screen.getByRole('button', { name: /initialize empty workspace/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /initialize with examples/i })).toBeInTheDocument();
   });
 
   it('shows migrate option when hasMigratableData is true', () => {
@@ -65,5 +72,14 @@ describe('App', () => {
     fireHostMessage({ command: 'loadStoryMap', cards: [] });
     fireHostMessage({ command: 'loadDiary', entries: [] });
     expect(screen.getByTestId('story-map-view')).toBeInTheDocument();
+  });
+
+  it('shows a starter-examples badge when example state is active', () => {
+    render(<App />);
+    fireHostMessage({ command: 'initState', initialized: true, hasMigratableData: false });
+    fireHostMessage({ command: 'loadStoryMap', cards: [] });
+    fireHostMessage({ command: 'loadDiary', entries: [] });
+    fireHostMessage({ command: 'loadExampleState', hasGettingStartedExamples: true });
+    expect(screen.getByText(/starter examples active/i)).toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type ViewId = 'storymap' | 'diary' | 'calendar' | 'sprints' | 'techdebt' | 'inbox' | 'settings';
+export type ViewId = 'storymap' | 'diary' | 'calendar' | 'sprints' | 'techdebt' | 'inbox' | 'agents' | 'settings';
 
 interface SidebarProps {
   active: ViewId;
@@ -59,6 +59,14 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
       >
         <span className="codicon codicon-inbox"></span>
         <span className="mandala-sidebar-tooltip">Inbox</span>
+      </div>
+      <div
+        className={`mandala-sidebar-icon ${active === 'agents' ? 'active' : ''}`}
+        onClick={() => onSelect('agents')}
+        title="Agents"
+      >
+        <span className="codicon codicon-hubot"></span>
+        <span className="mandala-sidebar-tooltip">Agents</span>
       </div>
 
       {/* Sticky footer for info/settings */}

@@ -51,6 +51,33 @@ export interface SprintRecord {
   body: string;
 }
 
+export interface AgentFileRef {
+  name: string;
+  path: string;
+  relativePath: string;
+}
+
+export interface GuideInsights {
+  title?: string;
+  updated?: string;
+  workflowCount?: number;
+  slashCommandCount?: number;
+  autoTriggerCount?: number;
+  qualityGateCount?: number;
+}
+
+export interface AgentResources {
+  workflows: AgentFileRef[];
+  skills: AgentFileRef[];
+  tasks: AgentFileRef[];
+  guides: AgentFileRef[];
+  registry: AgentFileRef[];
+  guidePath?: string;
+  guideInsights?: GuideInsights;
+}
+
+export type ThemeOverride = 'auto' | 'light' | 'dark' | 'neuromancer';
+
 // ─── Host → Webview messages ─────────────────────────────────────────────────
 
 export interface LoadStoryMapMessage {
@@ -73,10 +100,31 @@ export interface LoadTechDebtMessage {
   cards: TechDebtCard[];
 }
 
+export interface LoadAgentResourcesMessage {
+  command: 'loadAgentResources';
+  resources: AgentResources;
+}
+
+export interface LoadThemeMessage {
+  command: 'loadTheme';
+  override: ThemeOverride;
+}
+
+export interface LoadProgressMessage {
+  command: 'loadProgress';
+  step: string;
+  elapsedMs?: number;
+}
+
 export interface InitStateMessage {
   command: 'initState';
   initialized: boolean;
   hasMigratableData: boolean;
+}
+
+export interface LoadExampleStateMessage {
+  command: 'loadExampleState';
+  hasGettingStartedExamples: boolean;
 }
 
 export interface ErrorMessage {
@@ -164,21 +212,40 @@ export interface PathSelectedMessage {
 export interface ReadyMessage { command: 'ready'; }
 export interface RefreshMessage { command: 'refresh'; }
 export interface OpenFileMessage { command: 'openFile'; path: string; }
-export interface InitWorkspaceMessage { command: 'initWorkspace'; }
+export interface InitWorkspaceMessage {
+  command: 'initWorkspace';
+  withExamples?: boolean;
+}
 export interface MigrateWorkspaceMessage { command: 'migrateWorkspace'; }
+export interface SeedExamplesMessage { command: 'seedExamples'; }
+export interface RemoveExamplesMessage { command: 'removeExamples'; }
 export interface SaveSettingsMessage {
   command: 'saveSettings';
   settings: IntegrationSettings;
 }
 export interface OpenSettingsMessage { command: 'openSettings'; }
 export interface OpenGuideMessage { command: 'openGuide'; }
+export interface SetThemeOverrideMessage {
+  command: 'setThemeOverride';
+  override: ThemeOverride;
+}
+export interface RunSdlcStepMessage {
+  command: 'runSdlcStep';
+  step: 'plan' | 'execute' | 'validate' | 'close';
+  suggestedSlash: string;
+  fallbackPath?: string;
+}
 
 export type HostMessage =
   | LoadStoryMapMessage
   | LoadDiaryMessage
   | LoadSprintsMessage
   | LoadTechDebtMessage
+  | LoadAgentResourcesMessage
+  | LoadThemeMessage
+  | LoadProgressMessage
   | InitStateMessage
+  | LoadExampleStateMessage
   | ErrorMessage
   | LoadSettingsMessage
   | PathSelectedMessage;
@@ -194,8 +261,12 @@ export type WebviewMessage =
   | OpenFileMessage
   | InitWorkspaceMessage
   | MigrateWorkspaceMessage
+  | SeedExamplesMessage
+  | RemoveExamplesMessage
   | SaveSettingsMessage
   | BrowsePathMessage
   | OpenSettingsMessage
-  | OpenGuideMessage;
+  | OpenGuideMessage
+  | SetThemeOverrideMessage
+  | RunSdlcStepMessage;
 
