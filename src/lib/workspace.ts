@@ -1,23 +1,22 @@
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { parseFrontmatter } from './frontmatter';
-import type { TaskStatus, EntryType, TaskCard, DiaryEntry } from '../shared/types';
+import type { TaskStatus, EntryType, TaskCard, DiaryEntry, TechDebtSeverity, TechDebtCard, SprintRecord } from '../shared/types';
 
-export type { TaskStatus, EntryType, TaskCard, DiaryEntry };
+export type { TaskStatus, EntryType, TaskCard, DiaryEntry, TechDebtSeverity, TechDebtCard, SprintRecord };
 
 export interface FsLike {
-  readDirectory(uri: UriLike): Thenable<[string, number][]>;
-  readFile(uri: UriLike): Thenable<Uint8Array>;
-  writeFile(uri: UriLike, data: Uint8Array): Thenable<void>;
-  createDirectory(uri: UriLike): Thenable<void>;
-  delete(uri: UriLike, options?: { recursive?: boolean }): Thenable<void>;
+  readDirectory(uri: vscode.Uri): Thenable<[string, number][]>;
+  readFile(uri: vscode.Uri): Thenable<Uint8Array>;
+  writeFile(uri: vscode.Uri, data: Uint8Array): Thenable<void>;
+  createDirectory(uri: vscode.Uri): Thenable<void>;
+  delete(uri: vscode.Uri, options?: { recursive?: boolean }): Thenable<void>;
 }
 
-export interface UriLike {
-  fsPath: string;
-}
+export type UriLike = vscode.Uri;
 
 export const MANDALA_ROOT = '.mandala';
-export const MANDALA_SUBDIRS = ['inbox', 'diary', 'agents'] as const;
+export const MANDALA_SUBDIRS = ['inbox', 'diary', 'agents', 'tech-debt', 'sprints'] as const;
 type Subdir = (typeof MANDALA_SUBDIRS)[number];
 
 // Keep the old export name so extension.ts callers stay consistent
@@ -32,7 +31,7 @@ export interface DetectionResult {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function joinPath(base: UriLike, ...segments: string[]): UriLike {
-  return { fsPath: path.join(base.fsPath, ...segments) };
+  return vscode.Uri.joinPath(base, ...segments);
 }
 
 function decode(bytes: Uint8Array): string {
@@ -41,6 +40,40 @@ function decode(bytes: Uint8Array): string {
 
 function stem(filename: string): string {
   return path.basename(filename, path.extname(filename));
+}
+
+interface ParsedMarkdown {
+  name: string;
+  uri: UriLike;
+  meta: Record<string, unknown>;
+  body: string;
+}
+
+async function readMarkdownFiles(
+  dirUri: UriLike,
+  fs: Pick<FsLike, 'readDirectory' | 'readFile'>
+): Promise<ParsedMarkdown[]> {
+  let entries: [string, number][];
+  try {
+    entries = await fs.readDirectory(dirUri);
+  } catch {
+    return [];
+  }
+
+  const results: ParsedMarkdown[] = [];
+  for (const [name] of entries) {
+    if (!name.endsWith('.md')) continue;
+    const uri = joinPath(dirUri, name);
+    let raw: string;
+    try {
+      raw = decode(await fs.readFile(uri));
+    } catch {
+      continue;
+    }
+    const { meta, body } = parseFrontmatter(raw);
+    results.push({ name, uri, meta, body });
+  }
+  return results;
 }
 
 // ─── detectDevBrainFolders ───────────────────────────────────────────────────
@@ -71,27 +104,11 @@ export async function loadTaskCards(
   inboxUri: UriLike,
   fs: Pick<FsLike, 'readDirectory' | 'readFile'>
 ): Promise<TaskCard[]> {
-  let entries: [string, number][];
-  try {
-    entries = await fs.readDirectory(inboxUri);
-  } catch {
-    return [];
-  }
-
-  const cards: TaskCard[] = [];
-  for (const [name] of entries) {
-    if (!name.endsWith('.md')) continue;
-    const fileUri = joinPath(inboxUri, name);
-    let raw: string;
-    try {
-      raw = decode(await fs.readFile(fileUri));
-    } catch {
-      continue;
-    }
-
-    const { meta, body } = parseFrontmatter(raw);
+  const files = await readMarkdownFiles(inboxUri, fs);
+  
+  return files.map(({ name, uri, meta, body }) => {
     const id = typeof meta.id === 'string' ? meta.id : stem(name);
-    cards.push({
+    return {
       id,
       title: typeof meta.title === 'string' ? meta.title : id,
       sprint: typeof meta.sprint === 'number' ? meta.sprint : 0,
@@ -101,11 +118,10 @@ export async function loadTaskCards(
       points: typeof meta.points === 'number' ? meta.points : undefined,
       branch: typeof meta.branch === 'string' ? meta.branch : undefined,
       activity: typeof meta.activity === 'string' ? meta.activity : undefined,
-      path: fileUri.fsPath,
+      path: uri.fsPath,
       body,
-    });
-  }
-  return cards;
+    };
+  });
 }
 
 // ─── loadDiaryEntries ────────────────────────────────────────────────────────
@@ -114,27 +130,11 @@ export async function loadDiaryEntries(
   diaryUri: UriLike,
   fs: Pick<FsLike, 'readDirectory' | 'readFile'>
 ): Promise<DiaryEntry[]> {
-  let entries: [string, number][];
-  try {
-    entries = await fs.readDirectory(diaryUri);
-  } catch {
-    return [];
-  }
-
-  const results: DiaryEntry[] = [];
-  for (const [name] of entries) {
-    if (!name.endsWith('.md')) continue;
-    const fileUri = joinPath(diaryUri, name);
-    let raw: string;
-    try {
-      raw = decode(await fs.readFile(fileUri));
-    } catch {
-      continue;
-    }
-
-    const { meta, body } = parseFrontmatter(raw);
+  const files = await readMarkdownFiles(diaryUri, fs);
+  
+  const results: DiaryEntry[] = files.map(({ name, uri, meta, body }) => {
     const date = typeof meta.date === 'string' ? meta.date : stem(name);
-    results.push({
+    return {
       date,
       type: (meta.type as EntryType) ?? 'chore',
       title: typeof meta.title === 'string' ? meta.title : stem(name),
@@ -142,13 +142,61 @@ export async function loadDiaryEntries(
       files: Array.isArray(meta.files) ? (meta.files as string[]) : undefined,
       techDebt: meta.techDebt === true,
       adr: meta.adr === true,
-      path: fileUri.fsPath,
+      path: uri.fsPath,
       body,
-    });
-  }
+    };
+  });
 
   results.sort((a, b) => b.date.localeCompare(a.date));
   return results;
+}
+
+// ─── loadTechDebtCards ───────────────────────────────────────────────────────
+
+export async function loadTechDebtCards(
+  techDebtUri: UriLike,
+  fs: Pick<FsLike, 'readDirectory' | 'readFile'>
+): Promise<TechDebtCard[]> {
+  const files = await readMarkdownFiles(techDebtUri, fs);
+  
+  return files.map(({ name, uri, meta, body }) => {
+    const id = typeof meta.id === 'string' ? meta.id : stem(name);
+    return {
+      id,
+      title: typeof meta.title === 'string' ? meta.title : id,
+      severity: (meta.severity as TechDebtSeverity) ?? 'low',
+      tags: Array.isArray(meta.tags) ? (meta.tags as string[]) : [],
+      added: typeof meta.added === 'string' ? meta.added : new Date().toISOString().split('T')[0],
+      status: (meta.status as 'open' | 'resolved') ?? 'open',
+      path: uri.fsPath,
+      body,
+    };
+  });
+}
+
+// ─── loadSprintRecords ───────────────────────────────────────────────────────
+
+export async function loadSprintRecords(
+  sprintsUri: UriLike,
+  fs: Pick<FsLike, 'readDirectory' | 'readFile'>
+): Promise<SprintRecord[]> {
+  const files = await readMarkdownFiles(sprintsUri, fs);
+  
+  const records = files.map(({ name, uri, meta, body }) => {
+    return {
+      sprint: typeof meta.sprint === 'number' ? meta.sprint : parseInt(stem(name).replace(/\D/g, ''), 10) || 0,
+      goal: typeof meta.goal === 'string' ? meta.goal : '',
+      status: (meta.status as TaskStatus) ?? 'planned',
+      startDate: typeof meta.startDate === 'string' ? meta.startDate : undefined,
+      endDate: typeof meta.endDate === 'string' ? meta.endDate : undefined,
+      path: uri.fsPath,
+      body,
+    };
+  });
+
+  // Sort descending by sprint number
+  records.sort((a, b) => b.sprint - a.sprint);
+  return records;
 }
 
 // ─── migrateToMandalaFolder ─────────────────────────────────────────────────
@@ -208,9 +256,6 @@ export async function migrateToMandalaFolder(
 
 // ─── initDevBrainFolders ─────────────────────────────────────────────────────
 
-const TECH_DEBT_SEED = `# Technical Debt Register\n\n| ID | Description | Severity | Added |\n|---|---|---|---|\n`;
-const SPRINT_REGISTER_SEED = `# Sprint Register\n\n| Sprint | Goal | Status |\n|---|---|---|\n| 1 | Initial setup | planned |\n`;
-
 export async function initDevBrainFolders(
   workspaceRoot: UriLike,
   fs: Pick<FsLike, 'createDirectory' | 'writeFile'>
@@ -219,11 +264,33 @@ export async function initDevBrainFolders(
   const inbox = joinPath(workspaceRoot, MANDALA_ROOT, 'inbox');
   const diary = joinPath(workspaceRoot, MANDALA_ROOT, 'diary');
   const agents = joinPath(workspaceRoot, MANDALA_ROOT, 'agents');
+  const techDebt = joinPath(workspaceRoot, MANDALA_ROOT, 'tech-debt');
+  const sprints = joinPath(workspaceRoot, MANDALA_ROOT, 'sprints');
 
   await fs.createDirectory(inbox);
   await fs.createDirectory(diary);
   await fs.createDirectory(agents);
+  await fs.createDirectory(techDebt);
+  await fs.createDirectory(sprints);
 
-  await fs.writeFile(joinPath(agents, 'TECH_DEBT.md'), enc.encode(TECH_DEBT_SEED));
-  await fs.writeFile(joinPath(agents, 'SPRINT_REGISTER.md'), enc.encode(SPRINT_REGISTER_SEED));
+  // Generate some seed frontmatter files for Sprints and Tech Debt
+  const sprintSeed = `---
+sprint: 1
+goal: "Initial setup"
+status: "planned"
+---
+Initial project scaffolding.
+`;
+  await fs.writeFile(joinPath(sprints, 'Sprint-1.md'), enc.encode(sprintSeed));
+
+  const techDebtSeed = `---
+id: "TD-001"
+title: "Replace placeholder code"
+severity: "medium"
+tags: ["setup", "refactor"]
+status: "open"
+---
+The initial codebase contains some placeholders that need to be replaced.
+`;
+  await fs.writeFile(joinPath(techDebt, 'TD-001.md'), enc.encode(techDebtSeed));
 }

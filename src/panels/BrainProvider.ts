@@ -12,53 +12,72 @@ import {
 } from '../lib/integrations';
 import type { WebviewMessage, KnownIntegrationFlags, IntegrationSettings } from '../shared/types';
 
-export class BrainPanel {
-  public static currentPanel: BrainPanel | undefined;
+export class BrainProvider implements vscode.WebviewViewProvider {
+  public static readonly viewType = 'mandalaDashboard';
 
-  private readonly _panel: vscode.WebviewPanel;
-  private readonly _extensionUri: vscode.Uri;
-  private readonly _workspaceRoot: vscode.Uri;
+  private _view?: vscode.WebviewView;
   private _disposables: vscode.Disposable[] = [];
 
-  private constructor(
-    panel: vscode.WebviewPanel,
-    extensionUri: vscode.Uri,
-    workspaceRoot: vscode.Uri
-  ) {
-    this._panel = panel;
-    this._extensionUri = extensionUri;
-    this._workspaceRoot = workspaceRoot;
+  constructor(
+    private readonly _extensionUri: vscode.Uri,
+    private readonly _workspaceRoot: vscode.Uri
+  ) {}
 
-    this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
-    this._panel.webview.html = buildWebviewHtml(
-      this._panel.webview,
-      extensionUri,
+  public resolveWebviewView(
+    webviewView: vscode.WebviewView,
+    context: vscode.WebviewViewResolveContext,
+    _token: vscode.CancellationToken,
+  ) {
+    this._view = webviewView;
+
+    webviewView.webview.options = {
+      enableScripts: true,
+      localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview')]
+    };
+
+    webviewView.webview.html = buildWebviewHtml(
+      webviewView.webview,
+      this._extensionUri,
       getNonce()
     );
-    this._setWebviewMessageListener(this._panel.webview);
-  }
 
-  public static render(extensionUri: vscode.Uri, workspaceRoot: vscode.Uri): void {
-    if (BrainPanel.currentPanel) {
-      BrainPanel.currentPanel._panel.reveal(vscode.ViewColumn.One);
-      return;
-    }
-    const panel = vscode.window.createWebviewPanel(
-      'mandalaDashboard',
-      'Mandala',
-      vscode.ViewColumn.One,
-      {
-        enableScripts: true,
-        localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'dist', 'webview')],
-        retainContextWhenHidden: true,
+    this._setWebviewMessageListener(webviewView.webview);
+    
+    // Automatically initialize/refresh data when view becomes visible
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        this._sendInitialData();
       }
-    );
-    BrainPanel.currentPanel = new BrainPanel(panel, extensionUri, workspaceRoot);
+    }, null, this._disposables);
+
+    vscode.workspace.onDidChangeConfiguration(async (e) => {
+      if (e.affectsConfiguration('mandala')) {
+        await this._pushSettings();
+        // Also trigger sync if integration flags changed
+        if (e.affectsConfiguration('mandala.integrations')) {
+          const wsConfig = vscode.workspace.getConfiguration('mandala.integrations');
+          const known: KnownIntegrationFlags = {
+            claude: wsConfig.get('claude', true),
+            copilot: wsConfig.get('copilot', false),
+            cursor: wsConfig.get('cursor', false),
+            cline: wsConfig.get('cline', false),
+            claudeCommands: wsConfig.get('claudeCommands', true),
+          };
+          const config = await loadIntegrationConfig(this._workspaceRoot, vscode.workspace.fs);
+          await syncIntegrations(
+            this._workspaceRoot,
+            known,
+            config,
+            vscode.workspace.fs as any
+          );
+        }
+      }
+    }, null, this._disposables);
+
+    webviewView.onDidDispose(() => this.dispose(), null, this._disposables);
   }
 
   public dispose(): void {
-    BrainPanel.currentPanel = undefined;
-    this._panel.dispose();
     while (this._disposables.length) {
       this._disposables.pop()?.dispose();
     }
@@ -67,17 +86,15 @@ export class BrainPanel {
   private _setWebviewMessageListener(webview: vscode.Webview): void {
     webview.onDidReceiveMessage(
       async (message: WebviewMessage) => {
-        // Capture panel reference at handler start to avoid race on dispose
-        const panel = BrainPanel.currentPanel;
-        if (!panel) return;
+        if (!this._view) return;
 
         switch (message.command) {
           case 'ready':
-            await panel._sendInitialData();
+            await this._sendInitialData();
             return;
 
           case 'refresh':
-            await panel._pushData();
+            await this._pushData();
             return;
 
           case 'openFile':
@@ -88,14 +105,21 @@ export class BrainPanel {
 
           case 'initWorkspace': {
             const { initDevBrainFolders } = await import('../lib/workspace');
-            await initDevBrainFolders(panel._workspaceRoot, vscode.workspace.fs);
-            await panel._pushData();
+            await initDevBrainFolders(this._workspaceRoot, vscode.workspace.fs);
+            
+            this._view?.webview.postMessage({
+              command: 'initState',
+              initialized: true,
+              hasMigratableData: false,
+            });
+            
+            await this._pushData();
             return;
           }
 
           case 'migrateWorkspace': {
             const report = await migrateToMandalaFolder(
-              panel._workspaceRoot,
+              this._workspaceRoot,
               vscode.workspace.fs
             );
             if (report.skipped.length > 0) {
@@ -107,7 +131,36 @@ export class BrainPanel {
                 `Migration complete — ${report.moved.length} files moved to .mandala/`
               );
             }
-            await panel._pushData();
+            
+            this._view?.webview.postMessage({
+              command: 'initState',
+              initialized: true,
+              hasMigratableData: false,
+            });
+            
+            await this._pushData();
+            return;
+          }
+
+          case 'browsePath': {
+            const uris = await vscode.window.showOpenDialog({
+              canSelectFiles: true,
+              canSelectFolders: true,
+              canSelectMany: false,
+              openLabel: 'Select',
+              defaultUri: this._workspaceRoot,
+            });
+            if (uris && uris[0]) {
+              let selected = vscode.workspace.asRelativePath(uris[0], false);
+              if (message.field === 'source' && selected.startsWith('.mandala/agents/')) {
+                selected = selected.slice('.mandala/agents/'.length);
+              }
+              this._view?.webview.postMessage({
+                command: 'pathSelected',
+                field: message.field,
+                path: selected,
+              });
+            }
             return;
           }
 
@@ -115,11 +168,11 @@ export class BrainPanel {
             const { settings } = message;
             // Persist custom integrations to .mandala/config.json
             const config = await loadIntegrationConfig(
-              panel._workspaceRoot,
+              this._workspaceRoot,
               vscode.workspace.fs
             );
             config.custom = settings.custom;
-            await saveIntegrationConfig(panel._workspaceRoot, config, vscode.workspace.fs);
+            await saveIntegrationConfig(this._workspaceRoot, config, vscode.workspace.fs);
 
             // Update VS Code workspace settings for known flags
             const wsConfig = vscode.workspace.getConfiguration('mandala.integrations');
@@ -129,11 +182,21 @@ export class BrainPanel {
 
             // Run sync
             await syncIntegrations(
-              panel._workspaceRoot,
+              this._workspaceRoot,
               settings.known as KnownIntegrationFlags,
               config,
               vscode.workspace.fs as any
             );
+            return;
+          }
+
+          case 'openSettings':
+            vscode.commands.executeCommand('workbench.action.openSettings', '@ext:onetoomanybi.mandala');
+            return;
+
+          case 'openGuide': {
+            const guideUri = vscode.Uri.joinPath(this._extensionUri, 'docs', 'USER_GUIDE.md');
+            vscode.commands.executeCommand('markdown.showPreview', guideUri);
             return;
           }
         }
@@ -168,7 +231,7 @@ export class BrainPanel {
       }
     }
 
-    this._panel.webview.postMessage({
+    this._view?.webview.postMessage({
       command: 'initState',
       initialized: detection.found,
       hasMigratableData,
@@ -203,7 +266,7 @@ export class BrainPanel {
     };
     const config = await loadIntegrationConfig(this._workspaceRoot, vscode.workspace.fs);
     const settings: IntegrationSettings = { known, custom: config.custom };
-    this._panel.webview.postMessage({ command: 'loadSettings', settings });
+    this._view?.webview.postMessage({ command: 'loadSettings', settings });
   }
 
   private async _pushData(): Promise<void> {
@@ -211,16 +274,29 @@ export class BrainPanel {
     const root = this._workspaceRoot;
     const cfg = vscode.workspace.getConfiguration('mandala');
 
-    const inboxUri = vscode.Uri.joinPath(root, cfg.get<string>('inboxPath', '.mandala/inbox'));
-    const diaryUri = vscode.Uri.joinPath(root, cfg.get<string>('diaryPath', '.mandala/diary'));
+    const inboxPath = cfg.get<string>('inboxPath', '.mandala/inbox').split('/');
+    const diaryPath = cfg.get<string>('diaryPath', '.mandala/diary').split('/');
+    const techDebtPath = ['.mandala', 'tech-debt'];
+    const sprintsPath = ['.mandala', 'sprints'];
 
-    const [cards, entries] = await Promise.all([
+    const inboxUri = vscode.Uri.joinPath(root, ...inboxPath);
+    const diaryUri = vscode.Uri.joinPath(root, ...diaryPath);
+    const techDebtUri = vscode.Uri.joinPath(root, ...techDebtPath);
+    const sprintsUri = vscode.Uri.joinPath(root, ...sprintsPath);
+
+    const { loadTechDebtCards, loadSprintRecords } = await import('../lib/workspace');
+
+    const [cards, entries, techDebtCards, sprintRecords] = await Promise.all([
       loadTaskCards(inboxUri, fs),
       loadDiaryEntries(diaryUri, fs),
+      loadTechDebtCards(techDebtUri, fs),
+      loadSprintRecords(sprintsUri, fs),
     ]);
 
-    this._panel.webview.postMessage({ command: 'loadStoryMap', cards });
-    this._panel.webview.postMessage({ command: 'loadDiary', entries });
+    this._view?.webview.postMessage({ command: 'loadStoryMap', cards });
+    this._view?.webview.postMessage({ command: 'loadDiary', entries });
+    this._view?.webview.postMessage({ command: 'loadTechDebt', cards: techDebtCards });
+    this._view?.webview.postMessage({ command: 'loadSprints', records: sprintRecords });
   }
 }
 
@@ -238,12 +314,12 @@ export function buildWebviewHtml(
   extensionUri: { fsPath: string },
   nonce: string
 ): string {
-  const scriptUri = webview.asWebviewUri({
-    fsPath: `${extensionUri.fsPath}/dist/webview/webview.js`,
-  } as vscode.Uri);
-  const styleUri = webview.asWebviewUri({
-    fsPath: `${extensionUri.fsPath}/dist/webview/webview.css`,
-  } as vscode.Uri);
+  const scriptUri = webview.asWebviewUri(
+    vscode.Uri.joinPath(extensionUri as vscode.Uri, 'dist', 'webview', 'webview.js')
+  );
+  const styleUri = webview.asWebviewUri(
+    vscode.Uri.joinPath(extensionUri as vscode.Uri, 'dist', 'webview', 'webview.css')
+  );
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -252,6 +328,7 @@ export function buildWebviewHtml(
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy"
       content="default-src 'none';
+               font-src ${webview.cspSource};
                style-src ${webview.cspSource} 'unsafe-inline';
                script-src 'nonce-${nonce}';">
     <link rel="stylesheet" href="${styleUri}" />

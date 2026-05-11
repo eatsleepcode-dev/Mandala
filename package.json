@@ -2,7 +2,7 @@
   "name": "mandala",
   "displayName": "Mandala",
   "description": "Developer diary and sprint planner inside VS Code",
-  "version": "0.1.0",
+  "version": "0.1.5",
   "publisher": "onetoomanybi",
   "engines": {
     "vscode": "^1.90.0"
@@ -10,6 +10,12 @@
   "categories": [
     "Other"
   ],
+  "icon": "images/icon.png",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/onetoomanybi/Mandala"
+  },
   "keywords": [
     "diary",
     "planner",
@@ -18,10 +24,33 @@
     "developer"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onCommand:mandala.openDashboard",
+    "onCommand:mandala.initWorkspace",
+    "onView:mandalaDashboard"
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mandala-explorer",
+          "title": "Mandala",
+          "icon": "images/mandala-outline.svg"
+        }
+      ]
+    },
+    "views": {
+      "mandala-explorer": [
+        {
+          "type": "webview",
+          "id": "mandalaDashboard",
+          "name": "Dashboard",
+          "icon": "images/mandala-outline.svg",
+          "contextualTitle": "Mandala Dashboard"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "mandala.openDashboard",
@@ -91,7 +120,7 @@
     "lint": "eslint src --ext ts,tsx",
     "test": "jest",
     "test:watch": "jest --watch",
-    "package": "vsce package"
+    "package": "npx vsce package"
   },
   "jest": {
     "preset": "ts-jest",
@@ -177,6 +206,7 @@
     "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
+    "@vscode/vsce": "^3.9.1",
     "ajv": "^8.20.0",
     "css-loader": "^7.0.0",
     "eslint": "^9.0.0",
@@ -191,6 +221,7 @@
     "webpack-cli": "^5.1.0"
   },
   "dependencies": {
+    "@vscode/codicons": "^0.0.45",
     "react": "^18.3.0",
     "react-dom": "^18.3.0"
   }

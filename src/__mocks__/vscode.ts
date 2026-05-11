@@ -27,8 +27,8 @@ const commands = {
 
 const Uri = {
   file: jest.fn((path: string) => ({ fsPath: path, path })),
-  joinPath: jest.fn((...args: { fsPath: string }[]) => ({
-    fsPath: args.map((a) => a.fsPath ?? a).join('/'),
+  joinPath: jest.fn((base: { fsPath: string }, ...segments: string[]) => ({
+    fsPath: require('path').join(base.fsPath, ...segments),
   })),
 };
 

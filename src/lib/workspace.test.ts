@@ -240,6 +240,70 @@ type: chore
   });
 });
 
+// ─── loadTechDebtCards ───────────────────────────────────────────────────────
+
+describe('loadTechDebtCards', () => {
+  const techDebtUri = makeUri('/workspace/.mandala/tech-debt');
+
+  it('parses a tech debt card with frontmatter', async () => {
+    const mockFs = {
+      readDirectory: jest.fn().mockResolvedValue([['TD-001.md', 1]]),
+      readFile: jest.fn().mockResolvedValue(
+        md(`---
+id: "TD-001"
+title: "Fix auth bug"
+severity: "high"
+tags: ["auth", "bug"]
+status: "open"
+---
+Need to fix the token expiration logic.`)
+      ),
+    };
+    const { loadTechDebtCards } = require('./workspace');
+    const cards = await loadTechDebtCards(techDebtUri as any, mockFs as any);
+    expect(cards).toHaveLength(1);
+    const c = cards[0];
+    expect(c.id).toBe('TD-001');
+    expect(c.title).toBe('Fix auth bug');
+    expect(c.severity).toBe('high');
+    expect(c.tags).toEqual(['auth', 'bug']);
+    expect(c.status).toBe('open');
+    expect(c.body).toBe('Need to fix the token expiration logic.');
+  });
+});
+
+// ─── loadSprintRecords ───────────────────────────────────────────────────────
+
+describe('loadSprintRecords', () => {
+  const sprintsUri = makeUri('/workspace/.mandala/sprints');
+
+  it('parses a sprint record with frontmatter', async () => {
+    const mockFs = {
+      readDirectory: jest.fn().mockResolvedValue([['Sprint-2.md', 1]]),
+      readFile: jest.fn().mockResolvedValue(
+        md(`---
+sprint: 2
+goal: "User Dashboard"
+status: "in-progress"
+startDate: "2026-05-01"
+endDate: "2026-05-14"
+---
+Sprint 2 details here.`)
+      ),
+    };
+    const { loadSprintRecords } = require('./workspace');
+    const records = await loadSprintRecords(sprintsUri as any, mockFs as any);
+    expect(records).toHaveLength(1);
+    const r = records[0];
+    expect(r.sprint).toBe(2);
+    expect(r.goal).toBe('User Dashboard');
+    expect(r.status).toBe('in-progress');
+    expect(r.startDate).toBe('2026-05-01');
+    expect(r.endDate).toBe('2026-05-14');
+    expect(r.body).toBe('Sprint 2 details here.');
+  });
+});
+
 // ─── migrateToMandalaFolder ─────────────────────────────────────────────────
 
 describe('migrateToMandalaFolder', () => {
@@ -331,6 +395,7 @@ describe('initDevBrainFolders', () => {
       createDirectory: jest.fn().mockResolvedValue(undefined),
       writeFile: jest.fn().mockResolvedValue(undefined),
     };
+    const { initDevBrainFolders } = require('./workspace');
     await initDevBrainFolders(root as any, mockFs as any);
     const created: string[] = mockFs.createDirectory.mock.calls.map(
       (c: [{ fsPath: string }]) => c[0].fsPath
@@ -338,6 +403,8 @@ describe('initDevBrainFolders', () => {
     expect(created.some((p) => p.includes(path.join('.mandala', 'inbox')))).toBe(true);
     expect(created.some((p) => p.includes(path.join('.mandala', 'diary')))).toBe(true);
     expect(created.some((p) => p.includes(path.join('.mandala', 'agents')))).toBe(true);
+    expect(created.some((p) => p.includes(path.join('.mandala', 'tech-debt')))).toBe(true);
+    expect(created.some((p) => p.includes(path.join('.mandala', 'sprints')))).toBe(true);
     expect(mockFs.writeFile).toHaveBeenCalledTimes(2);
   });
 });

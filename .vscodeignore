@@ -7,3 +7,13 @@ webpack.config.js
 tsconfig*.json
 node_modules/**
 out/**
+tests/**
+**/*.test.ts
+**/*.test.tsx
+**/__mocks__/**
+.mandala/**
+SPRINT_LOG.md
+STORY_MAP.md
+TECH_DEBT.md
+README.md
+CHANGELOG.md

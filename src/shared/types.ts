@@ -2,6 +2,7 @@
 
 export type TaskStatus = 'planned' | 'in-progress' | 'complete' | 'blocked';
 export type EntryType = 'feat' | 'fix' | 'chore' | 'docs' | 'test' | 'tidy';
+export type TechDebtSeverity = 'high' | 'medium' | 'low';
 
 export interface TaskCard {
   id: string;
@@ -29,6 +30,27 @@ export interface DiaryEntry {
   body: string;
 }
 
+export interface TechDebtCard {
+  id: string;
+  title: string;
+  severity: TechDebtSeverity;
+  tags: string[];
+  added: string;
+  status: 'open' | 'resolved';
+  path: string;
+  body: string;
+}
+
+export interface SprintRecord {
+  sprint: number;
+  goal: string;
+  status: TaskStatus;
+  startDate?: string;
+  endDate?: string;
+  path: string;
+  body: string;
+}
+
 // ─── Host → Webview messages ─────────────────────────────────────────────────
 
 export interface LoadStoryMapMessage {
@@ -39,6 +61,16 @@ export interface LoadStoryMapMessage {
 export interface LoadDiaryMessage {
   command: 'loadDiary';
   entries: DiaryEntry[];
+}
+
+export interface LoadSprintsMessage {
+  command: 'loadSprints';
+  records: SprintRecord[];
+}
+
+export interface LoadTechDebtMessage {
+  command: 'loadTechDebt';
+  cards: TechDebtCard[];
 }
 
 export interface InitStateMessage {
@@ -121,6 +153,12 @@ export interface LoadSettingsMessage {
   settings: IntegrationSettings;
 }
 
+export interface PathSelectedMessage {
+  command: 'pathSelected';
+  field: 'source' | 'target';
+  path: string;
+}
+
 // ─── Webview → Host messages ─────────────────────────────────────────────────
 
 export interface ReadyMessage { command: 'ready'; }
@@ -132,13 +170,23 @@ export interface SaveSettingsMessage {
   command: 'saveSettings';
   settings: IntegrationSettings;
 }
+export interface OpenSettingsMessage { command: 'openSettings'; }
+export interface OpenGuideMessage { command: 'openGuide'; }
 
 export type HostMessage =
   | LoadStoryMapMessage
   | LoadDiaryMessage
+  | LoadSprintsMessage
+  | LoadTechDebtMessage
   | InitStateMessage
   | ErrorMessage
-  | LoadSettingsMessage;
+  | LoadSettingsMessage
+  | PathSelectedMessage;
+
+export interface BrowsePathMessage {
+  command: 'browsePath';
+  field: 'source' | 'target';
+}
 
 export type WebviewMessage =
   | ReadyMessage
@@ -146,4 +194,8 @@ export type WebviewMessage =
   | OpenFileMessage
   | InitWorkspaceMessage
   | MigrateWorkspaceMessage
-  | SaveSettingsMessage;
+  | SaveSettingsMessage
+  | BrowsePathMessage
+  | OpenSettingsMessage
+  | OpenGuideMessage;
+

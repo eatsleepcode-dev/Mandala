@@ -1,8 +1,8 @@
-// Tests for BrainPanel message handling logic extracted into testable helpers.
-// BrainPanel itself is hard to unit-test (it wraps vscode.WebviewPanel), so we
+// Tests for BrainProvider message handling logic extracted into testable helpers.
+// BrainProvider itself is hard to unit-test (it wraps vscode.WebviewPanel), so we
 // test the pure business-logic functions it delegates to.
 
-import { buildWebviewHtml } from './BrainPanel';
+import { buildWebviewHtml } from './BrainProvider';
 
 // ─── buildWebviewHtml ─────────────────────────────────────────────────────────
 
@@ -48,7 +48,7 @@ describe('buildWebviewHtml', () => {
 
 // ─── getNonce ────────────────────────────────────────────────────────────────
 
-import { getNonce } from './BrainPanel';
+import { getNonce } from './BrainProvider';
 
 describe('getNonce', () => {
   it('returns a 32-character string', () => {

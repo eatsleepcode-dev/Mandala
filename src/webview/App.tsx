@@ -3,12 +3,17 @@ import { vscode } from './vscode';
 import { Sidebar } from './components/Sidebar';
 import { StoryMapView } from './components/StoryMapView';
 import { DiaryView } from './components/DiaryView';
+import { TechDebtView } from './components/TechDebtView';
+import { SprintsView } from './components/SprintsView';
+import { InboxView } from './components/InboxView';
 import { SettingsView } from './components/SettingsView';
 import type {
   HostMessage,
   TaskCard,
   DiaryEntry,
   IntegrationSettings,
+  TechDebtCard,
+  SprintRecord,
 } from '../shared/types';
 import type { ViewId } from './components/Sidebar';
 
@@ -28,7 +33,7 @@ const DEFAULT_SETTINGS: IntegrationSettings = {
 type Phase =
   | { status: 'loading' }
   | { status: 'setup'; hasMigratableData: boolean }
-  | { status: 'ready'; cards: TaskCard[]; entries: DiaryEntry[] };
+  | { status: 'ready'; cards: TaskCard[]; entries: DiaryEntry[]; techDebtCards: TechDebtCard[]; sprintRecords: SprintRecord[] };
 
 interface AppState {
   phase: Phase;
@@ -40,6 +45,8 @@ type Action =
   | { type: 'INIT'; initialized: boolean; hasMigratableData: boolean }
   | { type: 'LOAD_STORY_MAP'; cards: TaskCard[] }
   | { type: 'LOAD_DIARY'; entries: DiaryEntry[] }
+  | { type: 'LOAD_TECH_DEBT'; cards: TechDebtCard[] }
+  | { type: 'LOAD_SPRINTS'; records: SprintRecord[] }
   | { type: 'LOAD_SETTINGS'; settings: IntegrationSettings }
   | { type: 'SET_VIEW'; view: ViewId };
 
@@ -47,7 +54,7 @@ function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'INIT':
       return action.initialized
-        ? { ...state, phase: { status: 'ready', cards: [], entries: [] } }
+        ? { ...state, phase: { status: 'ready', cards: [], entries: [], techDebtCards: [], sprintRecords: [] } }
         : { ...state, phase: { status: 'setup', hasMigratableData: action.hasMigratableData } };
 
     case 'LOAD_STORY_MAP':
@@ -57,6 +64,14 @@ function reducer(state: AppState, action: Action): AppState {
     case 'LOAD_DIARY':
       if (state.phase.status !== 'ready') return state;
       return { ...state, phase: { ...state.phase, entries: action.entries } };
+
+    case 'LOAD_TECH_DEBT':
+      if (state.phase.status !== 'ready') return state;
+      return { ...state, phase: { ...state.phase, techDebtCards: action.cards } };
+
+    case 'LOAD_SPRINTS':
+      if (state.phase.status !== 'ready') return state;
+      return { ...state, phase: { ...state.phase, sprintRecords: action.records } };
 
     case 'LOAD_SETTINGS':
       return { ...state, settings: action.settings };
@@ -90,6 +105,12 @@ export default function App() {
           break;
         case 'loadDiary':
           dispatch({ type: 'LOAD_DIARY', entries: msg.entries });
+          break;
+        case 'loadTechDebt':
+          dispatch({ type: 'LOAD_TECH_DEBT', cards: msg.cards });
+          break;
+        case 'loadSprints':
+          dispatch({ type: 'LOAD_SPRINTS', records: msg.records });
           break;
         case 'loadSettings':
           dispatch({ type: 'LOAD_SETTINGS', settings: msg.settings });
@@ -142,11 +163,14 @@ export default function App() {
         {activeView === 'diary' && (
           <DiaryView entries={phase.entries} onOpenFile={openFile} />
         )}
-        {activeView === 'settings' && (
-          <SettingsView
-            settings={settings}
-            onSave={(updated) => vscode.postMessage({ command: 'saveSettings', settings: updated })}
-          />
+        {activeView === 'techdebt' && (
+          <TechDebtView cards={phase.techDebtCards} onOpenFile={openFile} />
+        )}
+        {activeView === 'sprints' && (
+          <SprintsView records={phase.sprintRecords} onOpenFile={openFile} />
+        )}
+        {activeView === 'inbox' && (
+          <InboxView cards={phase.cards} onOpenFile={openFile} />
         )}
       </main>
     </div>

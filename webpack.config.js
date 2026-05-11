@@ -48,6 +48,11 @@ module.exports = [
           test: /\.css$/,
           use: [MiniCssExtractPlugin.loader, 'css-loader'],
         },
+        {
+          test: /\.ttf$/,
+          type: 'asset/resource',
+          generator: { filename: '[name][ext]' }
+        },
       ],
     },
     plugins: [

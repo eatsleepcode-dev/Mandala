@@ -1,3 +1,5 @@
+@import '@vscode/codicons/dist/codicon.css';
+
 :root {
   --bg: #1e1e1e;
   --bg-sidebar: #252526;
@@ -67,40 +69,63 @@ body {
 .mandala-main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
 /* Sidebar */
-.sidebar {
+.mandala-sidebar {
   width: 48px;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 0;
-  gap: 4px;
+  padding: 10px 0;
+  gap: 8px;
   flex-shrink: 0;
 }
 
-.sidebar-icon {
+.mandala-sidebar-icon {
   width: 40px; height: 40px;
   display: flex; align-items: center; justify-content: center;
   border-radius: var(--radius);
   cursor: pointer;
   color: var(--fg-dim);
-  font-size: 18px;
+  font-size: 24px;
   background: none;
   border: 1px solid transparent;
   position: relative;
 }
-.sidebar-icon:hover { color: var(--fg); background: var(--bg-card); }
-.sidebar-icon.active { color: var(--fg); border-color: var(--blue); background: rgba(14,99,156,0.15); }
-.tooltip {
+.mandala-sidebar-icon:hover { color: var(--fg); background: var(--bg-card); }
+.mandala-sidebar-icon.active { color: var(--fg); border-color: var(--blue); background: rgba(14,99,156,0.15); }
+.mandala-sidebar-icon:hover .mandala-sidebar-tooltip { opacity: 1; }
+
+.mandala-sidebar-tooltip {
   position: absolute; left: 48px;
   background: var(--bg-panel); border: 1px solid var(--border);
   padding: 4px 8px; border-radius: var(--radius);
   white-space: nowrap; font-size: 11px; color: var(--fg);
   pointer-events: none; opacity: 0; transition: opacity 0.1s; z-index: 100;
 }
-.sidebar-icon:hover .tooltip { opacity: 1; }
 
+.mandala-sidebar-divider {
+  width: 24px;
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.mandala-sidebar-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 12px;
+}
+
+.mandala-sidebar-version {
+  font-size: 10px;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  cursor: default;
+}
 /* Empty state */
 .empty-state {
   display: flex; align-items: center; justify-content: center;

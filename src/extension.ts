@@ -1,8 +1,16 @@
 import * as vscode from 'vscode';
-import { BrainPanel } from './panels/BrainPanel';
+import { BrainProvider } from './panels/BrainProvider';
 import { detectDevBrainFolders, migrateToMandalaFolder } from './lib/workspace';
 
 export function activate(context: vscode.ExtensionContext): void {
+  const root = getWorkspaceRoot();
+  if (root) {
+    const provider = new BrainProvider(context.extensionUri, root);
+    context.subscriptions.push(
+      vscode.window.registerWebviewViewProvider(BrainProvider.viewType, provider)
+    );
+  }
+
   // Deprecated aliases so keybindings created under the old "Meridian" name still work
   context.subscriptions.push(
     vscode.commands.registerCommand('meridian.openDashboard', () =>
@@ -17,7 +25,6 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('mandala.openDashboard', async () => {
-      const root = getWorkspaceRoot();
       if (!root) {
         vscode.window.showWarningMessage('Mandala requires an open workspace folder.');
         return;
@@ -58,7 +65,7 @@ export function activate(context: vscode.ExtensionContext): void {
         }
       }
 
-      BrainPanel.render(context.extensionUri, root);
+      vscode.commands.executeCommand(`${BrainProvider.viewType}.focus`);
     })
   );
 

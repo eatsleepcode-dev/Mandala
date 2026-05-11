@@ -1,4 +1,5 @@
 import * as path from 'path';
+import * as vscode from 'vscode';
 import {
   KNOWN_INTEGRATIONS,
   type CustomIntegration,
@@ -22,9 +23,7 @@ export interface SyncReport {
   failed: number;
 }
 
-interface UriLike {
-  fsPath: string;
-}
+export type UriLike = vscode.Uri;
 
 interface IntegrationFsLike {
   readFile(uri: UriLike): Thenable<Uint8Array>;
@@ -38,7 +37,7 @@ const AGENTS_ROOT = path.join(MANDALA_ROOT, 'agents');
 const CONFIG_PATH = path.join(MANDALA_ROOT, 'config.json');
 
 function joinPath(base: UriLike, ...segments: string[]): UriLike {
-  return { fsPath: path.join(base.fsPath, ...segments) };
+  return vscode.Uri.joinPath(base, ...segments);
 }
 
 export async function loadIntegrationConfig(
@@ -93,14 +92,14 @@ export async function syncIntegrations(
       await fs.readFile(sourceUri);
     } catch {
       try {
-        await fs.createDirectory({ fsPath: path.dirname(sourceUri.fsPath) });
+        await fs.createDirectory(vscode.Uri.file(path.dirname(sourceUri.fsPath)));
       } catch { /* already exists */ }
       await fs.writeFile(sourceUri, enc.encode(`# ${label}\n\nAdd your agent context here.\n`));
     }
 
     // Create parent directory for target
     try {
-      await fs.createDirectory({ fsPath: path.dirname(targetUri.fsPath) });
+      await fs.createDirectory(vscode.Uri.file(path.dirname(targetUri.fsPath)));
     } catch { /* already exists */ }
 
     // Try symlink; fall back to copying the file

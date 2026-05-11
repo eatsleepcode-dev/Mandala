@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import type { IntegrationSettings, CustomIntegration } from '../../shared/types';
+import React, { useState, useEffect } from 'react';
+import { vscode } from '../vscode';
+import type { IntegrationSettings, CustomIntegration, HostMessage } from '../../shared/types';
 import { KNOWN_INTEGRATIONS } from '../../shared/types';
 
 interface Props {
@@ -18,6 +19,21 @@ const EMPTY_FORM: AddForm = { label: '', source: '', target: '' };
 export function SettingsView({ settings, onSave }: Props) {
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState<AddForm>(EMPTY_FORM);
+
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      const msg = event.data as HostMessage;
+      if (msg.command === 'pathSelected') {
+        setForm((f) => ({ ...f, [msg.field]: msg.path }));
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  function requestBrowse(field: 'source' | 'target') {
+    vscode.postMessage({ command: 'browsePath', field });
+  }
 
   function toggleKnown(id: string) {
     onSave({
@@ -119,21 +135,38 @@ export function SettingsView({ settings, onSave }: Props) {
 
         {adding ? (
           <form aria-label="New integration" className="settings-add-form">
-            <input
-              placeholder="Label"
-              value={form.label}
-              onChange={(e) => setForm({ ...form, label: e.target.value })}
-            />
-            <input
-              placeholder="Source (relative to .mandala/agents/)"
-              value={form.source}
-              onChange={(e) => setForm({ ...form, source: e.target.value })}
-            />
-            <input
-              placeholder="Target (relative to workspace root)"
-              value={form.target}
-              onChange={(e) => setForm({ ...form, target: e.target.value })}
-            />
+            <div style={{ display: 'flex', gap: '4px', flexDirection: 'column' }}>
+              <input
+                placeholder="Label"
+                title="A descriptive name for your custom integration"
+                value={form.label}
+                onChange={(e) => setForm({ ...form, label: e.target.value })}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <input
+                style={{ flex: 1 }}
+                placeholder="Source (relative to .mandala/agents/)"
+                title="The file path inside the .mandala/agents folder"
+                value={form.source}
+                onChange={(e) => setForm({ ...form, source: e.target.value })}
+              />
+              <button type="button" onClick={() => requestBrowse('source')} title="Browse for source file">Browse...</button>
+            </div>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <input
+                style={{ flex: 1 }}
+                placeholder="Target (relative to workspace root)"
+                title="The destination file path where it will be linked/copied"
+                value={form.target}
+                onChange={(e) => setForm({ ...form, target: e.target.value })}
+              />
+              <button type="button" onClick={() => requestBrowse('target')} title="Browse for target location">Browse...</button>
+            </div>
+            <p className="settings-hint">
+              <strong>Source:</strong> Select the agent configuration or instructions file from your Mandala agents folder.<br/>
+              <strong>Target:</strong> Select where the file should be linked or copied in your workspace.
+            </p>
             <div className="settings-add-actions">
               <button type="button" onClick={confirmAdd} aria-label="Confirm">
                 Confirm
