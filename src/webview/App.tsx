@@ -115,7 +115,7 @@ export default function App() {
         <h1>Mandala</h1>
         {phase.hasMigratableData ? (
           <>
-            <p>Existing __inbox/, diary/, or .agents/ folders detected.</p>
+            <p>Existing data folders detected (.meridian/, __inbox/, diary/, or .agents/).</p>
             <button onClick={() => vscode.postMessage({ command: 'migrateWorkspace' })}>
               Migrate to .mandala/
             </button>

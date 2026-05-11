@@ -149,22 +149,21 @@ export class BrainPanel {
       vscode.workspace.fs
     );
 
-    // Check if legacy folders exist for migration prompt
+    // Check if legacy folders exist for migration prompt (.meridian/ rename or old flat layout)
     let hasMigratableData = false;
     if (!detection.found) {
-      try {
-        await vscode.workspace.fs.readDirectory(
-          vscode.Uri.file(`${this._workspaceRoot.fsPath}/__inbox/__todo`)
-        );
-        hasMigratableData = true;
-      } catch {
+      const legacyCandidates = [
+        vscode.Uri.joinPath(this._workspaceRoot, '.meridian'),
+        vscode.Uri.joinPath(this._workspaceRoot, '__inbox', '__todo'),
+        vscode.Uri.joinPath(this._workspaceRoot, 'diary'),
+      ];
+      for (const uri of legacyCandidates) {
         try {
-          await vscode.workspace.fs.readDirectory(
-            vscode.Uri.file(`${this._workspaceRoot.fsPath}/diary`)
-          );
+          await vscode.workspace.fs.readDirectory(uri);
           hasMigratableData = true;
+          break;
         } catch {
-          // no legacy data
+          // not present, try next
         }
       }
     }
@@ -185,12 +184,22 @@ export class BrainPanel {
 
   private async _pushSettings(): Promise<void> {
     const wsConfig = vscode.workspace.getConfiguration('mandala.integrations');
+    const legacyConfig = vscode.workspace.getConfiguration('meridian.integrations');
+
+    // For each key, use the mandala.* value if explicitly set by the user; otherwise
+    // fall back to the legacy meridian.* value so settings survive the rename.
+    function getWithFallback<T>(key: string, defaultVal: T): T {
+      const insp = wsConfig.inspect<T>(key);
+      const explicitlySet = insp?.workspaceValue !== undefined || insp?.globalValue !== undefined;
+      return explicitlySet ? wsConfig.get<T>(key, defaultVal) : legacyConfig.get<T>(key, defaultVal);
+    }
+
     const known: KnownIntegrationFlags = {
-      claude: wsConfig.get<boolean>('claude', true),
-      copilot: wsConfig.get<boolean>('copilot', false),
-      cursor: wsConfig.get<boolean>('cursor', false),
-      cline: wsConfig.get<boolean>('cline', false),
-      claudeCommands: wsConfig.get<boolean>('claudeCommands', true),
+      claude: getWithFallback('claude', true),
+      copilot: getWithFallback('copilot', false),
+      cursor: getWithFallback('cursor', false),
+      cline: getWithFallback('cline', false),
+      claudeCommands: getWithFallback('claudeCommands', true),
     };
     const config = await loadIntegrationConfig(this._workspaceRoot, vscode.workspace.fs);
     const settings: IntegrationSettings = { known, custom: config.custom };

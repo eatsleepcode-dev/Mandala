@@ -3,6 +3,18 @@ import { BrainPanel } from './panels/BrainPanel';
 import { detectDevBrainFolders, migrateToMandalaFolder } from './lib/workspace';
 
 export function activate(context: vscode.ExtensionContext): void {
+  // Deprecated aliases so keybindings created under the old "Meridian" name still work
+  context.subscriptions.push(
+    vscode.commands.registerCommand('meridian.openDashboard', () =>
+      vscode.commands.executeCommand('mandala.openDashboard')
+    )
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand('meridian.initWorkspace', () =>
+      vscode.commands.executeCommand('mandala.initWorkspace')
+    )
+  );
+
   context.subscriptions.push(
     vscode.commands.registerCommand('mandala.openDashboard', async () => {
       const root = getWorkspaceRoot();
@@ -18,7 +30,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
         if (hasMigratableData) {
           const choice = await vscode.window.showInformationMessage(
-            'Mandala found existing __inbox/, diary/, or .agents/ folders. Migrate them to .mandala/?',
+            'Mandala found existing data folders (.meridian/, __inbox/, diary/, or .agents/). Migrate them to .mandala/?',
             'Migrate',
             'Initialize Fresh',
             'Cancel'
@@ -72,6 +84,7 @@ function getWorkspaceRoot(): vscode.Uri | undefined {
 
 async function checkLegacyFolders(root: vscode.Uri): Promise<boolean> {
   const legacyPaths = [
+    vscode.Uri.joinPath(root, '.meridian'),
     vscode.Uri.joinPath(root, '__inbox', '__todo'),
     vscode.Uri.joinPath(root, 'diary'),
     vscode.Uri.joinPath(root, '.agents'),
