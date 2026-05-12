@@ -117,7 +117,7 @@ export function StoryMapView({ cards, sprintRecords, onOpenFile }: Props) {
                 : 'PLANNED';
               return (
                 <div key={sp} className="sprint-label-cell">
-                  <span className="sprint-num">S{sp}</span>
+                  <span className="sprint-num">Sprint {sp}</span>
                   {record?.goal && <span className="sprint-title">{record.goal}</span>}
                   <span className={`sprint-status-badge ${badgeClass}`}>{badgeLabel}</span>
                 </div>
@@ -138,6 +138,7 @@ export function StoryMapView({ cards, sprintRecords, onOpenFile }: Props) {
                         <div
                           key={c.id}
                           className={`story-card ${c.status}`}
+                          data-status={c.status}
                           onClick={() => onOpenFile(c.path)}
                           role="button"
                           tabIndex={0}
