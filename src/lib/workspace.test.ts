@@ -79,6 +79,25 @@ describe('loadTaskCards', () => {
     expect(cards).toEqual([]);
   });
 
+  it('reads task cards from nested inbox folders', async () => {
+    const mockFs = {
+      readDirectory: jest.fn().mockImplementation((uri: { fsPath: string }) => {
+        if (uri.fsPath.endsWith('inbox')) return Promise.resolve([['__todo', 2]]);
+        if (uri.fsPath.endsWith('__todo')) return Promise.resolve([['20260512', 2]]);
+        if (uri.fsPath.endsWith('20260512')) return Promise.resolve([['task-GAP-01.md', 1]]);
+        return Promise.resolve([]);
+      }),
+      readFile: jest.fn().mockResolvedValue(
+        md('---\nid: GAP-01\ntitle: Nested task\n---\nBody')
+      ),
+    };
+
+    const cards = await loadTaskCards(inboxUri as any, mockFs as any);
+    expect(cards).toHaveLength(1);
+    expect(cards[0].id).toBe('GAP-01');
+    expect(cards[0].title).toBe('Nested task');
+  });
+
   it('ignores non-markdown files', async () => {
     const mockFs = {
       readDirectory: jest.fn().mockResolvedValue([['README.txt', 1], ['image.png', 1]]),

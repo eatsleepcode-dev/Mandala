@@ -137,8 +137,8 @@ For each task card in this sprint:
 ```
 
 Then archive story map artefacts for the same gap(s):
-- Find `__inbox/__todo/*/story-map-{gap-id}.md`
-- Find `__inbox/__todo/*/story-map-{gap-id}.html`
+- Find `.mandala/inbox/__todo/*/story-map-{gap-id}.md`
+- Find `.mandala/inbox/__todo/*/story-map-{gap-id}.html`
 - Ensure `.agents/sprints/story-maps/` exists (create if missing)
 - Move both files to `.agents/sprints/story-maps/` and keep the date prefix in the filename if there are naming collisions
 - If a story map is missing, note that explicitly in the sprint close log instead of failing silently

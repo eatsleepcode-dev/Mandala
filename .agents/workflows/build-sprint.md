@@ -6,7 +6,7 @@ description: Build a sprint task card — pre-mortem, elephant register, migrati
 
 **Vibe Mode**: CREATION (planning only — no implementation in this skill)
 
-Produces a task card at `__inbox/__todo/{YYYYMMDD}/task-{gap-id}.md` (active work location).
+Produces a task card at `.mandala/inbox/__todo/{YYYYMMDD}/task-{gap-id}.md` (active work location).
 Sprint-close moves it to `.agents/sprints/task-cards/` on completion.
 The card is the only artefact — no code is written here.
 
@@ -29,7 +29,7 @@ Select-String -Path ".agents/SPRINT_REGISTER.md" -Pattern "IN PROGRESS|PLANNED" 
 ```
 
 - Is the previous sprint marked `COMPLETE`?
-- If `IN PROGRESS`: does a task card exist in `__inbox/__todo/` or `.agents/sprints/task-cards/`?
+- If `IN PROGRESS`: does a task card exist in `.mandala/inbox/__todo/` or `.agents/sprints/task-cards/`?
 - If the task card exists but the sprint register row still says `IN PROGRESS`: run `/sprint-close` before continuing.
 
 **Gate outcome:**
@@ -126,7 +126,7 @@ Target Condition — Sprint N — {date}
 - Experiment threshold: test is FAILED if {measurable condition}
 ```
 
-If a story map exists for this gap (`__inbox/__todo/*/story-map-{gap-id}.md`), copy the Target Condition from it directly. If no story map exists, write the TC now before ordering cycles.
+If a story map exists for this gap (`.mandala/inbox/__todo/*/story-map-{gap-id}.md`), copy the Target Condition from it directly. If no story map exists, write the TC now before ordering cycles.
 
 **Walking Skeleton check (Jeff Patton):**
 If multiple cycles are planned, identify which cycle delivers the thinnest end-to-end slice of value. Order Ralph's Ledger skeleton-first — a user should be able to observe value after the first GREEN, not only after all cycles are complete.
@@ -185,7 +185,7 @@ Search in order:
      exactly what remains — do not re-plan what is already done
 2. `.agents/ROADMAP.md` — gap items and FMD comparison candidates
 3. `.agents/TECH_DEBT.md` — open TD items tagged with this gap or sprint
-4. `.agents/sprints/task-cards/` and `__inbox/__todo/` — any existing completed or in-progress task cards for the same gap
+4. `.agents/sprints/task-cards/` and `.mandala/inbox/__todo/` — any existing completed or in-progress task cards for the same gap
    - Sprint plans use YAML frontmatter with `adr_required: [ADR-045, ...]` — note any listed ADRs
 
 If carryover from a prior sprint is found, the task card must include a
@@ -316,7 +316,7 @@ Document each identified risk as an elephant in the task card. Every elephant is
 
 Create the file at:
 ```
-__inbox/__todo/{YYYYMMDD}/task-{gap-id}.md
+.mandala/inbox/__todo/{YYYYMMDD}/task-{gap-id}.md
 ```
 
 Use `task-init.md` as the template. Fill in every section:

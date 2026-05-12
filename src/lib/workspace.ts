@@ -137,6 +137,8 @@ function joinPath(base: UriLike, ...segments: string[]): UriLike {
   return vscode.Uri.joinPath(base, ...segments);
 }
 
+const DIRECTORY_FILE_TYPE = vscode.FileType?.Directory ?? 2;
+
 function decode(bytes: Uint8Array): string {
   return new TextDecoder().decode(bytes);
 }
@@ -189,6 +191,39 @@ async function readMarkdownFiles(
   return results;
 }
 
+async function readMarkdownFilesRecursive(
+  dirUri: UriLike,
+  fs: Pick<FsLike, 'readDirectory' | 'readFile'>
+): Promise<ParsedMarkdown[]> {
+  let entries: [string, number][];
+  try {
+    entries = await fs.readDirectory(dirUri);
+  } catch {
+    return [];
+  }
+
+  const results: ParsedMarkdown[] = [];
+  for (const [name, fileType] of entries) {
+    const uri = joinPath(dirUri, name);
+    if (fileType === DIRECTORY_FILE_TYPE) {
+      results.push(...await readMarkdownFilesRecursive(uri, fs));
+      continue;
+    }
+
+    if (!name.endsWith('.md')) continue;
+
+    let raw: string;
+    try {
+      raw = decode(await fs.readFile(uri));
+    } catch {
+      continue;
+    }
+    const { meta, body } = parseFrontmatter(raw);
+    results.push({ name, uri, meta, body });
+  }
+  return results;
+}
+
 async function listFilesRecursive(
   dirUri: UriLike,
   fs: Pick<FsLike, 'readDirectory'>,
@@ -205,7 +240,7 @@ async function listFilesRecursive(
   const files: AgentFileRef[] = [];
   for (const [name, fileType] of entries) {
     const child = joinPath(dirUri, name);
-    if (fileType === vscode.FileType.Directory) {
+    if (fileType === DIRECTORY_FILE_TYPE) {
       files.push(...await listFilesRecursive(child, fs, shouldInclude, baseDir));
       continue;
     }
@@ -250,7 +285,7 @@ export async function loadTaskCards(
   inboxUri: UriLike,
   fs: Pick<FsLike, 'readDirectory' | 'readFile'>
 ): Promise<TaskCard[]> {
-  const files = await readMarkdownFiles(inboxUri, fs);
+  const files = await readMarkdownFilesRecursive(inboxUri, fs);
 
   return files.map(({ name, uri, meta, body }) => {
     const id = typeof meta.id === 'string' ? meta.id : stem(name);

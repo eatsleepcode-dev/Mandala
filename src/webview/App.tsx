@@ -59,6 +59,8 @@ interface AppState {
   settings: IntegrationSettings;
   themeOverride: ThemeOverride;
   hasGettingStartedExamples: boolean;
+  inboxPath: string;
+  diaryPath: string;
 }
 
 type Action =
@@ -70,6 +72,7 @@ type Action =
   | { type: 'LOAD_AGENT_RESOURCES'; resources: AgentResources }
   | { type: 'LOAD_SETTINGS'; settings: IntegrationSettings }
   | { type: 'LOAD_THEME'; override: ThemeOverride }
+  | { type: 'LOAD_WORKSPACE_PATHS'; inboxPath: string; diaryPath: string }
   | { type: 'LOAD_EXAMPLE_STATE'; hasGettingStartedExamples: boolean }
   | { type: 'SET_VIEW'; view: ViewId };
 
@@ -116,6 +119,9 @@ function reducer(state: AppState, action: Action): AppState {
     case 'LOAD_THEME':
       return { ...state, themeOverride: action.override };
 
+    case 'LOAD_WORKSPACE_PATHS':
+      return { ...state, inboxPath: action.inboxPath, diaryPath: action.diaryPath };
+
     case 'LOAD_EXAMPLE_STATE':
       return { ...state, hasGettingStartedExamples: action.hasGettingStartedExamples };
 
@@ -149,6 +155,8 @@ export default function App() {
     settings: DEFAULT_SETTINGS,
     themeOverride: 'auto',
     hasGettingStartedExamples: false,
+    inboxPath: '.mandala/inbox',
+    diaryPath: '.mandala/diary',
   });
   const [loadingMessage, setLoadingMessage] = useState('Starting extension');
   const [loadingElapsedMs, setLoadingElapsedMs] = useState<number | undefined>(undefined);
@@ -196,6 +204,9 @@ export default function App() {
           break;
         case 'loadTheme':
           dispatch({ type: 'LOAD_THEME', override: msg.override });
+          break;
+        case 'workspacePaths':
+          dispatch({ type: 'LOAD_WORKSPACE_PATHS', inboxPath: msg.inboxPath, diaryPath: msg.diaryPath });
           break;
         case 'loadExampleState':
           dispatch({ type: 'LOAD_EXAMPLE_STATE', hasGettingStartedExamples: msg.hasGettingStartedExamples });
@@ -353,7 +364,12 @@ export default function App() {
             settings={settings}
             themeOverride={state.themeOverride}
             hasGettingStartedExamples={state.hasGettingStartedExamples}
+            inboxPath={state.inboxPath}
+            diaryPath={state.diaryPath}
             onThemeOverrideChange={setThemeOverride}
+            onWorkspacePathChange={(path, value) => {
+              vscode.postMessage({ command: 'updateWorkspacePath', path, value });
+            }}
             onSeedExamples={() => vscode.postMessage({ command: 'seedExamples' })}
             onRemoveExamples={() => vscode.postMessage({ command: 'removeExamples' })}
             onSave={(nextSettings) => {

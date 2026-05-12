@@ -7,8 +7,11 @@ interface Props {
   settings: IntegrationSettings;
   themeOverride?: ThemeOverride;
   hasGettingStartedExamples?: boolean;
+  inboxPath?: string;
+  diaryPath?: string;
   onSave: (settings: IntegrationSettings) => void;
   onThemeOverrideChange?: (override: ThemeOverride) => void;
+  onWorkspacePathChange?: (path: 'inbox' | 'diary', value: string) => void;
   onSeedExamples?: () => void;
   onRemoveExamples?: () => void;
 }
@@ -25,8 +28,11 @@ export function SettingsView({
   settings,
   themeOverride = 'auto',
   hasGettingStartedExamples = false,
+  inboxPath = '.mandala/inbox',
+  diaryPath = '.mandala/diary',
   onSave,
   onThemeOverrideChange = () => undefined,
+  onWorkspacePathChange = () => undefined,
   onSeedExamples = () => undefined,
   onRemoveExamples = () => undefined,
 }: Props) {
@@ -98,6 +104,31 @@ export function SettingsView({
             <option value="dark">Dark</option>
             <option value="neuromancer">Neuromancer</option>
           </select>
+        </label>
+      </section>
+
+      <section className="settings-section">
+        <h2>Workspace Paths</h2>
+        <p className="settings-hint">Configure where Mandala stores diary entries and task cards within the workspace.</p>
+        <label className="settings-theme-row">
+          <span>Inbox Path</span>
+          <input
+            type="text"
+            value={inboxPath}
+            onChange={(e) => onWorkspacePathChange('inbox', e.target.value)}
+            placeholder=".mandala/inbox"
+            title="Relative path to inbox folder (relative to workspace root)"
+          />
+        </label>
+        <label className="settings-theme-row">
+          <span>Diary Path</span>
+          <input
+            type="text"
+            value={diaryPath}
+            onChange={(e) => onWorkspacePathChange('diary', e.target.value)}
+            placeholder=".mandala/diary"
+            title="Relative path to diary folder (relative to workspace root)"
+          />
         </label>
       </section>
 

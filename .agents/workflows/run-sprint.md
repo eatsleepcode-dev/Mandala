@@ -22,7 +22,7 @@ Executes the task card for a gap end-to-end: RED → GREEN → REFACTOR per cycl
 
 Resolve the task card path — check active location first, then completed:
 ```
-__inbox/__todo/*/task-{gap-id}.md
+.mandala/inbox/__todo/*/task-{gap-id}.md
 .agents/sprints/task-cards/task-{gap-id}.md
 ```
 

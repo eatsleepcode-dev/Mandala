@@ -2,7 +2,7 @@
 workflow: day-plan
 trigger: "/day-plan | start of session | handoff note received"
 scope: data-platform
-output: "__inbox/__todo/YYYYMMDD/__plan-for-the-day.md"
+output: ".mandala/inbox/__todo/YYYYMMDD/__plan-for-the-day.md"
 ---
 
 # /day-plan — Daily Plan Workflow
@@ -49,7 +49,7 @@ Read `.agents/SPRINT_REGISTER.md`:
 - Note its `Status` (READY / IN PROGRESS / COMPLETE), `Title`, and `Started` date.
 - Scan the sprint detail section for its status and any open `[ ]` deliverables.
 - If the sprint status is **READY** (not yet started): check whether a story map exists at
-  `__inbox/__todo/*/story-map-{gap-id}.md`. If none, note it as a recommended first step
+  `.mandala/inbox/__todo/*/story-map-{gap-id}.md`. If none, note it as a recommended first step
   (run `/user-story-map GAP-NN`) before `/build-sprint`, especially for larger or ambiguous gaps.
 
 Read `.agents/TECH_DEBT.md`:
@@ -60,21 +60,21 @@ Read `.agents/TECH_DEBT.md`:
 
 ## Step 2b — Inbox scan
 
-Scan `__inbox/` for unprocessed items at depth 1 only. Two categories:
+Scan `.mandala/inbox/` for unprocessed items at depth 1 only. Two categories:
 
 ### 2b.1 — Loose files (depth 1)
 
 ```powershell
-Get-ChildItem __inbox\ -File | Select-Object Name, Extension, LastWriteTime | Sort-Object LastWriteTime -Descending
+Get-ChildItem .mandala\inbox\ -File | Select-Object Name, Extension, LastWriteTime | Sort-Object LastWriteTime -Descending
 ```
 
 ### 2b.2 — Non-`__` prefixed subdirectories (dropped-in folders)
 
 ```powershell
-Get-ChildItem __inbox\ -Directory | Where-Object { $_.Name -notlike '__*' } | Select-Object Name, LastWriteTime
+Get-ChildItem .mandala\inbox\ -Directory | Where-Object { $_.Name -notlike '__*' } | Select-Object Name, LastWriteTime
 ```
 
-These are folders someone has dropped into `__inbox/` for triage — e.g. a research dump, a reference package, or a set of spec docs.
+These are folders someone has dropped into `.mandala/inbox/` for triage — e.g. a research dump, a reference package, or a set of spec docs.
 
 ### 2b.3 — Surface and confirm
 
@@ -94,7 +94,7 @@ Dropped-in folders:
   • code-first-fabric/               [folder — N files]
 
 Action options per item:
-  [move]   → move to __inbox/__todo/YYYYMMDD/
+  [move]   → move to .mandala/inbox/__todo/YYYYMMDD/
   [ref]    → move to __reference/
   [skip]   → leave in place (intentionally parked)
   [all-ref]→ move everything to __reference in one go
@@ -104,7 +104,7 @@ Awaiting your decision before proceeding.
 
 **Rules:**
 - `__` prefixed folders (`__errors/`, `__todo/`) — **always skip**, never surfaced
-- `__inbox/__todo/*/` subfolders — **always skip**
+- `.mandala/inbox/__todo/*/` subfolders — **always skip**
 - Files/folders the user marks `[skip]` — add a note under `## Inbox (parked)` in the day plan so they're not re-surfaced tomorrow
 - Do **not** move anything without explicit confirmation — this is a mandatory HITL gate
 
@@ -112,7 +112,7 @@ Awaiting your decision before proceeding.
 
 ## Step 3 — Read today's task folder
 
-Check `__inbox/__todo/YYYYMMDD/` (today's date):
+Check `.mandala/inbox/__todo/YYYYMMDD/` (today's date):
 - If a `__plan-for-the-day.md` already exists → **do not overwrite**; summarise its state instead.
 - If a `PLAN.md` or `*-scope.md` exists → read it; use it as the workstream source.
 - List all other `.md` files in the folder — these are in-flight notes and research docs.
@@ -124,7 +124,7 @@ Check `__inbox/__todo/YYYYMMDD/` (today's date):
 Fill the template below with live values, then save as:
 
 ```
-__inbox/__todo/<YYYYMMDD>/__plan-for-the-day.md
+.mandala/inbox/__todo/<YYYYMMDD>/__plan-for-the-day.md
 ```
 
 Where `YYYYMMDD` is today's date in local time (UK, Europe/London).

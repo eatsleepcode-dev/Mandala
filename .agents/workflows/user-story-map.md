@@ -6,7 +6,7 @@ description: Build a Jeff Patton story map for a gap or feature area, with Toyot
 
 **Vibe Mode**: CREATION (discovery and planning only — no implementation code)
 
-Produces two artefacts in `__inbox/__todo/{YYYYMMDD}/`:
+Produces two artefacts in `.mandala/inbox/__todo/{YYYYMMDD}/`:
 - `story-map-{gap-id}.md` — narrative document (actors, stories, acceptance criteria, Toyota Kata)
 - `story-map-{gap-id}.html` — interactive visual board for stakeholder review (Jeff Patton grid layout)
 
@@ -74,8 +74,8 @@ First, locate the gap definition. Read sources in this order:
 
 1. `.agents/ROADMAP.md` — gap items and one-line descriptions
 2. `docs/adr/ADR-NNN-*.md` — if an ADR exists for this gap (listed in ROADMAP)
-3. `__inbox/` research files — if referenced in the ADR (`**Source**:` field)
-4. `__inbox/__todo/` sprint plans — for any prior framing
+3. `.mandala/inbox/` research files — if referenced in the ADR (`**Source**:` field)
+4. `.mandala/inbox/__todo/` sprint plans — for any prior framing
 
 Then write a single sentence capturing the long-term aspiration for this gap area. It should be:
 - Ambitious — not achievable in one sprint
@@ -219,7 +219,7 @@ The Target Condition is the input to `/build-sprint` — Step 0.5 (Mom Test) in 
 
 ## Step 8.5 — Idempotency check
 
-Before writing the document, check whether `__inbox/__todo/*/story-map-{gap-id}.md` already exists:
+Before writing the document, check whether `.mandala/inbox/__todo/*/story-map-{gap-id}.md` already exists:
 
 - **If it does not exist**: proceed to Step 9.
 - **If it already exists**: read the existing file, then ask the user:
@@ -235,7 +235,7 @@ Do not silently overwrite an existing story map.
 
 Create:
 ```
-__inbox/__todo/{YYYYMMDD}/story-map-{gap-id}.md
+.mandala/inbox/__todo/{YYYYMMDD}/story-map-{gap-id}.md
 ```
 
 Document structure:
@@ -288,7 +288,7 @@ Document structure:
 After the `.md` document is written, generate a companion HTML story map in the **same directory**:
 
 ```
-__inbox/__todo/{YYYYMMDD}/story-map-{gap-id}.html
+.mandala/inbox/__todo/{YYYYMMDD}/story-map-{gap-id}.html
 ```
 
 The HTML file is the primary visual artefact — it is opened in the browser to review the story map with stakeholders and to show as a status board.
@@ -364,7 +364,7 @@ Increment `rev N` each time the HTML is regenerated. Append a ✅ note for each 
 The canonical example for this workflow is:
 
 ```
-__inbox/__todo/20260509/pbi-qa-story-map.html   ← PBI-QA (ADR-061, Sprint 20)
+.mandala/inbox/__todo/20260509/pbi-qa-story-map.html   ← PBI-QA (ADR-061, Sprint 20)
 ```
 
 Study this file when generating HTML for a new gap — copy the CSS block verbatim; only the card content and stripe contents change.
@@ -379,4 +379,4 @@ In the task card, the **Target Condition** section (from Step 8) replaces the ge
 
 The pre-mortem in `/build-sprint` Step 2 maps to Toyota Kata **Obstacles** — what is preventing us from reaching the Target Condition?
 
-**Archiving**: both the `.md` and `.html` story map files remain in `__inbox/__todo/{YYYYMMDD}/` until the sprint closes. On `/sprint-close`, if the task card is archived to `.agents/sprints/task-cards/`, archive both files to `.agents/sprints/story-maps/` at the same time. If no corresponding directory exists, create it.
+**Archiving**: both the `.md` and `.html` story map files remain in `.mandala/inbox/__todo/{YYYYMMDD}/` until the sprint closes. On `/sprint-close`, if the task card is archived to `.agents/sprints/task-cards/`, archive both files to `.agents/sprints/story-maps/` at the same time. If no corresponding directory exists, create it.

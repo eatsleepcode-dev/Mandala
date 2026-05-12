@@ -207,6 +207,12 @@ export interface PathSelectedMessage {
   path: string;
 }
 
+export interface WorkspacePathsMessage {
+  command: 'workspacePaths';
+  inboxPath: string;
+  diaryPath: string;
+}
+
 // ─── Webview → Host messages ─────────────────────────────────────────────────
 
 export interface ReadyMessage { command: 'ready'; }
@@ -235,6 +241,11 @@ export interface RunSdlcStepMessage {
   suggestedSlash: string;
   fallbackPath?: string;
 }
+export interface UpdateWorkspacePathMessage {
+  command: 'updateWorkspacePath';
+  path: 'inbox' | 'diary';
+  value: string;
+}
 
 export type HostMessage =
   | LoadStoryMapMessage
@@ -248,6 +259,7 @@ export type HostMessage =
   | LoadExampleStateMessage
   | ErrorMessage
   | LoadSettingsMessage
+  | WorkspacePathsMessage
   | PathSelectedMessage;
 
 export interface BrowsePathMessage {
@@ -265,6 +277,7 @@ export type WebviewMessage =
   | RemoveExamplesMessage
   | SaveSettingsMessage
   | BrowsePathMessage
+  | UpdateWorkspacePathMessage
   | OpenSettingsMessage
   | OpenGuideMessage
   | SetThemeOverrideMessage

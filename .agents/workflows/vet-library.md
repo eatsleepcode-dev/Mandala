@@ -118,7 +118,7 @@ This keeps all tests passing locally without the full Fabric environment.
 
 ## Step 8 — Decision record
 
-Add a brief note to the relevant task card (`__inbox/__todo/{date}/task-{gap-id}.md`) under a `## Library Vetting` section:
+Add a brief note to the relevant task card (`.mandala/inbox/__todo/{date}/task-{gap-id}.md`) under a `## Library Vetting` section:
 
 ```markdown
 ## Library Vetting

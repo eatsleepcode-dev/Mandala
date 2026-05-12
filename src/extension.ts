@@ -3,13 +3,16 @@ import { BrainProvider } from './panels/BrainProvider';
 import { detectDevBrainFolders, migrateToMandalaFolder } from './lib/workspace';
 
 export function activate(context: vscode.ExtensionContext): void {
-  const root = getWorkspaceRoot();
-  if (root) {
-    const provider = new BrainProvider(context.extensionUri, root);
-    context.subscriptions.push(
-      vscode.window.registerWebviewViewProvider(BrainProvider.viewType, provider)
-    );
-  }
+  // Initialize async work in background
+  (async () => {
+    const root = await getWorkspaceRoot();
+    if (root) {
+      const provider = new BrainProvider(context.extensionUri, root);
+      context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(BrainProvider.viewType, provider)
+      );
+    }
+  })();
 
   // Deprecated aliases so keybindings created under the old "Meridian" name still work
   context.subscriptions.push(
@@ -25,6 +28,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('mandala.openDashboard', async () => {
+      const root = await getWorkspaceRoot();
       if (!root) {
         vscode.window.showWarningMessage('Mandala requires an open workspace folder.');
         return;
@@ -71,7 +75,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('mandala.initWorkspace', async () => {
-      const root = getWorkspaceRoot();
+      const root = await getWorkspaceRoot();
       if (!root) {
         vscode.window.showWarningMessage('Mandala requires an open workspace folder.');
         return;
@@ -84,7 +88,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('mandala.seedGettingStartedExamples', async () => {
-      const root = getWorkspaceRoot();
+      const root = await getWorkspaceRoot();
       if (!root) {
         vscode.window.showWarningMessage('Mandala requires an open workspace folder.');
         return;
@@ -98,7 +102,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('mandala.removeGettingStartedExamples', async () => {
-      const root = getWorkspaceRoot();
+      const root = await getWorkspaceRoot();
       if (!root) {
         vscode.window.showWarningMessage('Mandala requires an open workspace folder.');
         return;
@@ -116,8 +120,23 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {}
 
-function getWorkspaceRoot(): vscode.Uri | undefined {
-  return vscode.workspace.workspaceFolders?.[0]?.uri;
+async function getWorkspaceRoot(): Promise<vscode.Uri | undefined> {
+  const folders = vscode.workspace.workspaceFolders;
+  if (!folders || folders.length === 0) return undefined;
+  if (folders.length === 1) return folders[0].uri;
+
+  // Multi-root workspace: prefer folder with .mandala/
+  for (const folder of folders) {
+    try {
+      await vscode.workspace.fs.stat(vscode.Uri.joinPath(folder.uri, '.mandala'));
+      return folder.uri;
+    } catch {
+      // .mandala not found in this folder, continue
+    }
+  }
+
+  // No .mandala found, fall back to first folder
+  return folders[0].uri;
 }
 
 async function checkLegacyFolders(root: vscode.Uri): Promise<boolean> {

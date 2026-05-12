@@ -118,7 +118,7 @@ Keep the table sorted by ADR number.
 
 ## Step 5 — Update the task card
 
-If a task card exists for the gating gap (e.g. `__inbox/__todo/{date}/task-{gap-id}.md`):
+If a task card exists for the gating gap (e.g. `.mandala/inbox/__todo/{date}/task-{gap-id}.md`):
 - Update the `adr_required` frontmatter field from `STATUS: MISSING` to the actual file path
 - The ADR Cycle checklist in the task card body should reference the new file path
 

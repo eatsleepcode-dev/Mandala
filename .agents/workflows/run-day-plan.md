@@ -23,8 +23,8 @@ Execute the next pending task from today's structured day plan.
 ### Step 0 — Locate today's plan
 
 1. Calculate today's date as `YYYYMMDD`.
-2. Read `__inbox/__todo/<YYYYMMDD>/__plan-for-the-day.md`.
-   - If the file does not exist, stop and tell the user: "No day plan found at `__inbox/__todo/<YYYYMMDD>/__plan-for-the-day.md`. Run `/day-plan` first."
+2. Read `.mandala/inbox/__todo/<YYYYMMDD>/__plan-for-the-day.md`.
+   - If the file does not exist, stop and tell the user: "No day plan found at `.mandala/inbox/__todo/<YYYYMMDD>/__plan-for-the-day.md`. Run `/day-plan` first."
 3. Parse all tasks in priority order: **A** (critical) → **B** (important) → **C** (nice-to-have).
 
 ### Step 1 — Select the target task
@@ -63,7 +63,7 @@ When the task is done:
 
 2. Commit the tick:
    ```
-   git add __inbox/__todo/<YYYYMMDD>/__plan-for-the-day.md
+   git add .mandala/inbox/__todo/<YYYYMMDD>/__plan-for-the-day.md
    git commit -m "chore(plan): tick task <task-id> [skip ci]"
    ```
 

@@ -12,7 +12,7 @@ description: End-to-end sprint lifecycle — PLAN → TICKET → BUILD → GATE 
 
 1. Pick the change from `ROADMAP.md` or `TECH_DEBT.md`
 2. **Optional but recommended for larger/ambiguous gaps:** run `/user-story-map GAP-NN` first.
-   Produces `__inbox/__todo/{YYYYMMDD}/story-map-{gap-id}.md` with:
+  Produces `.mandala/inbox/__todo/{YYYYMMDD}/story-map-{gap-id}.md` with:
    - Jeff Patton backbone (who does what, in narrative order)
    - Toyota Kata Challenge + Current Condition + Target Condition
    - Walking skeleton (scope of the first sprint)

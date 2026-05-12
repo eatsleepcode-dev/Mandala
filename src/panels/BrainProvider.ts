@@ -220,6 +220,19 @@ export class BrainProvider implements vscode.WebviewViewProvider {
             return;
           }
 
+          case 'updateWorkspacePath': {
+            const { path, value } = message;
+            const cfg = vscode.workspace.getConfiguration('mandala');
+            if (path === 'inbox') {
+              await cfg.update('inboxPath', value, vscode.ConfigurationTarget.Workspace);
+            } else if (path === 'diary') {
+              await cfg.update('diaryPath', value, vscode.ConfigurationTarget.Workspace);
+            }
+            // Refresh data after path change
+            await this._pushData();
+            return;
+          }
+
           case 'openSettings':
             vscode.commands.executeCommand('workbench.action.openSettings', '@ext:onetoomanybi.mandala');
             return;
@@ -353,6 +366,7 @@ export class BrainProvider implements vscode.WebviewViewProvider {
     await this._pushSettings();
     this._emitProgress('Applying theme');
     await this._pushTheme();
+    await this._pushWorkspacePaths();
 
     if (detection.found) {
       this._emitProgress('Checking starter content');
@@ -363,6 +377,18 @@ export class BrainProvider implements vscode.WebviewViewProvider {
       this._emitProgress('Ready for workspace setup');
       this._startupStartedAt = undefined;
     }
+  }
+
+  private async _pushWorkspacePaths(): Promise<void> {
+    const cfg = vscode.workspace.getConfiguration('mandala');
+    const inboxPath = cfg.get<string>('inboxPath', '.mandala/inbox');
+    const diaryPath = cfg.get<string>('diaryPath', '.mandala/diary');
+
+    this._view?.webview.postMessage({
+      command: 'workspacePaths',
+      inboxPath,
+      diaryPath,
+    });
   }
 
   private async _pushSettings(): Promise<void> {
