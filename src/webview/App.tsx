@@ -1,5 +1,6 @@
 import React, { useEffect, useReducer, useRef, useState } from 'react';
 import { vscode } from './vscode';
+import { computeScore } from './score';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
 import { StoryMapView } from './components/StoryMapView';
@@ -387,9 +388,7 @@ export default function App() {
     const active = phase.sprintRecords.find((r) => r.status === 'in-progress');
     const latest = phase.sprintRecords.slice().sort((a, b) => b.sprint - a.sprint)[0];
     const sprint = active ?? latest;
-    const total = phase.cards.reduce((s, c) => s + (c.points ?? 1), 0);
-    const done = phase.cards.filter((c) => c.status === 'complete').reduce((s, c) => s + (c.points ?? 1), 0);
-    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    const { done, total, pct } = computeScore(phase.cards);
     const parts: string[] = [];
     if (sprint) parts.push(`Sprint ${sprint.sprint}`);
     if (total > 0) parts.push(`${done}/${total} pts (${pct}%)`);
