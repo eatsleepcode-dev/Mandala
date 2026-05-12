@@ -1,6 +1,7 @@
 import React, { useEffect, useReducer, useRef, useState } from 'react';
 import { vscode } from './vscode';
 import { Sidebar } from './components/Sidebar';
+import { Topbar } from './components/Topbar';
 import { StoryMapView } from './components/StoryMapView';
 import { DiaryView } from './components/DiaryView';
 import { TechDebtView } from './components/TechDebtView';
@@ -382,17 +383,35 @@ export default function App() {
     return <WorkspaceSetupForm candidates={phase.folderCandidates} contentVisible={contentVisible} />;
   }
 
+  const statusLabel = (() => {
+    if (phase.status !== 'ready') return null;
+    const active = phase.sprintRecords.find((r) => r.status === 'in-progress');
+    const latest = phase.sprintRecords.slice().sort((a, b) => b.sprint - a.sprint)[0];
+    const sprint = active ?? latest;
+    const total = phase.cards.reduce((s, c) => s + (c.points ?? 1), 0);
+    const done = phase.cards.filter((c) => c.status === 'complete').reduce((s, c) => s + (c.points ?? 1), 0);
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    const parts: string[] = [];
+    if (sprint) parts.push(`Sprint ${sprint.sprint}`);
+    if (total > 0) parts.push(`${done}/${total} pts (${pct}%)`);
+    parts.push(`${phase.cards.length} tasks`);
+    return parts.join(' · ');
+  })();
+
   return (
     <div className={`mandala-dashboard mandala-boot-target${contentVisible ? ' is-visible' : ''}`}>
       <Sidebar active={activeView} onSelect={(v) => dispatch({ type: 'SET_VIEW', view: v })} />
       <main className="mandala-main">
+        {phase.status === 'ready' && (
+          <Topbar sprintRecords={phase.sprintRecords} cards={phase.cards} />
+        )}
         {state.hasGettingStartedExamples && (
           <div className="mandala-example-badge-row" role="status" aria-live="polite">
             <span className="mandala-example-badge">Starter Examples Active</span>
           </div>
         )}
         {activeView === 'storymap' && (
-          <StoryMapView cards={phase.cards} onOpenFile={openFile} />
+          <StoryMapView cards={phase.cards} sprintRecords={phase.sprintRecords} onOpenFile={openFile} />
         )}
         {activeView === 'diary' && (
           <DiaryView entries={phase.entries} onOpenFile={openFile} />
@@ -436,6 +455,12 @@ export default function App() {
               vscode.postMessage({ command: 'saveSettings', settings: nextSettings });
             }}
           />
+        )}
+        {statusLabel && (
+          <div className="mandala-status-bar">
+            <span className="mandala-status-ok">●</span>
+            <span>{statusLabel}</span>
+          </div>
         )}
       </main>
     </div>
