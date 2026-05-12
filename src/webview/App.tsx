@@ -423,6 +423,7 @@ export default function App() {
             }}
             onSeedExamples={() => vscode.postMessage({ command: 'seedExamples' })}
             onRemoveExamples={() => vscode.postMessage({ command: 'removeExamples' })}
+            onReinitializeWorkspace={() => vscode.postMessage({ command: 'reinitializeWorkspace' })}
             onSave={(nextSettings) => {
               dispatch({ type: 'LOAD_SETTINGS', settings: nextSettings });
               vscode.postMessage({ command: 'saveSettings', settings: nextSettings });

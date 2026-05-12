@@ -228,6 +228,7 @@ export interface InitWorkspaceMessage {
 export interface MigrateWorkspaceMessage { command: 'migrateWorkspace'; }
 export interface SeedExamplesMessage { command: 'seedExamples'; }
 export interface RemoveExamplesMessage { command: 'removeExamples'; }
+export interface ReinitializeWorkspaceMessage { command: 'reinitializeWorkspace'; }
 export interface SaveSettingsMessage {
   command: 'saveSettings';
   settings: IntegrationSettings;
@@ -278,6 +279,7 @@ export type WebviewMessage =
   | MigrateWorkspaceMessage
   | SeedExamplesMessage
   | RemoveExamplesMessage
+  | ReinitializeWorkspaceMessage
   | SaveSettingsMessage
   | BrowsePathMessage
   | UpdateWorkspacePathMessage

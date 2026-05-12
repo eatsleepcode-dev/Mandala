@@ -172,6 +172,15 @@ export class BrainProvider implements vscode.WebviewViewProvider {
             return;
           }
 
+          case 'reinitializeWorkspace': {
+            const { initDevBrainFolders } = await import('../lib/workspace');
+            await initDevBrainFolders(this._workspaceRoot, vscode.workspace.fs);
+            vscode.window.showInformationMessage('Mandala workspace reinitialized — .mandala/ folder structure restored.');
+            await this._pushExampleState();
+            await this._pushData();
+            return;
+          }
+
           case 'browsePath': {
             const uris = await vscode.window.showOpenDialog({
               canSelectFiles: true,
