@@ -384,7 +384,6 @@ export default function App() {
   }
 
   const statusLabel = (() => {
-    if (phase.status !== 'ready') return null;
     const active = phase.sprintRecords.find((r) => r.status === 'in-progress');
     const latest = phase.sprintRecords.slice().sort((a, b) => b.sprint - a.sprint)[0];
     const sprint = active ?? latest;
