@@ -10,6 +10,7 @@ import { SettingsView } from './components/SettingsView';
 import { AgentsView } from './components/AgentsView';
 import type {
   AgentResources,
+  FolderCandidates,
   HostMessage,
   TaskCard,
   DiaryEntry,
@@ -43,7 +44,7 @@ const EMPTY_AGENT_RESOURCES: AgentResources = {
 
 type Phase =
   | { status: 'loading' }
-  | { status: 'setup'; hasMigratableData: boolean }
+  | { status: 'setup'; hasMigratableData: boolean; folderCandidates: FolderCandidates }
   | {
       status: 'ready';
       cards: TaskCard[];
@@ -67,7 +68,7 @@ interface AppState {
 }
 
 type Action =
-  | { type: 'INIT'; initialized: boolean; hasMigratableData: boolean }
+  | { type: 'INIT'; initialized: boolean; hasMigratableData: boolean; folderCandidates: FolderCandidates }
   | { type: 'LOAD_STORY_MAP'; cards: TaskCard[] }
   | { type: 'LOAD_DIARY'; entries: DiaryEntry[] }
   | { type: 'LOAD_TECH_DEBT'; cards: TechDebtCard[] }
@@ -94,7 +95,7 @@ function reducer(state: AppState, action: Action): AppState {
               agentResources: EMPTY_AGENT_RESOURCES,
             },
           }
-        : { ...state, phase: { status: 'setup', hasMigratableData: action.hasMigratableData } };
+        : { ...state, phase: { status: 'setup', hasMigratableData: action.hasMigratableData, folderCandidates: action.folderCandidates } };
 
     case 'LOAD_STORY_MAP':
       if (state.phase.status !== 'ready') return state;
@@ -143,6 +144,63 @@ function reducer(state: AppState, action: Action): AppState {
   }
 }
 
+// ─── Workspace setup form ────────────────────────────────────────────────────
+function WorkspaceSetupForm({ candidates, contentVisible }: { candidates: FolderCandidates; contentVisible: boolean }) {
+  const [inbox, setInbox] = useState(candidates.inbox);
+  const [diary, setDiary] = useState(candidates.diary);
+  const [sprints, setSprints] = useState(candidates.sprints);
+  const [techDebt, setTechDebt] = useState(candidates.techDebt);
+  const [agents, setAgents] = useState(candidates.agents);
+
+  function apply() {
+    vscode.postMessage({ command: 'mapWorkspace', inbox, diary, sprints, techDebt, agents });
+  }
+
+  const rows: { label: string; value: string; set: (v: string) => void; hint: string }[] = [
+    { label: 'Inbox', value: inbox, set: setInbox, hint: 'Task cards & sprint backlog' },
+    { label: 'Diary', value: diary, set: setDiary, hint: 'Daily dev diary entries' },
+    { label: 'Sprints', value: sprints, set: setSprints, hint: 'Sprint records' },
+    { label: 'Tech Debt', value: techDebt, set: setTechDebt, hint: 'Tech debt cards' },
+    { label: 'Agents', value: agents, set: setAgents, hint: 'AI context, skills & workflows' },
+  ];
+
+  return (
+    <div className={`mandala-setup mandala-boot-target${contentVisible ? ' is-visible' : ''}`}>
+      <div className="mandala-welcome-container">
+        <div className="mandala-welcome-glow" aria-hidden="true" />
+        <h1 className="mandala-welcome-title">Map Your Folders</h1>
+        <p className="mandala-welcome-subtitle">Point Mandala to where your data lives</p>
+        <div className="mandala-welcome-content">
+          <p className="mandala-welcome-text">
+            Confirm or edit the folder paths below. Existing folders are used as-is;
+            paths that don’t exist will be created.
+          </p>
+          <div className="mandala-folder-map">
+            {rows.map(({ label, value, set, hint }) => (
+              <label key={label} className="mandala-folder-map-row">
+                <span className="mandala-folder-map-label">{label}</span>
+                <input
+                  type="text"
+                  className="mandala-folder-map-input"
+                  value={value}
+                  onChange={(e) => set(e.target.value)}
+                  spellCheck={false}
+                />
+                <span className="mandala-folder-map-hint">{hint}</span>
+              </label>
+            ))}
+          </div>
+          <div className="mandala-welcome-actions">
+            <button className="mandala-btn mandala-btn-primary" onClick={apply}>
+              Apply &amp; Open Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -189,11 +247,11 @@ export default function App() {
           const elapsed = Date.now() - loadingStartedAtRef.current;
           const waitMs = Math.max(0, minLoadingMs - elapsed);
           if (waitMs === 0) {
-            dispatch({ type: 'INIT', initialized: msg.initialized, hasMigratableData: msg.hasMigratableData });
+            dispatch({ type: 'INIT', initialized: msg.initialized, hasMigratableData: msg.hasMigratableData, folderCandidates: msg.folderCandidates });
             initTimerRef.current = undefined;
           } else {
             initTimerRef.current = window.setTimeout(() => {
-              dispatch({ type: 'INIT', initialized: msg.initialized, hasMigratableData: msg.hasMigratableData });
+              dispatch({ type: 'INIT', initialized: msg.initialized, hasMigratableData: msg.hasMigratableData, folderCandidates: msg.folderCandidates });
             }, waitMs);
           }
           break;
@@ -321,59 +379,7 @@ export default function App() {
   }
 
   if (phase.status === 'setup') {
-    return (
-      <div className={`mandala-setup mandala-boot-target${contentVisible ? ' is-visible' : ''}`}>
-        <div className="mandala-welcome-container">
-          <div className="mandala-welcome-glow" aria-hidden="true" />
-          <h1 className="mandala-welcome-title">Welcome to Mandala</h1>
-          <p className="mandala-welcome-subtitle">Your developer diary and sprint planner</p>
-
-          {phase.hasMigratableData ? (
-            <div className="mandala-welcome-content">
-              <p className="mandala-welcome-text">
-                We found existing data in your workspace (.meridian/, __inbox/, diary/, or .agents/). 
-                Would you like to migrate it to the new .mandala/ structure?
-              </p>
-              <div className="mandala-welcome-actions">
-                <button 
-                  className="mandala-btn mandala-btn-primary"
-                  onClick={() => vscode.postMessage({ command: 'migrateWorkspace' })}
-                >
-                  Migrate Existing Data
-                </button>
-                <button 
-                  className="mandala-btn mandala-btn-secondary"
-                  onClick={() => vscode.postMessage({ command: 'initWorkspace' })}
-                >
-                  Start Fresh
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="mandala-welcome-content">
-              <p className="mandala-welcome-text">
-                To get started, initialize a new Mandala workspace. This creates the .mandala/ folder 
-                with all necessary directories for managing your diary, sprints, tasks, and more.
-              </p>
-              <div className="mandala-welcome-actions">
-                <button 
-                  className="mandala-btn mandala-btn-primary"
-                  onClick={() => vscode.postMessage({ command: 'initWorkspace', withExamples: true })}
-                >
-                  Initialize with Examples
-                </button>
-                <button 
-                  className="mandala-btn mandala-btn-secondary"
-                  onClick={() => vscode.postMessage({ command: 'initWorkspace' })}
-                >
-                  Initialize Empty Workspace
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+    return <WorkspaceSetupForm candidates={phase.folderCandidates} contentVisible={contentVisible} />;
   }
 
   return (
@@ -424,6 +430,7 @@ export default function App() {
             onSeedExamples={() => vscode.postMessage({ command: 'seedExamples' })}
             onRemoveExamples={() => vscode.postMessage({ command: 'removeExamples' })}
             onReinitializeWorkspace={() => vscode.postMessage({ command: 'reinitializeWorkspace' })}
+            onRemapWorkspace={() => vscode.postMessage({ command: 'remapWorkspace' })}
             onSave={(nextSettings) => {
               dispatch({ type: 'LOAD_SETTINGS', settings: nextSettings });
               vscode.postMessage({ command: 'saveSettings', settings: nextSettings });

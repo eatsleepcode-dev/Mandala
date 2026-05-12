@@ -116,10 +116,19 @@ export interface LoadProgressMessage {
   elapsedMs?: number;
 }
 
+export interface FolderCandidates {
+  inbox: string;
+  diary: string;
+  sprints: string;
+  techDebt: string;
+  agents: string;
+}
+
 export interface InitStateMessage {
   command: 'initState';
   initialized: boolean;
   hasMigratableData: boolean;
+  folderCandidates: FolderCandidates;
 }
 
 export interface LoadExampleStateMessage {
@@ -226,6 +235,15 @@ export interface InitWorkspaceMessage {
   withExamples?: boolean;
 }
 export interface MigrateWorkspaceMessage { command: 'migrateWorkspace'; }
+export interface MapWorkspaceMessage {
+  command: 'mapWorkspace';
+  inbox: string;
+  diary: string;
+  sprints: string;
+  techDebt: string;
+  agents: string;
+}
+export interface RemapWorkspaceMessage { command: 'remapWorkspace'; }
 export interface SeedExamplesMessage { command: 'seedExamples'; }
 export interface RemoveExamplesMessage { command: 'removeExamples'; }
 export interface ReinitializeWorkspaceMessage { command: 'reinitializeWorkspace'; }
@@ -277,6 +295,8 @@ export type WebviewMessage =
   | OpenFileMessage
   | InitWorkspaceMessage
   | MigrateWorkspaceMessage
+  | MapWorkspaceMessage
+  | RemapWorkspaceMessage
   | SeedExamplesMessage
   | RemoveExamplesMessage
   | ReinitializeWorkspaceMessage

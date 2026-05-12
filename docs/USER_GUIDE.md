@@ -132,4 +132,4 @@ No default keybindings are assigned. To add one:
 
 ## Feedback and issues
 
-File issues at the [Mandala repository](https://github.com/onetoomanybi/Mandala).
+File issues at the [Mandala repository](https://github.com/eatsleepcode-dev/Mandala).

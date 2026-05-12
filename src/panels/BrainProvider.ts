@@ -14,7 +14,7 @@ import {
   saveIntegrationConfig,
   syncIntegrations,
 } from '../lib/integrations';
-import type { WebviewMessage, KnownIntegrationFlags, IntegrationSettings, ThemeOverride } from '../shared/types';
+import type { WebviewMessage, KnownIntegrationFlags, IntegrationSettings, ThemeOverride, FolderCandidates } from '../shared/types';
 
 export class BrainProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'mandalaDashboard';
@@ -115,10 +115,12 @@ export class BrainProvider implements vscode.WebviewViewProvider {
               includeExamples: message.withExamples === true,
             });
             
+            const initCandidates = await this._detectFolderCandidates();
             this._view?.webview.postMessage({
               command: 'initState',
               initialized: true,
               hasMigratableData: false,
+              folderCandidates: initCandidates,
             });
 
             await this._pushExampleState();
@@ -141,10 +143,12 @@ export class BrainProvider implements vscode.WebviewViewProvider {
               );
             }
             
+            const migrateCandidates = await this._detectFolderCandidates();
             this._view?.webview.postMessage({
               command: 'initState',
               initialized: true,
               hasMigratableData: false,
+              folderCandidates: migrateCandidates,
             });
 
             await this._pushExampleState();
@@ -173,11 +177,55 @@ export class BrainProvider implements vscode.WebviewViewProvider {
           }
 
           case 'reinitializeWorkspace': {
-            const { initDevBrainFolders } = await import('../lib/workspace');
-            await initDevBrainFolders(this._workspaceRoot, vscode.workspace.fs);
-            vscode.window.showInformationMessage('Mandala workspace reinitialized — .mandala/ folder structure restored.');
+            const reinitCandidates = await this._detectFolderCandidates();
+            this._view?.webview.postMessage({
+              command: 'initState',
+              initialized: false,
+              hasMigratableData: false,
+              folderCandidates: reinitCandidates,
+            });
+            return;
+          }
+
+          case 'mapWorkspace': {
+            const folderCfg = vscode.workspace.getConfiguration('mandala', this._workspaceRoot);
+            const target = vscode.ConfigurationTarget.WorkspaceFolder;
+            await Promise.all([
+              folderCfg.update('inboxPath', message.inbox, target),
+              folderCfg.update('diaryPath', message.diary, target),
+              folderCfg.update('sprintsPath', message.sprints, target),
+              folderCfg.update('techDebtPath', message.techDebt, target),
+              folderCfg.update('agentsPath', message.agents, target),
+            ]);
+            for (const relPath of [message.inbox, message.diary, message.sprints, message.techDebt, message.agents]) {
+              const uri = vscode.Uri.joinPath(this._workspaceRoot, ...relPath.split('/'));
+              try {
+                await vscode.workspace.fs.stat(uri);
+              } catch {
+                await vscode.workspace.fs.createDirectory(uri);
+              }
+            }
+            const mapCandidates = await this._detectFolderCandidates();
+            this._view?.webview.postMessage({
+              command: 'initState',
+              initialized: true,
+              hasMigratableData: false,
+              folderCandidates: mapCandidates,
+            });
+            await this._pushWorkspacePaths();
             await this._pushExampleState();
             await this._pushData();
+            return;
+          }
+
+          case 'remapWorkspace': {
+            const remapCandidates = await this._detectFolderCandidates();
+            this._view?.webview.postMessage({
+              command: 'initState',
+              initialized: false,
+              hasMigratableData: false,
+              folderCandidates: remapCandidates,
+            });
             return;
           }
 
@@ -249,13 +297,14 @@ export class BrainProvider implements vscode.WebviewViewProvider {
                 await cfg.update('agentsPath', value, vscode.ConfigurationTarget.Workspace);
                 break;
             }
-            // Refresh data after path change
+            // Refresh data and confirm stored paths back to webview
+            await this._pushWorkspacePaths();
             await this._pushData();
             return;
           }
 
           case 'openSettings':
-            vscode.commands.executeCommand('workbench.action.openSettings', '@ext:onetoomanybi.mandala');
+            vscode.commands.executeCommand('workbench.action.openSettings', '@ext:eatsleepcode-dev.mandala');
             return;
 
           case 'openGuide': {
@@ -376,10 +425,12 @@ export class BrainProvider implements vscode.WebviewViewProvider {
       }
     }
 
+    const candidates = await this._detectFolderCandidates();
     this._view?.webview.postMessage({
       command: 'initState',
       initialized: detection.found,
       hasMigratableData,
+      folderCandidates: candidates,
     });
 
     // Send current integration settings
@@ -416,6 +467,42 @@ export class BrainProvider implements vscode.WebviewViewProvider {
       techDebtPath,
       agentsPath,
     });
+  }
+
+  private async _detectFolderCandidates(): Promise<FolderCandidates> {
+    const cfg = vscode.workspace.getConfiguration('mandala');
+    const fs = vscode.workspace.fs;
+    const root = this._workspaceRoot;
+    const defaults: Record<string, string> = {
+      inboxPath: '.mandala/inbox',
+      diaryPath: '.mandala/diary',
+      sprintsPath: '.mandala/sprints',
+      techDebtPath: '.mandala/tech-debt',
+      agentsPath: '.mandala/agents',
+    };
+
+    const detect = async (configKey: string, legacyCandidates: string[]): Promise<string> => {
+      const defaultVal = defaults[configKey];
+      const configured = cfg.get<string>(configKey, defaultVal);
+      if (configured !== defaultVal) return configured;
+      for (const p of legacyCandidates) {
+        try {
+          await fs.stat(vscode.Uri.joinPath(root, ...p.split('/')));
+          return p;
+        } catch { /* not found */ }
+      }
+      return defaultVal;
+    };
+
+    const [inbox, diary, sprints, techDebt, agents] = await Promise.all([
+      detect('inboxPath', ['__inbox/__todo', '__inbox', 'inbox']),
+      detect('diaryPath', ['diary']),
+      detect('sprintsPath', ['sprints']),
+      detect('techDebtPath', ['tech-debt']),
+      detect('agentsPath', ['.agents', 'agents']),
+    ]);
+
+    return { inbox, diary, sprints, techDebt, agents };
   }
 
   private async _pushSettings(): Promise<void> {

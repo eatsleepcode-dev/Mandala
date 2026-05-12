@@ -1,4 +1,5 @@
 {
+  "mandala.diaryPath": ".mandala/diary",
   "mandala.integrations.claude": true,
   "mandala.integrations.copilot": true,
   "mandala.integrations.cursor": false,

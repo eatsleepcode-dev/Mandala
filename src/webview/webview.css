@@ -331,6 +331,58 @@ body {
   transform: translateY(-1px);
 }
 
+.mandala-folder-map {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.mandala-folder-map-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  row-gap: 2px;
+  align-items: center;
+}
+
+.mandala-folder-map-label {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted, var(--text));
+  white-space: nowrap;
+}
+
+.mandala-folder-map-input {
+  grid-column: 2;
+  grid-row: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  padding: 5px 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.mandala-folder-map-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.mandala-folder-map-hint {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 11px;
+  color: var(--text-muted, color-mix(in srgb, var(--text) 60%, transparent));
+}
+
 .mandala-dashboard {
   display: flex;
   height: 100vh;

@@ -18,6 +18,7 @@ interface Props {
   onSeedExamples?: () => void;
   onRemoveExamples?: () => void;
   onReinitializeWorkspace?: () => void;
+  onRemapWorkspace?: () => void;
 }
 
 interface AddForm {
@@ -43,6 +44,7 @@ export function SettingsView({
   onSeedExamples = () => undefined,
   onRemoveExamples = () => undefined,
   onReinitializeWorkspace = () => undefined,
+  onRemapWorkspace = () => undefined,
 }: Props) {
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState<AddForm>(EMPTY_FORM);
@@ -192,9 +194,12 @@ export function SettingsView({
       <section className="settings-section">
         <h2>Workspace Management</h2>
         <p className="settings-hint">
-          Reinitialize your Mandala workspace to restore folder structure or reconfigure paths.
+          Map folder paths or reinitialize the workspace structure.
         </p>
         <div className="settings-example-actions">
+          <button className="settings-example-btn" onClick={onRemapWorkspace}>
+            Remap Folder Paths
+          </button>
           <button className="settings-example-btn" onClick={onReinitializeWorkspace}>
             Reinitialize Workspace
           </button>

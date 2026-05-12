@@ -2,8 +2,8 @@
   "name": "mandala",
   "displayName": "Mandala",
   "description": "Developer diary and sprint planner inside VS Code",
-  "version": "0.1.6",
-  "publisher": "onetoomanybi",
+  "version": "0.2.0",
+  "publisher": "eatsleepcode-dev",
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -14,7 +14,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/onetoomanybi/Mandala"
+    "url": "https://github.com/eatsleepcode-dev/Mandala"
   },
   "keywords": [
     "diary",
