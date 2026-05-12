@@ -1,0 +1,2102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phoric Dev-Brain — UI Prototype</title>
+<style>
+  :root {
+    --bg: #1e1e1e;
+    --bg-sidebar: #252526;
+    --bg-panel: #2d2d30;
+    --bg-card: #3c3c3c;
+    --bg-card-hover: #464646;
+    --bg-input: #3c3c3c;
+    --border: #3e3e42;
+    --border-light: #555;
+    --fg: #cccccc;
+    --fg-dim: #858585;
+    --fg-muted: #6a6a6a;
+    --blue: #0e639c;
+    --blue-light: #1177bb;
+    --blue-bright: #4fc3f7;
+    --green: #4caf50;
+    --green-dim: #2d6a30;
+    --amber: #ff9800;
+    --amber-dim: #6b4000;
+    --red: #f44336;
+    --red-dim: #6b1a14;
+    --purple: #9c27b0;
+    --purple-dim: #4a0e56;
+    --teal: #009688;
+    --teal-dim: #004d40;
+    --accent: #0e639c;
+    --tag-bg: #37373d;
+    --sprint-complete: #1a3a1e;
+    --sprint-active: #1a2a3a;
+    --sprint-planned: #2a2a1a;
+    --font: 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'Cascadia Code', 'Fira Code', monospace;
+    --radius: 4px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--fg);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 48px;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+    gap: 4px;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .sidebar-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: var(--fg-dim);
+    font-size: 18px;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+    position: relative;
+  }
+
+  .sidebar-icon:hover { color: var(--fg); background: var(--bg-card); }
+  .sidebar-icon.active { color: var(--fg); border-color: var(--blue); background: rgba(14,99,156,0.15); }
+
+  .sidebar-icon .tooltip {
+    position: absolute;
+    left: 48px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    border-radius: var(--radius);
+    white-space: nowrap;
+    font-size: 11px;
+    color: var(--fg);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.1s;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+
+  .sidebar-icon:hover .tooltip { opacity: 1; }
+
+  .sidebar-divider {
+    width: 28px;
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+
+  /* ── MAIN ── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    height: 38px;
+    background: var(--bg-sidebar);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .topbar-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+  }
+
+  .topbar-badge {
+    background: var(--green-dim);
+    color: var(--green);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  .topbar-score {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--fg-dim);
+  }
+
+  .topbar-score span { color: var(--green); font-weight: 600; }
+
+  .topbar-date {
+    font-size: 11px;
+    color: var(--fg-muted);
+    font-family: var(--font-mono);
+  }
+
+  /* ── VIEWS ── */
+  .view { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+  .view.active { display: flex; }
+
+  .view-header {
+    padding: 14px 20px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .view-header h2 { font-size: 14px; font-weight: 600; }
+  .view-header .subtitle { font-size: 11px; color: var(--fg-dim); }
+
+  .view-body {
+    flex: 1;
+    overflow: auto;
+    padding: 16px 20px;
+  }
+
+  /* ── STORY MAP ── */
+  .story-map-container { overflow: auto; }
+
+  .story-map-activities {
+    display: flex;
+    gap: 0;
+    min-width: max-content;
+    margin-bottom: 0;
+  }
+
+  .activity-col {
+    min-width: 200px;
+    border-right: 1px solid var(--border);
+  }
+
+  .activity-header {
+    padding: 10px 12px;
+    background: var(--bg-panel);
+    border-bottom: 2px solid var(--blue);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--blue-bright);
+    text-transform: uppercase;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+
+  .activity-meta {
+    font-size: 10px;
+    color: var(--fg-muted);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-top: 2px;
+  }
+
+  .swim-lane {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .swim-lane-label {
+    padding: 6px 12px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--fg-muted);
+    background: var(--bg-sidebar);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .swim-lane-cards {
+    padding: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 56px;
+  }
+
+  .story-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+    min-width: 140px;
+    max-width: 175px;
+  }
+
+  .story-card:hover { background: var(--bg-card-hover); border-color: var(--border-light); transform: translateY(-1px); box-shadow: var(--shadow); }
+
+  .story-card.complete { border-left: 3px solid var(--green); }
+  .story-card.in-progress { border-left: 3px solid var(--amber); }
+  .story-card.planned { border-left: 3px solid var(--fg-muted); }
+  .story-card.blocked { border-left: 3px solid var(--red); }
+
+  .card-title { font-weight: 600; margin-bottom: 3px; color: var(--fg); }
+  .card-meta { font-size: 10px; color: var(--fg-dim); display: flex; gap: 6px; flex-wrap: wrap; }
+  .card-tag { background: var(--tag-bg); padding: 1px 5px; border-radius: 3px; }
+  .card-status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+  .dot-green { background: var(--green); }
+  .dot-amber { background: var(--amber); }
+  .dot-gray { background: var(--fg-muted); }
+  .dot-red { background: var(--red); }
+
+  /* Sprint row headers column */
+  .sprint-col-header {
+    min-width: 120px;
+    flex-shrink: 0;
+    border-right: 2px solid var(--border);
+  }
+
+  .sprint-label-cell {
+    padding: 6px 10px;
+    background: var(--bg-sidebar);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .sprint-num { font-size: 11px; font-weight: 700; color: var(--blue-bright); }
+  .sprint-title { font-size: 10px; color: var(--fg-dim); margin-top: 2px; }
+  .sprint-status-badge {
+    font-size: 9px;
+    margin-top: 3px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    width: fit-content;
+  }
+  .badge-complete { background: var(--green-dim); color: var(--green); }
+  .badge-planned { background: var(--amber-dim); color: var(--amber); }
+  .badge-active { background: var(--sprint-active); color: var(--blue-bright); border: 1px solid var(--blue); }
+
+  /* ── CODE DIARY ── */
+  .diary-layout { display: flex; gap: 0; height: 100%; overflow: hidden; }
+
+  .diary-sidebar {
+    width: 280px;
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  .diary-date-group { margin-bottom: 0; }
+
+  .diary-date-label {
+    padding: 8px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--fg-muted);
+    background: var(--bg-sidebar);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .diary-entry-row {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .diary-entry-row:hover { background: var(--bg-card); }
+  .diary-entry-row.active { background: var(--sprint-active); border-left: 2px solid var(--blue); }
+
+  .diary-hash {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--blue-bright);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .diary-entry-title {
+    font-size: 11px;
+    color: var(--fg);
+    line-height: 1.4;
+  }
+
+  .diary-entry-type {
+    font-size: 10px;
+    color: var(--fg-muted);
+    margin-top: 2px;
+  }
+
+  .type-feat { color: #4fc3f7; }
+  .type-test { color: #81c784; }
+  .type-fix { color: #ffb74d; }
+  .type-chore { color: var(--fg-muted); }
+  .type-docs { color: #ce93d8; }
+  .type-tidy { color: #80cbc4; }
+
+  .diary-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+  }
+
+  .diary-content-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .diary-content-hash {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--blue-bright);
+    margin-bottom: 6px;
+  }
+
+  .diary-content-title {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 8px;
+  }
+
+  .diary-content-meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .diary-chip {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--tag-bg);
+    color: var(--fg-dim);
+  }
+
+  .diary-chip.branch { background: rgba(14,99,156,0.2); color: var(--blue-bright); }
+  .diary-chip.td { background: var(--amber-dim); color: var(--amber); }
+  .diary-chip.adr { background: var(--purple-dim); color: #ce93d8; }
+
+  .diary-body { font-size: 12px; line-height: 1.7; color: var(--fg); }
+  .diary-body h3 { font-size: 12px; color: var(--fg-dim); margin: 14px 0 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .diary-body .file-list { display: flex; flex-wrap: wrap; gap: 4px; }
+  .diary-body .file-tag { background: var(--tag-bg); font-family: var(--font-mono); font-size: 10px; padding: 2px 6px; border-radius: 3px; color: var(--fg-dim); }
+  .diary-body .cycle-badge { display: inline-block; width: 14px; height: 14px; border-radius: 50%; text-align: center; line-height: 14px; font-size: 9px; font-weight: 700; margin-right: 4px; }
+  .badge-red-cycle { background: var(--red-dim); color: var(--red); }
+  .badge-green-cycle { background: var(--green-dim); color: var(--green); }
+
+  /* ── CALENDAR ── */
+  .calendar-layout { display: flex; gap: 0; height: 100%; overflow: hidden; }
+
+  .calendar-main { flex: 1; overflow-y: auto; padding: 0; }
+
+  .week-header {
+    display: grid;
+    grid-template-columns: 60px repeat(5, 1fr);
+    border-bottom: 2px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg-sidebar);
+    z-index: 3;
+  }
+
+  .week-header-day {
+    padding: 8px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--fg-dim);
+    text-align: center;
+    border-left: 1px solid var(--border);
+  }
+
+  .week-header-day.today { color: var(--blue-bright); }
+  .week-header-day .day-num { font-size: 18px; font-weight: 300; display: block; color: var(--fg); }
+  .week-header-day.today .day-num {
+    background: var(--blue);
+    color: white;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    margin: 0 auto;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: 60px repeat(5, 1fr);
+  }
+
+  .time-col { font-size: 10px; color: var(--fg-muted); text-align: right; padding-right: 8px; padding-top: 4px; border-right: 1px solid var(--border); }
+  .time-slot { border-bottom: 1px solid var(--border); height: 48px; display: flex; align-items: flex-start; }
+  .time-slot.half { border-bottom: 1px dashed var(--border); height: 24px; }
+  .day-slot { border-left: 1px solid var(--border); border-bottom: 1px solid var(--border); height: 48px; position: relative; padding: 2px; }
+  .day-slot.today-col { background: rgba(14,99,156,0.04); }
+
+  .cal-event {
+    position: absolute;
+    left: 2px; right: 2px;
+    border-radius: var(--radius);
+    padding: 3px 6px;
+    font-size: 10px;
+    font-weight: 500;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    z-index: 1;
+  }
+
+  .cal-event.sprint { background: rgba(14,99,156,0.3); border-left: 3px solid var(--blue); color: var(--fg); }
+  .cal-event.tdd { background: rgba(76,175,80,0.2); border-left: 3px solid var(--green); color: var(--fg); }
+  .cal-event.review { background: rgba(156,39,176,0.2); border-left: 3px solid var(--purple); color: var(--fg); }
+  .cal-event.hitl { background: rgba(255,152,0,0.2); border-left: 3px solid var(--amber); color: var(--fg); }
+
+  .calendar-sidebar {
+    width: 260px;
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  .cal-sidebar-section { border-bottom: 1px solid var(--border); }
+  .cal-sidebar-label {
+    padding: 8px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--fg-muted);
+    background: var(--bg-sidebar);
+  }
+
+  .task-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .task-item:hover { background: var(--bg-card); }
+
+  .task-checkbox {
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--fg-muted);
+    border-radius: 3px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+  }
+
+  .task-checkbox.done { background: var(--green); border-color: var(--green); color: white; }
+  .task-checkbox.blocked { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+
+  .task-text { font-size: 11px; line-height: 1.4; }
+  .task-text.done { text-decoration: line-through; color: var(--fg-muted); }
+  .task-priority { font-size: 9px; color: var(--fg-muted); margin-top: 2px; }
+  .task-priority.high { color: var(--amber); }
+  .task-priority.crit { color: var(--red); }
+
+  /* ── TECH DEBT ── */
+  .td-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 12px;
+    padding-bottom: 20px;
+  }
+
+  .td-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .td-card:hover { border-color: var(--border-light); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .td-card.sev-high { border-top: 3px solid var(--red); }
+  .td-card.sev-medium { border-top: 3px solid var(--amber); }
+  .td-card.sev-low { border-top: 3px solid var(--teal); }
+  .td-card.resolved { opacity: 0.5; border-top-color: var(--green); }
+
+  .td-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .td-id { font-family: var(--font-mono); font-size: 11px; color: var(--blue-bright); font-weight: 700; }
+  .td-sev { font-size: 9px; padding: 2px 6px; border-radius: 10px; font-weight: 600; }
+  .sev-high { background: var(--red-dim); color: var(--red); }
+  .sev-medium { background: var(--amber-dim); color: var(--amber); }
+  .sev-low { background: var(--teal-dim); color: var(--teal); }
+  .sev-done { background: var(--green-dim); color: var(--green); }
+
+  .td-title { font-size: 12px; font-weight: 600; margin-bottom: 6px; line-height: 1.4; }
+  .td-desc { font-size: 11px; color: var(--fg-dim); line-height: 1.5; }
+  .td-footer { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .td-chip { font-size: 10px; padding: 2px 6px; border-radius: 3px; background: var(--tag-bg); color: var(--fg-muted); }
+
+  /* ── SPRINT BOARD ── */
+  .sprint-board {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 16px;
+    align-items: flex-start;
+  }
+
+  .sprint-col {
+    min-width: 240px;
+    max-width: 240px;
+    background: var(--bg-panel);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .sprint-col-title {
+    padding: 10px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .sprint-col-title.complete { color: var(--green); }
+  .sprint-col-title.planned { color: var(--amber); }
+  .sprint-col-title.active { color: var(--blue-bright); }
+
+  .sprint-count {
+    background: var(--tag-bg);
+    color: var(--fg-muted);
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 400;
+  }
+
+  .sprint-cards { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+
+  .sprint-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .sprint-card:hover { background: var(--bg-card-hover); }
+  .sprint-card.complete { border-left: 3px solid var(--green); }
+  .sprint-card.planned { border-left: 3px solid var(--amber); }
+
+  .sprint-card-num { font-family: var(--font-mono); font-size: 10px; color: var(--blue-bright); margin-bottom: 3px; }
+  .sprint-card-title { font-weight: 600; color: var(--fg); margin-bottom: 4px; line-height: 1.3; }
+  .sprint-card-meta { font-size: 10px; color: var(--fg-dim); display: flex; gap: 6px; flex-wrap: wrap; }
+  .sprint-card-score { color: var(--green); }
+
+  /* ── SEARCH ── */
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 5px 10px;
+    margin-left: auto;
+  }
+
+  .search-bar input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--fg);
+    font-size: 12px;
+    font-family: var(--font);
+    width: 180px;
+  }
+
+  .search-bar input::placeholder { color: var(--fg-muted); }
+
+  /* ── FILTER CHIPS ── */
+  .filter-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .filter-chip {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--fg-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-chip:hover { border-color: var(--border-light); color: var(--fg); }
+  .filter-chip.active { background: var(--blue); border-color: var(--blue); color: white; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar {
+    height: 4px;
+    background: var(--bg-card);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), #66bb6a);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  /* ── STATUS BAR ── */
+  .statusbar {
+    height: 22px;
+    background: var(--blue);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 16px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.8);
+    flex-shrink: 0;
+  }
+
+  .statusbar-item { display: flex; align-items: center; gap: 4px; }
+  .statusbar-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+
+  /* ── DETAIL PANEL ── */
+  .detail-panel {
+    width: 340px;
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    flex-shrink: 0;
+    display: none;
+  }
+
+  .detail-panel.open { display: block; }
+
+  .detail-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-panel);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .detail-close {
+    float: right;
+    cursor: pointer;
+    color: var(--fg-muted);
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .detail-close:hover { color: var(--fg); }
+
+  .detail-body { padding: 14px; }
+  .detail-section { margin-bottom: 14px; }
+  .detail-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--fg-muted);
+    margin-bottom: 6px;
+  }
+
+  .detail-text { font-size: 12px; line-height: 1.6; color: var(--fg-dim); }
+
+  /* Checklist */
+  .checklist { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .checklist li { display: flex; gap: 6px; align-items: flex-start; font-size: 11px; }
+  .checklist li::before { content: '✓'; color: var(--green); flex-shrink: 0; }
+  .checklist li.open::before { content: '○'; color: var(--fg-muted); }
+  .checklist li.blocked::before { content: '!'; color: var(--red); }
+
+  /* Tooltip on hover for story map cards */
+  .story-card[data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    border-radius: var(--radius);
+    font-size: 10px;
+    white-space: pre-wrap;
+    max-width: 200px;
+    z-index: 100;
+    box-shadow: var(--shadow);
+    pointer-events: none;
+    left: 100%;
+    top: 0;
+    margin-left: 6px;
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-icon active" onclick="showView('story-map')" title="">
+    🗺️<span class="tooltip">Story Map</span>
+  </div>
+  <div class="sidebar-icon" onclick="showView('diary')" title="">
+    📖<span class="tooltip">Code Diary</span>
+  </div>
+  <div class="sidebar-icon" onclick="showView('calendar')" title="">
+    📅<span class="tooltip">Calendar</span>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-icon" onclick="showView('sprints')" title="">
+    🏃<span class="tooltip">Sprints</span>
+  </div>
+  <div class="sidebar-icon" onclick="showView('tech-debt')" title="">
+    🔧<span class="tooltip">Tech Debt</span>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-icon" onclick="showView('inbox')" title="">
+    📥<span class="tooltip">Inbox</span>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <span class="topbar-title">Phoric Dev-Brain</span>
+    <span class="topbar-badge">Sprint 20 Complete</span>
+    <div class="search-bar">
+      <span style="color:var(--fg-muted);font-size:12px">⌕</span>
+      <input type="text" placeholder="Search gaps, tasks, diary…" id="global-search" oninput="handleSearch(this.value)">
+    </div>
+    <span class="topbar-score">Tests: <span>1,407</span> · Score: <span>381/390 (98%)</span></span>
+    <span class="topbar-date">Fri 9 May 2026</span>
+  </div>
+
+  <!-- ════ STORY MAP VIEW ════ -->
+  <div class="view active" id="view-story-map">
+    <div class="view-header">
+      <div>
+        <h2>Jeff Patton Story Map</h2>
+        <div class="subtitle">Gap closure programme · Sprints 1–20 · 381/390 (98%) complete</div>
+      </div>
+      <div class="filter-row" style="margin:0 0 0 auto">
+        <span class="filter-chip active" onclick="toggleFilter(this,'all')">All</span>
+        <span class="filter-chip" onclick="toggleFilter(this,'complete')">✅ Complete</span>
+        <span class="filter-chip" onclick="toggleFilter(this,'planned')">📋 Planned</span>
+        <span class="filter-chip" onclick="toggleFilter(this,'blocked')">🔴 Blocked</span>
+      </div>
+    </div>
+
+    <div class="view-body" style="padding:0; overflow:auto;">
+      <div style="display:flex; min-width:max-content;">
+
+        <!-- Sprint label column -->
+        <div class="sprint-col-header">
+          <div class="activity-header" style="min-height:54px;display:flex;align-items:center;">Sprint</div>
+          <div class="swim-lane-label" style="min-height:33px;display:flex;align-items:center;">GAP</div>
+
+          <div class="sprint-label-cell" style="min-height:72px;">
+            <div class="sprint-num">S1–2</div>
+            <div class="sprint-title">Queue + WI</div>
+            <div class="sprint-status-badge badge-complete">COMPLETE</div>
+          </div>
+          <div class="sprint-label-cell" style="min-height:72px;">
+            <div class="sprint-num">S3</div>
+            <div class="sprint-title">Spark + RTI</div>
+            <div class="sprint-status-badge badge-complete">COMPLETE</div>
+          </div>
+          <div class="sprint-label-cell" style="min-height:72px;">
+            <div class="sprint-num">S4–6</div>
+            <div class="sprint-title">Fabric SQL</div>
+            <div class="sprint-status-badge badge-complete">COMPLETE</div>
+          </div>
+          <div class="sprint-label-cell" style="min-height:72px;">
+            <div class="sprint-num">S7–8</div>
+            <div class="sprint-title">Data Awareness</div>
+            <div class="sprint-status-badge badge-complete">COMPLETE</div>
+          </div>
+          <div class="sprint-label-cell" style="min-height:72px;">
+            <div class="sprint-num">S9–11</div>
+            <div class="sprint-title">Quality + Catalogue</div>
+            <div class="sprint-status-badge badge-complete">COMPLETE</div>
+          </div>
+          <div class="sprint-label-cell" style="min-height:72px;">
+            <div class="sprint-num">S12</div>
+            <div class="sprint-title">Deployment Excellence</div>
+            <div class="sprint-status-badge badge-planned">PLANNED</div>
+          </div>
+          <div class="sprint-label-cell" style="min-height:72px;">
+            <div class="sprint-num">S13–16</div>
+            <div class="sprint-title">Feature Expansion</div>
+            <div class="sprint-status-badge badge-complete">COMPLETE</div>
+          </div>
+          <div class="sprint-label-cell" style="min-height:72px;">
+            <div class="sprint-num">S17–20</div>
+            <div class="sprint-title">Security + Control</div>
+            <div class="sprint-status-badge badge-complete">COMPLETE</div>
+          </div>
+        </div>
+
+        <!-- Activity: Auth & Identity -->
+        <div class="activity-col">
+          <div class="activity-header">
+            Auth &amp; Identity
+            <div class="activity-meta">GAP-01, GAP-02</div>
+          </div>
+          <div class="swim-lane">
+            <div class="swim-lane-label">GAP-01 Workspace Identity · GAP-02 WorkspaceGuid</div>
+            <div class="swim-lane-cards">
+              <div class="story-card complete" onclick="openDetail('gap01')">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>nb_conn_jdbc WI</div>
+                <div class="card-meta"><span class="card-tag">GAP-01</span><span class="card-tag">S1–2</span></div>
+              </div>
+              <div class="story-card complete" onclick="openDetail('gap02')">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>WorkspaceGuid DAG</div>
+                <div class="card-meta"><span class="card-tag">GAP-02</span><span class="card-tag">S1</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane">
+            <div class="swim-lane-cards">
+              <div class="story-card planned" onclick="openDetail('gap22')">
+                <div class="card-title"><span class="card-status-dot dot-gray"></span>OIDC Federation</div>
+                <div class="card-meta"><span class="card-tag">GAP-22</span><span class="card-tag">Backlog</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane">
+            <div class="swim-lane-cards">
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>WI Migration</div>
+                <div class="card-meta"><span class="card-tag">FEATURE P7</span><span class="card-tag">S17</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity: Connectors -->
+        <div class="activity-col">
+          <div class="activity-header">
+            Connectors
+            <div class="activity-meta">GAP-04, FEATURE P4</div>
+          </div>
+          <div class="swim-lane">
+            <div class="swim-lane-cards">
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>Mirroring Connector</div>
+                <div class="card-meta"><span class="card-tag">GAP-04</span><span class="card-tag">S2</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane">
+            <div class="swim-lane-cards">
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>SFTP / FTPS</div>
+                <div class="card-meta"><span class="card-tag">FEATURE P4</span><span class="card-tag">S15</span></div>
+              </div>
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>SharePoint</div>
+                <div class="card-meta"><span class="card-tag">FEATURE P4</span><span class="card-tag">S15</span></div>
+              </div>
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>Oracle/SQLMI</div>
+                <div class="card-meta"><span class="card-tag">FEATURE P4</span><span class="card-tag">S15</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+        </div>
+
+        <!-- Activity: Compute -->
+        <div class="activity-col">
+          <div class="activity-header">
+            Compute
+            <div class="activity-meta">GAP-03</div>
+          </div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane">
+            <div class="swim-lane-cards">
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>Spark Resource Profiles</div>
+                <div class="card-meta"><span class="card-tag">GAP-03</span><span class="card-tag">S3</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane">
+            <div class="swim-lane-cards">
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>Delta Maintenance</div>
+                <div class="card-meta"><span class="card-tag">GAP-23</span><span class="card-tag">S19</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity: Control DB -->
+        <div class="activity-col">
+          <div class="activity-header">
+            Control Plane
+            <div class="activity-meta">GAP-05</div>
+          </div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane">
+            <div class="swim-lane-cards">
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>Fabric SQL — Dual Write</div>
+                <div class="card-meta"><span class="card-tag">GAP-05</span><span class="card-tag">S4</span></div>
+              </div>
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>Fabric SQL — Read Migration</div>
+                <div class="card-meta"><span class="card-tag">GAP-05</span><span class="card-tag">S5</span></div>
+              </div>
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>Fabric SQL — Full Migration</div>
+                <div class="card-meta"><span class="card-tag">GAP-05</span><span class="card-tag">S6</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane">
+            <div class="swim-lane-cards">
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>Control Plane Phase 1</div>
+                <div class="card-meta"><span class="card-tag">S19</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity: Observability -->
+        <div class="activity-col">
+          <div class="activity-header">
+            Observability
+            <div class="activity-meta">GAP-06, FEATURE P3</div>
+          </div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane">
+            <div class="swim-lane-cards">
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>RTI Observability</div>
+                <div class="card-meta"><span class="card-tag">GAP-06</span><span class="card-tag">S3</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane">
+            <div class="swim-lane-cards">
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>Structured Logging L1</div>
+                <div class="card-meta"><span class="card-tag">FEATURE P3</span><span class="card-tag">S14</span></div>
+              </div>
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>Hub Plugin L2</div>
+                <div class="card-meta"><span class="card-tag">FEATURE P3</span><span class="card-tag">S14</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="swim-lane">
+            <div class="swim-lane-cards">
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>Livy CI Smoke</div>
+                <div class="card-meta"><span class="card-tag">GAP-21</span><span class="card-tag">S18</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity: Data Quality -->
+        <div class="activity-col">
+          <div class="activity-header">
+            Data Quality
+            <div class="activity-meta">GAP-07–09</div>
+          </div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane">
+            <div class="swim-lane-cards">
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>Bronze Profiling</div>
+                <div class="card-meta"><span class="card-tag">GAP-07</span><span class="card-tag">S7–8</span></div>
+              </div>
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>PII Auto-Discovery</div>
+                <div class="card-meta"><span class="card-tag">GAP-08</span><span class="card-tag">S8</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="swim-lane">
+            <div class="swim-lane-cards">
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>Pandera Contracts</div>
+                <div class="card-meta"><span class="card-tag">GAP-09</span><span class="card-tag">S9</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane">
+            <div class="swim-lane-cards">
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>PBI QA Framework</div>
+                <div class="card-meta"><span class="card-tag">PBI-QA</span><span class="card-tag">S20</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity: Catalogue -->
+        <div class="activity-col">
+          <div class="activity-header">
+            Data Catalogue
+            <div class="activity-meta">GAP-10, GAP-11</div>
+          </div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane">
+            <div class="swim-lane-cards">
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>PIM Control Plane</div>
+                <div class="card-meta"><span class="card-tag">GAP-10</span><span class="card-tag">S10</span></div>
+              </div>
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>OpenMetadata</div>
+                <div class="card-meta"><span class="card-tag">GAP-11</span><span class="card-tag">S11</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+        </div>
+
+        <!-- Activity: Gold Domain -->
+        <div class="activity-col">
+          <div class="activity-header">
+            Gold Domain
+            <div class="activity-meta">FEATURE P5</div>
+          </div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+          <div class="swim-lane">
+            <div class="swim-lane-cards">
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>Domain Scaffold Wizard</div>
+                <div class="card-meta"><span class="card-tag">FEATURE P5</span><span class="card-tag">S16</span></div>
+              </div>
+              <div class="story-card complete">
+                <div class="card-title"><span class="card-status-dot dot-green"></span>write_gold()</div>
+                <div class="card-meta"><span class="card-tag">FEATURE P5</span><span class="card-tag">S16</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="swim-lane"><div class="swim-lane-cards"></div></div>
+        </div>
+
+      </div><!-- end flex -->
+    </div><!-- end view-body -->
+  </div><!-- end story-map -->
+
+  <!-- ════ CODE DIARY VIEW ════ -->
+  <div class="view" id="view-diary">
+    <div class="view-header">
+      <div>
+        <h2>Code Diary</h2>
+        <div class="subtitle">1,298 entries · Auto-generated from git commits</div>
+      </div>
+      <div class="filter-row" style="margin:0 0 0 auto">
+        <span class="filter-chip active">All</span>
+        <span class="filter-chip">feat</span>
+        <span class="filter-chip">test</span>
+        <span class="filter-chip">fix</span>
+        <span class="filter-chip">docs</span>
+      </div>
+    </div>
+    <div style="display:flex;flex:1;overflow:hidden;">
+      <div class="diary-sidebar" id="diary-list">
+
+        <div class="diary-date-group">
+          <div class="diary-date-label">Fri 9 May 2026 — 24 entries</div>
+
+          <div class="diary-entry-row active" onclick="showDiaryEntry('fafca77')">
+            <div class="diary-hash">fafca77</div>
+            <div>
+              <div class="diary-entry-title">RED — nb_table_maintenance core functions</div>
+              <div class="diary-entry-type type-test">test</div>
+            </div>
+          </div>
+
+          <div class="diary-entry-row" onclick="showDiaryEntry('f13af56')">
+            <div class="diary-hash">f13af56</div>
+            <div>
+              <div class="diary-entry-title">Sprint 19 task card — COMPLETE, all 8 cycles</div>
+              <div class="diary-entry-type type-chore">chore</div>
+            </div>
+          </div>
+
+          <div class="diary-entry-row" onclick="showDiaryEntry('e5a12e3')">
+            <div class="diary-hash">e5a12e3</div>
+            <div>
+              <div class="diary-entry-title">feat(smoke-livy): MSAL fallback + main() [GREEN]</div>
+              <div class="diary-entry-type type-feat">feat</div>
+            </div>
+          </div>
+
+          <div class="diary-entry-row" onclick="showDiaryEntry('d3ea5b1')">
+            <div class="diary-hash">d3ea5b1</div>
+            <div>
+              <div class="diary-entry-title">fix(pii-scanner): IP/MAC regex; tighten IBAN</div>
+              <div class="diary-entry-type type-fix">fix</div>
+            </div>
+          </div>
+
+          <div class="diary-entry-row" onclick="showDiaryEntry('cf3fbdf')">
+            <div class="diary-hash">cf3fbdf</div>
+            <div>
+              <div class="diary-entry-title">feat(bootstrap): Cycle 8 — VOrderEnabled migration [GREEN]</div>
+              <div class="diary-entry-type type-feat">feat</div>
+            </div>
+          </div>
+
+          <div class="diary-entry-row" onclick="showDiaryEntry('cee2766')">
+            <div class="diary-hash">cee2766</div>
+            <div>
+              <div class="diary-entry-title">test(bootstrap): RED — VOrderEnabled migration guards</div>
+              <div class="diary-entry-type type-test">test</div>
+            </div>
+          </div>
+
+          <div class="diary-entry-row" onclick="showDiaryEntry('c4da04e')">
+            <div class="diary-hash">c4da04e</div>
+            <div>
+              <div class="diary-entry-title">tidy(nb-bootstrap): extract _migrate_table helper</div>
+              <div class="diary-entry-type type-tidy">tidy</div>
+            </div>
+          </div>
+
+          <div class="diary-entry-row" onclick="showDiaryEntry('9f25172')">
+            <div class="diary-hash">9f25172</div>
+            <div>
+              <div class="diary-entry-title">feat(bootstrap): Cycle 5 — TD-078 annotations DDL [GREEN]</div>
+              <div class="diary-entry-type type-feat">feat</div>
+            </div>
+          </div>
+
+          <div class="diary-entry-row" onclick="showDiaryEntry('8ba4160')">
+            <div class="diary-hash">8ba4160</div>
+            <div>
+              <div class="diary-entry-title">chore: sprint 18 close — RBAC + Livy 1302→1310</div>
+              <div class="diary-entry-type type-chore">chore · TD-079</div>
+            </div>
+          </div>
+
+          <div class="diary-entry-row" onclick="showDiaryEntry('7ba353a')">
+            <div class="diary-hash">7ba353a</div>
+            <div>
+              <div class="diary-entry-title">fix(livy): Sessions API; sprint-19 close</div>
+              <div class="diary-entry-type type-fix">fix</div>
+            </div>
+          </div>
+
+          <div class="diary-entry-row" onclick="showDiaryEntry('6076f9e')">
+            <div class="diary-hash">6076f9e</div>
+            <div>
+              <div class="diary-entry-title">docs(adr): ADR-061 agentic QA for Power BI</div>
+              <div class="diary-entry-type type-docs">docs · ADR-061</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="diary-date-group">
+          <div class="diary-date-label">Thu 8 May 2026 — 18 entries</div>
+          <div class="diary-entry-row" onclick="showDiaryEntry('prev1')">
+            <div class="diary-hash">a8c3f12</div>
+            <div>
+              <div class="diary-entry-title">feat(onelake-rbac): workspace RBAC assignment [GREEN]</div>
+              <div class="diary-entry-type type-feat">feat · GAP-21</div>
+            </div>
+          </div>
+          <div class="diary-entry-row" onclick="showDiaryEntry('prev2')">
+            <div class="diary-hash">b2d9e44</div>
+            <div>
+              <div class="diary-entry-title">test(rbac): RED — OneLake role assignment matrix</div>
+              <div class="diary-entry-type type-test">test</div>
+            </div>
+          </div>
+          <div class="diary-entry-row" onclick="showDiaryEntry('prev3')">
+            <div class="diary-hash">c5f1a89</div>
+            <div>
+              <div class="diary-entry-title">docs(adr): ADR-060 Delta maintenance strategy</div>
+              <div class="diary-entry-type type-docs">docs · ADR-060</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="diary-date-group">
+          <div class="diary-date-label">Wed 7 May 2026 — 21 entries</div>
+          <div class="diary-entry-row">
+            <div class="diary-hash">d4e2b71</div>
+            <div>
+              <div class="diary-entry-title">feat(taskflow): Taskflow definitions + KV naming</div>
+              <div class="diary-entry-type type-feat">feat · FEATURE P8</div>
+            </div>
+          </div>
+          <div class="diary-entry-row">
+            <div class="diary-hash">e6f3c22</div>
+            <div>
+              <div class="diary-entry-title">feat(gold): write_gold() helper + domain scaffold</div>
+              <div class="diary-entry-type type-feat">feat · FEATURE P5</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Diary content pane -->
+      <div class="diary-content" id="diary-content">
+        <div class="diary-content-header">
+          <div class="diary-content-hash">fafca77 · 2026-05-09 · vnext</div>
+          <div class="diary-content-title">test(maintenance): RED — nb_table_maintenance core maintenance functions</div>
+          <div class="diary-content-meta">
+            <span class="diary-chip branch">vnext</span>
+            <span class="diary-chip">Sprint 19</span>
+            <span class="diary-chip">TDD: RED</span>
+          </div>
+        </div>
+        <div class="diary-body">
+          <p>Tests for <code style="background:var(--tag-bg);padding:1px 4px;border-radius:2px;font-family:var(--font-mono);font-size:11px">run_optimize</code>, <code style="background:var(--tag-bg);padding:1px 4px;border-radius:2px;font-family:var(--font-mono);font-size:11px">run_vacuum</code>, <code style="background:var(--tag-bg);padding:1px 4px;border-radius:2px;font-family:var(--font-mono);font-size:11px">enable_vorder</code> — all failing (module not yet created).</p>
+
+          <h3>TDD Phase</h3>
+          <p><span class="cycle-badge badge-red-cycle">R</span> RED commit — tests written, implementation pending</p>
+
+          <h3>Files Changed</h3>
+          <div class="file-list">
+            <span class="file-tag">tests/test_nb_table_maintenance.py</span>
+          </div>
+
+          <h3>Sprint Context</h3>
+          <p style="margin-top:4px">Part of Sprint 19 — GAP-23 Delta Table Maintenance. This RED commit establishes the test contract for the three core maintenance functions before implementation.</p>
+
+          <h3>Linked Items</h3>
+          <p>ADR-060 — Delta table maintenance strategy (V-Order, OPTIMIZE, Liquid Clustering)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ CALENDAR VIEW ════ -->
+  <div class="view" id="view-calendar">
+    <div class="view-header">
+      <div>
+        <h2>Calendar — Week of 6–10 May 2026</h2>
+        <div class="subtitle">Tactical execution view · Sprint 19 active</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:6px">
+        <button style="background:var(--bg-card);border:1px solid var(--border);color:var(--fg);padding:4px 10px;border-radius:var(--radius);cursor:pointer;font-size:12px">← Week</button>
+        <button style="background:var(--blue);border:none;color:white;padding:4px 10px;border-radius:var(--radius);cursor:pointer;font-size:12px">Today</button>
+        <button style="background:var(--bg-card);border:1px solid var(--border);color:var(--fg);padding:4px 10px;border-radius:var(--radius);cursor:pointer;font-size:12px">Week →</button>
+      </div>
+    </div>
+    <div class="calendar-layout">
+      <div class="calendar-main">
+        <!-- Week header -->
+        <div class="week-header">
+          <div style="padding:8px;border-bottom:2px solid var(--border);background:var(--bg-sidebar);"></div>
+          <div class="week-header-day">Mon<span class="day-num">6</span></div>
+          <div class="week-header-day">Tue<span class="day-num">7</span></div>
+          <div class="week-header-day">Wed<span class="day-num">8</span></div>
+          <div class="week-header-day today">Thu<span class="day-num">9</span></div>
+          <div class="week-header-day">Fri<span class="day-num">10</span></div>
+        </div>
+
+        <!-- Time slots -->
+        <div class="calendar-grid">
+          <!-- 09:00 -->
+          <div class="time-col" style="height:48px;padding-top:4px">09:00</div>
+          <div class="day-slot" style="height:48px">
+            <div class="cal-event sprint" style="top:2px;height:44px">Sprint 19 Kick-off · Control Plane Phase 1</div>
+          </div>
+          <div class="day-slot" style="height:48px"></div>
+          <div class="day-slot" style="height:48px"></div>
+          <div class="day-slot today-col" style="height:48px">
+            <div class="cal-event tdd" style="top:2px;height:44px">TDD Cycle 1–2 · nb_table_maintenance RED</div>
+          </div>
+          <div class="day-slot" style="height:48px"></div>
+
+          <!-- 10:00 -->
+          <div class="time-col" style="height:48px;padding-top:4px">10:00</div>
+          <div class="day-slot" style="height:48px">
+            <div class="cal-event tdd" style="top:2px;height:44px">TDD Cycle 1 · schema divergence fixes RED</div>
+          </div>
+          <div class="day-slot" style="height:48px">
+            <div class="cal-event tdd" style="top:2px;height:44px">TDD Cycle — Taskflow defs [GREEN]</div>
+          </div>
+          <div class="day-slot" style="height:48px">
+            <div class="cal-event tdd" style="top:2px;height:44px">TDD Cycle — RBAC matrix [RED→GREEN]</div>
+          </div>
+          <div class="day-slot today-col" style="height:48px">
+            <div class="cal-event tdd" style="top:2px;height:44px">TDD Cycle 3 · VOrderEnabled migration [GREEN]</div>
+          </div>
+          <div class="day-slot" style="height:48px"></div>
+
+          <!-- 11:00 -->
+          <div class="time-col" style="height:48px;padding-top:4px">11:00</div>
+          <div class="day-slot" style="height:48px"></div>
+          <div class="day-slot" style="height:48px">
+            <div class="cal-event review" style="top:2px;height:44px">ADR-060 write · Delta maintenance strategy</div>
+          </div>
+          <div class="day-slot" style="height:48px">
+            <div class="cal-event sprint" style="top:2px;height:44px">Sprint 18 close · RBAC + Livy</div>
+          </div>
+          <div class="day-slot today-col" style="height:48px">
+            <div class="cal-event review" style="top:2px;height:44px">Roast + tidy · nb_bootstrap _migrate_table</div>
+          </div>
+          <div class="day-slot" style="height:48px"></div>
+
+          <!-- 12:00 -->
+          <div class="time-col" style="height:48px;padding-top:4px">12:00</div>
+          <div class="day-slot" style="height:48px"></div>
+          <div class="day-slot" style="height:48px"></div>
+          <div class="day-slot" style="height:48px"></div>
+          <div class="day-slot today-col" style="height:48px"></div>
+          <div class="day-slot" style="height:48px"></div>
+
+          <!-- 13:00 -->
+          <div class="time-col" style="height:48px;padding-top:4px">13:00</div>
+          <div class="day-slot" style="height:48px">
+            <div class="cal-event tdd" style="top:2px;height:44px">TDD Cycle 2–3 · ControlLog + SourceConfig [GREEN]</div>
+          </div>
+          <div class="day-slot" style="height:48px">
+            <div class="cal-event tdd" style="top:2px;height:44px">TDD Cycle — Gold domain scaffold [GREEN]</div>
+          </div>
+          <div class="day-slot" style="height:48px">
+            <div class="cal-event hitl" style="top:2px;height:44px">HITL Gate · Livy smoke validation</div>
+          </div>
+          <div class="day-slot today-col" style="height:48px">
+            <div class="cal-event sprint" style="top:2px;height:44px">Sprint 19 close · 1310→1407 tests</div>
+          </div>
+          <div class="day-slot" style="height:48px"></div>
+
+          <!-- 14:00 -->
+          <div class="time-col" style="height:48px;padding-top:4px">14:00</div>
+          <div class="day-slot" style="height:48px"></div>
+          <div class="day-slot" style="height:48px"></div>
+          <div class="day-slot" style="height:48px">
+            <div class="cal-event review" style="top:2px;height:44px">ADR-061 write · PBI QA Framework</div>
+          </div>
+          <div class="day-slot today-col" style="height:48px">
+            <div class="cal-event tdd" style="top:2px;height:44px">Sprint 20 PBI-QA · Walking Skeleton</div>
+          </div>
+          <div class="day-slot" style="height:48px"></div>
+
+          <!-- 15:00 -->
+          <div class="time-col" style="height:48px;padding-top:4px">15:00</div>
+          <div class="day-slot" style="height:48px">
+            <div class="cal-event sprint" style="top:2px;height:44px">Sprint 11.5 close · SourceConfig unified</div>
+          </div>
+          <div class="day-slot" style="height:48px"></div>
+          <div class="day-slot" style="height:48px"></div>
+          <div class="day-slot today-col" style="height:48px">
+            <div class="cal-event review" style="top:2px;height:44px">phoric-planner scaffold + guides</div>
+          </div>
+          <div class="day-slot" style="height:48px"></div>
+
+          <!-- 16:00 -->
+          <div class="time-col" style="height:48px;padding-top:4px">16:00</div>
+          <div class="day-slot" style="height:48px"></div>
+          <div class="day-slot" style="height:48px">
+            <div class="cal-event hitl" style="top:2px;height:44px">HITL · nb_source_wizard smoke test</div>
+          </div>
+          <div class="day-slot" style="height:48px"></div>
+          <div class="day-slot today-col" style="height:48px">
+            <div class="cal-event hitl" style="top:2px;height:44px">TD-079 · Livy HITL gate open</div>
+          </div>
+          <div class="day-slot" style="height:48px"></div>
+
+          <!-- 17:00 -->
+          <div class="time-col" style="height:48px;padding-top:4px">17:00</div>
+          <div class="day-slot" style="height:48px"></div>
+          <div class="day-slot" style="height:48px"></div>
+          <div class="day-slot" style="height:48px"></div>
+          <div class="day-slot today-col" style="height:48px"></div>
+          <div class="day-slot" style="height:48px"></div>
+        </div>
+      </div>
+
+      <!-- Task sidebar -->
+      <div class="calendar-sidebar">
+        <div class="cal-sidebar-section">
+          <div class="cal-sidebar-label">Today's Plan · 9 May</div>
+
+          <div class="task-item">
+            <div class="task-checkbox done">✓</div>
+            <div>
+              <div class="task-text done">Sprint 19 — all 8 cycles complete</div>
+              <div class="task-priority">Sprint 19 · GAP-23</div>
+            </div>
+          </div>
+          <div class="task-item">
+            <div class="task-checkbox done">✓</div>
+            <div>
+              <div class="task-text done">Sprint 19 close + register update</div>
+              <div class="task-priority">1310 → 1407 tests</div>
+            </div>
+          </div>
+          <div class="task-item">
+            <div class="task-checkbox done">✓</div>
+            <div>
+              <div class="task-text done">ADR-061 — PBI QA Framework (Accepted)</div>
+              <div class="task-priority">Sprint 20 prerequisite</div>
+            </div>
+          </div>
+          <div class="task-item">
+            <div class="task-checkbox done">✓</div>
+            <div>
+              <div class="task-text done">Sprint 20 PBI-QA walking skeleton</div>
+              <div class="task-priority">5 cycles · COMPLETE</div>
+            </div>
+          </div>
+          <div class="task-item">
+            <div class="task-checkbox done">✓</div>
+            <div>
+              <div class="task-text done">phoric-planner extension scaffold</div>
+              <div class="task-priority">VS Code tool · __tools/</div>
+            </div>
+          </div>
+          <div class="task-item">
+            <div class="task-checkbox blocked">!</div>
+            <div>
+              <div class="task-text">TD-079 · Livy HITL gate (needs live workspace)</div>
+              <div class="task-priority crit">BLOCKED · High severity</div>
+            </div>
+          </div>
+          <div class="task-item">
+            <div class="task-checkbox"></div>
+            <div>
+              <div class="task-text">phoric-planner standalone repo extraction</div>
+              <div class="task-priority high">High priority · Next action</div>
+            </div>
+          </div>
+          <div class="task-item">
+            <div class="task-checkbox"></div>
+            <div>
+              <div class="task-text">Write ADR-048 + ADR-049 (Sprint 8 prereqs)</div>
+              <div class="task-priority">V-next backlog</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cal-sidebar-section">
+          <div class="cal-sidebar-label">Open HITL Gates</div>
+          <div class="task-item">
+            <div class="task-checkbox blocked">!</div>
+            <div>
+              <div class="task-text">TD-064 · GAP-05 live SQL commissioning</div>
+              <div class="task-priority crit">Requires live Fabric workspace</div>
+            </div>
+          </div>
+          <div class="task-item">
+            <div class="task-checkbox blocked">!</div>
+            <div>
+              <div class="task-text">TD-079 · Livy CI smoke stage</div>
+              <div class="task-priority crit">HITL gated · Sprint 18 carryover</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cal-sidebar-section">
+          <div class="cal-sidebar-label">Sprint Progress</div>
+          <div style="padding:10px 12px;">
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+              <span>Gap Closure</span><span style="color:var(--green)">381/390 (98%)</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:98%"></div></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:10px;margin-bottom:4px">
+              <span>Test Suite</span><span style="color:var(--green)">1,407 passing</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:85%"></div></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:10px;margin-bottom:4px">
+              <span>Open TDs</span><span style="color:var(--amber)">12 open</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:65%;background:var(--amber)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ SPRINTS VIEW ════ -->
+  <div class="view" id="view-sprints">
+    <div class="view-header">
+      <h2>Sprint Register</h2>
+      <div class="subtitle" style="margin-left:8px">20 sprints · 325 → 381/390 completed</div>
+    </div>
+    <div class="view-body">
+      <div class="filter-row">
+        <span class="filter-chip active">All</span>
+        <span class="filter-chip">Complete</span>
+        <span class="filter-chip">Planned</span>
+        <span class="filter-chip">V-next</span>
+      </div>
+      <div class="sprint-board">
+        <div class="sprint-col">
+          <div class="sprint-col-title complete">Complete <span class="sprint-count">19</span></div>
+          <div class="sprint-cards">
+            <div class="sprint-card complete" onclick="openDetail('s19')">
+              <div class="sprint-card-num">Sprint 19</div>
+              <div class="sprint-card-title">Control Plane Phase 1 + GAP-23 Delta Maintenance</div>
+              <div class="sprint-card-meta"><span class="sprint-card-score">1310→1407 tests</span><span>2026-05-09</span></div>
+            </div>
+            <div class="sprint-card complete" onclick="openDetail('s20')">
+              <div class="sprint-card-num">Sprint 20</div>
+              <div class="sprint-card-title">PBI-QA — Agentic QA Framework for Power BI</div>
+              <div class="sprint-card-meta"><span class="sprint-card-score">Walking skeleton ✅</span><span>2026-05-09</span></div>
+            </div>
+            <div class="sprint-card complete">
+              <div class="sprint-card-num">Sprint 18</div>
+              <div class="sprint-card-title">OneLake RBAC + Livy CI smoke</div>
+              <div class="sprint-card-meta"><span class="sprint-card-score">1302→1310 tests</span><span>2026-05-09</span></div>
+            </div>
+            <div class="sprint-card complete">
+              <div class="sprint-card-num">Sprint 17</div>
+              <div class="sprint-card-title">Security &amp; Taskflow — WI migration + KV naming</div>
+              <div class="sprint-card-meta"><span class="sprint-card-score">1284→1302 tests</span><span>2026-05-06</span></div>
+            </div>
+            <div class="sprint-card complete">
+              <div class="sprint-card-num">Sprint 16</div>
+              <div class="sprint-card-title">Gold Domain Framework</div>
+              <div class="sprint-card-meta"><span class="sprint-card-score">1257→1284 tests</span><span>2026-05-06</span></div>
+            </div>
+            <div class="sprint-card complete">
+              <div class="sprint-card-num">Sprint 15</div>
+              <div class="sprint-card-title">Connector Expansion — SFTP, SharePoint, Oracle</div>
+              <div class="sprint-card-meta"><span class="sprint-card-score">1228→1257 tests</span><span>2026-05-06</span></div>
+            </div>
+            <div class="sprint-card complete">
+              <div class="sprint-card-num">Sprint 14</div>
+              <div class="sprint-card-title">Observability — Structured Logging + Hub plugin</div>
+              <div class="sprint-card-meta"><span class="sprint-card-score">1228 tests</span><span>2026-05-06</span></div>
+            </div>
+            <div class="sprint-card complete">
+              <div class="sprint-card-num">Sprint 13</div>
+              <div class="sprint-card-title">Source Onboarding Wizard</div>
+              <div class="sprint-card-meta"><span class="sprint-card-score">→1228 tests</span><span>2026-05-06</span></div>
+            </div>
+            <div class="sprint-card complete">
+              <div class="sprint-card-num">Sprint 11</div>
+              <div class="sprint-card-title">OpenMetadata integration (GAP-11)</div>
+              <div class="sprint-card-meta"><span class="sprint-card-score">GAP-11 closed</span><span>2026-05-05</span></div>
+            </div>
+            <div class="sprint-card complete">
+              <div class="sprint-card-num">Sprint 10</div>
+              <div class="sprint-card-title">PIM control plane — Data Product Catalogue (GAP-10)</div>
+              <div class="sprint-card-meta"><span class="sprint-card-score">33 tests</span><span>2026-05-05</span></div>
+            </div>
+            <div class="sprint-card complete">
+              <div class="sprint-card-num">Sprint 9</div>
+              <div class="sprint-card-title">Pandera table contracts (GAP-09)</div>
+              <div class="sprint-card-meta"><span class="sprint-card-score">GAP-09 closed</span><span>2026-05-05</span></div>
+            </div>
+            <div class="sprint-card complete">
+              <div class="sprint-card-num">Sprint 7–8</div>
+              <div class="sprint-card-title">Bronze profiling + PII auto-discovery (GAP-07, 08)</div>
+              <div class="sprint-card-meta"><span class="sprint-card-score">381/390 (98%)</span><span>2026-05-03</span></div>
+            </div>
+            <div class="sprint-card complete">
+              <div class="sprint-card-num">Sprint 4–6</div>
+              <div class="sprint-card-title">Fabric SQL control DB — 3 phases (GAP-05)</div>
+              <div class="sprint-card-meta"><span class="sprint-card-score">+18 pts</span><span>2026-05-03</span></div>
+            </div>
+            <div class="sprint-card complete">
+              <div class="sprint-card-num">Sprint 1–3</div>
+              <div class="sprint-card-title">Auth + Compute + Connectors (GAP-01–04, GAP-06)</div>
+              <div class="sprint-card-meta"><span class="sprint-card-score">325→363</span><span>2026-05-02</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sprint-col">
+          <div class="sprint-col-title planned">Planned <span class="sprint-count">1</span></div>
+          <div class="sprint-cards">
+            <div class="sprint-card planned">
+              <div class="sprint-card-num">Sprint 12</div>
+              <div class="sprint-card-title">Deployment Excellence — React wizard + nb_environment_validator</div>
+              <div class="sprint-card-meta"><span style="color:var(--amber)">FEATURE P1</span><span>TBD</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sprint-col">
+          <div class="sprint-col-title" style="color:var(--fg-dim)">V-next Backlog <span class="sprint-count">4+</span></div>
+          <div class="sprint-cards">
+            <div class="sprint-card planned">
+              <div class="sprint-card-num">GAP-21</div>
+              <div class="sprint-card-title">OneLake RBAC — workspace access control</div>
+              <div class="sprint-card-meta"><span style="color:var(--amber)">Priority 1</span></div>
+            </div>
+            <div class="sprint-card planned">
+              <div class="sprint-card-num">GAP-22</div>
+              <div class="sprint-card-title">OIDC federation</div>
+              <div class="sprint-card-meta"><span style="color:var(--amber)">Priority 2</span></div>
+            </div>
+            <div class="sprint-card planned">
+              <div class="sprint-card-num">GAP-23</div>
+              <div class="sprint-card-title">Delta table maintenance</div>
+              <div class="sprint-card-meta"><span style="color:var(--amber)">Priority 3</span></div>
+            </div>
+            <div class="sprint-card planned">
+              <div class="sprint-card-num">GAP-24</div>
+              <div class="sprint-card-title">DR topology</div>
+              <div class="sprint-card-meta"><span style="color:var(--amber)">Priority 4</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ TECH DEBT VIEW ════ -->
+  <div class="view" id="view-tech-debt">
+    <div class="view-header">
+      <div>
+        <h2>Tech Debt Register</h2>
+        <div class="subtitle">12 open · 1 high · 8 medium · 3 low</div>
+      </div>
+      <div class="filter-row" style="margin:0 0 0 auto">
+        <span class="filter-chip active">All Open</span>
+        <span class="filter-chip">High</span>
+        <span class="filter-chip">Medium</span>
+        <span class="filter-chip">Resolved</span>
+      </div>
+    </div>
+    <div class="view-body">
+      <div class="td-grid">
+
+        <div class="td-card sev-high" onclick="openDetail('td064')">
+          <div class="td-header">
+            <span class="td-id">TD-064</span>
+            <span class="td-sev sev-high">High</span>
+          </div>
+          <div class="td-title">GAP-05 live commissioning — apply SQL schema, smoke, nb_env_setup, Power BI, Delta retirement</div>
+          <div class="td-desc">Requires live Fabric workspace to execute. Full commissioning blocked until environment is available.</div>
+          <div class="td-footer">
+            <span class="td-chip">GAP-05</span>
+            <span class="td-chip">HITL gated</span>
+            <span class="td-chip">Live workspace required</span>
+          </div>
+        </div>
+
+        <div class="td-card sev-high" onclick="openDetail('td079')">
+          <div class="td-header">
+            <span class="td-id">TD-079</span>
+            <span class="td-sev sev-high">High</span>
+          </div>
+          <div class="td-title">Smoke_Livy CI stage — HITL gated, awaiting live workspace validation</div>
+          <div class="td-desc">Sprint 18 carryover. Livy smoke test rewired to Sessions API; needs human-in-the-loop validation against live Fabric Livy endpoint.</div>
+          <div class="td-footer">
+            <span class="td-chip">Sprint 18</span>
+            <span class="td-chip">Carryover</span>
+            <span class="td-chip">CI/CD</span>
+          </div>
+        </div>
+
+        <div class="td-card sev-medium">
+          <div class="td-header">
+            <span class="td-id">TD-065</span>
+            <span class="td-sev sev-medium">Medium</span>
+          </div>
+          <div class="td-title">pytest coverage gate missing from CI/CD Build stage</div>
+          <div class="td-desc">Coverage check runs locally but is not enforced in the Azure Pipeline Build stage. A below-threshold commit could pass CI.</div>
+          <div class="td-footer">
+            <span class="td-chip">CI/CD</span>
+            <span class="td-chip">azure-pipelines.yml</span>
+          </div>
+        </div>
+
+        <div class="td-card sev-medium">
+          <div class="td-header">
+            <span class="td-id">TD-066</span>
+            <span class="td-sev sev-medium">Medium</span>
+          </div>
+          <div class="td-title">ADO approval gate missing between Dev and UAT deployment stages</div>
+          <div class="td-desc">No human approval required between Dev and UAT promotion in the pipeline. Risk of accidental UAT deployment.</div>
+          <div class="td-footer">
+            <span class="td-chip">CI/CD</span>
+            <span class="td-chip">Governance</span>
+          </div>
+        </div>
+
+        <div class="td-card sev-medium">
+          <div class="td-header">
+            <span class="td-id">TD-069</span>
+            <span class="td-sev sev-medium">Medium</span>
+          </div>
+          <div class="td-title">test_write_pii_candidates_calls_spark_write — untracked failing test</div>
+          <div class="td-desc">Test exists in suite but is not currently tracked as a known failure. Needs triage — either fix or mark xfail with justification.</div>
+          <div class="td-footer">
+            <span class="td-chip">Tests</span>
+            <span class="td-chip">PII</span>
+          </div>
+        </div>
+
+        <div class="td-card sev-medium">
+          <div class="td-header">
+            <span class="td-id">TD-071</span>
+            <span class="td-sev sev-medium">Medium</span>
+          </div>
+          <div class="td-title">_resolve_landing_files_root duplicated in two notebooks</div>
+          <div class="td-desc">Same helper function exists in nb_conn_file.py and nb_landing_to_bronze.py. Should be extracted to nb_utils.</div>
+          <div class="td-footer">
+            <span class="td-chip">DRY</span>
+            <span class="td-chip">nb_conn_file</span>
+            <span class="td-chip">nb_landing_to_bronze</span>
+          </div>
+        </div>
+
+        <div class="td-card sev-medium">
+          <div class="td-header">
+            <span class="td-id">TD-072</span>
+            <span class="td-sev sev-medium">Medium</span>
+          </div>
+          <div class="td-title">NB_SOURCE_TO_LANDING missing IsActive filter and ControlLog writes</div>
+          <div class="td-desc">Source-to-landing notebook does not filter inactive sources or emit control log events. Causes unnecessary processing and blind spots in observability.</div>
+          <div class="td-footer">
+            <span class="td-chip">nb_landing_to_bronze</span>
+            <span class="td-chip">Observability</span>
+          </div>
+        </div>
+
+        <div class="td-card sev-medium">
+          <div class="td-header">
+            <span class="td-id">TD-076</span>
+            <span class="td-sev sev-medium">Medium</span>
+          </div>
+          <div class="td-title">Live DEV migration SQL for ObjectConfig.CleansingRules not yet applied</div>
+          <div class="td-desc">DDL added to nb_bootstrap.py but the live migration SQL has not been run against the DEV lakehouse. Column exists in code but not in the live table.</div>
+          <div class="td-footer">
+            <span class="td-chip">Migration</span>
+            <span class="td-chip">nb_bootstrap</span>
+            <span class="td-chip">Live workspace</span>
+          </div>
+        </div>
+
+        <div class="td-card sev-medium">
+          <div class="td-header">
+            <span class="td-id">TD-077</span>
+            <span class="td-sev sev-medium">Medium</span>
+          </div>
+          <div class="td-title">deploy_fabric_cli.sh deferred — Sprint 17 carryover</div>
+          <div class="td-desc">CLI deployment script was scoped for Sprint 17 but deferred. Manual Fabric deployment remains the only path until this is implemented.</div>
+          <div class="td-footer">
+            <span class="td-chip">Sprint 17</span>
+            <span class="td-chip">Carryover</span>
+            <span class="td-chip">Deployment</span>
+          </div>
+        </div>
+
+        <div class="td-card sev-low">
+          <div class="td-header">
+            <span class="td-id">TD-062</span>
+            <span class="td-sev sev-low">Low</span>
+          </div>
+          <div class="td-title">_DEFAULT_OAUTH_SCOPE hardcodes Power BI / Fabric scope</div>
+          <div class="td-desc">Wrong scope for D365 and external APIs. Should be configurable per-connection in ConnectionConfig.</div>
+          <div class="td-footer">
+            <span class="td-chip">nb_conn_rest</span>
+            <span class="td-chip">Auth</span>
+          </div>
+        </div>
+
+        <div class="td-card sev-low">
+          <div class="td-header">
+            <span class="td-id">TD-067</span>
+            <span class="td-sev sev-low">Low</span>
+          </div>
+          <div class="td-title">Review nb_orchestrator.py retry logic vs native Fabric notebook retry policy</div>
+          <div class="td-desc">Custom retry logic may conflict with or duplicate Fabric's built-in retry behaviour. Needs alignment review.</div>
+          <div class="td-footer">
+            <span class="td-chip">nb_orchestrator</span>
+            <span class="td-chip">Resilience</span>
+          </div>
+        </div>
+
+        <div class="td-card sev-low">
+          <div class="td-header">
+            <span class="td-id">TD-070</span>
+            <span class="td-sev sev-low">Low</span>
+          </div>
+          <div class="td-title">En dashes in docstring parameter separators across notebooks</div>
+          <div class="td-desc">Several notebooks use — (en dash) instead of - (hyphen) in docstrings. Cosmetic but inconsistent with project style guide.</div>
+          <div class="td-footer">
+            <span class="td-chip">Style</span>
+            <span class="td-chip">Cosmetic</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ INBOX VIEW ════ -->
+  <div class="view" id="view-inbox">
+    <div class="view-header">
+      <h2>Inbox</h2>
+      <div class="subtitle" style="margin-left:8px">1 open task · 1 blocked</div>
+    </div>
+    <div class="view-body">
+      <div class="td-grid">
+        <div class="td-card sev-high" onclick="openDetail('phoric-extract')">
+          <div class="td-header">
+            <span class="td-id" style="color:var(--amber)">TASK</span>
+            <span class="td-sev sev-medium">High</span>
+          </div>
+          <div class="td-title">Extract phoric-planner to standalone repository</div>
+          <div class="td-desc">Scaffold in __tools/phoric-planner/ is ready. Needs own GitHub repo, npm install, F5 smoke test, GitHub Actions CI, and .vscodeignore before Marketplace publish is possible.</div>
+          <div class="td-footer">
+            <span class="td-chip">phoric-planner</span>
+            <span class="td-chip">VS Code</span>
+            <span class="td-chip">onetoomanybi/phoric-planner</span>
+          </div>
+          <div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:35%"></div></div>
+          <div style="font-size:10px;color:var(--fg-muted);margin-top:4px">35% — scaffold done, extraction pending</div>
+        </div>
+
+        <div class="td-card sev-medium">
+          <div class="td-header">
+            <span class="td-id" style="color:var(--amber)">TASK</span>
+            <span class="td-sev sev-medium">Medium</span>
+          </div>
+          <div class="td-title">Write ADR-048 + ADR-049 before Sprint 8 (V-next)</div>
+          <div class="td-desc">ADR-048 (whylogs Bronze profiling) and ADR-049 (Presidio PII) are prerequisites for Sprint 8. Both need to be written and accepted before that sprint can start.</div>
+          <div class="td-footer">
+            <span class="td-chip">ADR-048</span>
+            <span class="td-chip">ADR-049</span>
+            <span class="td-chip">V-next</span>
+          </div>
+          <div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:0%"></div></div>
+          <div style="font-size:10px;color:var(--fg-muted);margin-top:4px">Not started</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="statusbar">
+    <div class="statusbar-item"><div class="statusbar-dot"></div> vnext</div>
+    <div class="statusbar-item">Sprint 20 ✅</div>
+    <div class="statusbar-item">1,407 tests passing</div>
+    <div class="statusbar-item" style="margin-left:auto">381/390 (98%)</div>
+    <div class="statusbar-item">Fri 9 May 2026</div>
+  </div>
+
+</div><!-- end .main -->
+
+<script>
+  function showView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.sidebar-icon').forEach(i => i.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  function showDiaryEntry(hash) {
+    document.querySelectorAll('.diary-entry-row').forEach(r => r.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    const entries = {
+      fafca77: {
+        hash: 'fafca77 · 2026-05-09 · vnext',
+        title: 'test(maintenance): RED — nb_table_maintenance core maintenance functions',
+        chips: ['vnext', 'Sprint 19', 'TDD: RED'],
+        body: `<p>Tests for <code style="background:var(--tag-bg);padding:1px 4px;border-radius:2px;font-family:var(--font-mono);font-size:11px">run_optimize</code>, <code style="background:var(--tag-bg);padding:1px 4px;border-radius:2px;font-family:var(--font-mono);font-size:11px">run_vacuum</code>, <code style="background:var(--tag-bg);padding:1px 4px;border-radius:2px;font-family:var(--font-mono);font-size:11px">enable_vorder</code> — all failing (module not yet created).</p><h3>TDD Phase</h3><p><span class="cycle-badge badge-red-cycle">R</span> RED commit</p><h3>Files Changed</h3><div class="file-list"><span class="file-tag">tests/test_nb_table_maintenance.py</span></div>`
+      },
+      f13af56: {
+        hash: 'f13af56 · 2026-05-09 · vnext',
+        title: 'chore(sprint-19): mark task card COMPLETE — all 8 cycles done',
+        chips: ['vnext', 'Sprint 19', 'Close'],
+        body: `<p>Cycles 1–3 pre-existing; cycles 4–8 implemented this session.</p><h3>Files Changed</h3><div class="file-list"><span class="file-tag">__inbox/__todo/20260509/task-sprint-19.md</span></div>`
+      },
+      e5a12e3: {
+        hash: 'e5a12e3 · 2026-05-09 · vnext',
+        title: 'feat(smoke-livy): MSAL fallback + main() entry point for CI use [GREEN]',
+        chips: ['vnext', 'Sprint 18', 'TDD: GREEN'],
+        body: `<p>MSAL fallback added to smoke_livy.py; main() entry point wired for CI use. Rewired from Batch API to Sessions API (Batch requires ABFSS file URI).</p><h3>Files Changed</h3><div class="file-list"><span class="file-tag">scripts/smoke_livy.py</span></div>`
+      },
+      d3ea5b1: {
+        hash: 'd3ea5b1 · 2026-05-09 · vnext',
+        title: 'fix(pii-scanner): add IP/MAC regex fallbacks; tighten IBAN regex to prevent NI false-positives',
+        chips: ['vnext', 'GAP-08', 'Fix'],
+        body: `<p>IP address and MAC address regex patterns added as fallbacks. IBAN regex tightened to prevent Northern Ireland postcode false positives.</p><h3>Files Changed</h3><div class="file-list"><span class="file-tag">src/utils/pii_scanner.py</span><span class="file-tag">tests/test_pii_scanner.py</span></div>`
+      },
+      cf3fbdf: {
+        hash: 'cf3fbdf · 2026-05-09 · vnext',
+        title: 'feat(bootstrap): Cycle 8 — VOrderEnabled + AutoCompactEnabled migration guards in ObjectConfig [GREEN]',
+        chips: ['vnext', 'Sprint 19', 'TDD: GREEN'],
+        body: `<p>Adds VOrderEnabled (BOOLEAN) and AutoCompactEnabled (BOOLEAN) to ObjectConfig via _add_column_if_missing migration guards.</p><h3>Files Changed</h3><div class="file-list"><span class="file-tag">src/notebooks/nb_bootstrap.py</span></div>`
+      },
+      cee2766: {
+        hash: 'cee2766 · 2026-05-09 · vnext',
+        title: 'test(bootstrap): RED — VOrderEnabled + AutoCompactEnabled migration guards in ObjectConfig',
+        chips: ['vnext', 'Sprint 19', 'TDD: RED'],
+        body: `<p>TestObjectConfigVOrderColumns asserts _add_column_if_missing called for both columns.</p><h3>Files Changed</h3><div class="file-list"><span class="file-tag">tests/test_nb_bootstrap.py</span></div>`
+      },
+      c4da04e: {
+        hash: 'c4da04e · 2026-05-09 · vnext',
+        title: 'tidy(nb-bootstrap): extract _migrate_table helper — normalise 8 migration blocks to one pattern',
+        chips: ['vnext', 'Tidy', 'Kent Beck'],
+        body: `<p>8 copy-paste migration blocks reduced to a single _migrate_table() helper. No behaviour change — pure structural tidying before Cycle 8 feature work.</p><h3>Files Changed</h3><div class="file-list"><span class="file-tag">src/notebooks/nb_bootstrap.py</span></div>`
+      },
+      '9f25172': {
+        hash: '9f25172 · 2026-05-09 · vnext',
+        title: 'feat(bootstrap): Cycle 5 — TD-078 control.annotations DDL (7 columns) [GREEN]',
+        chips: ['vnext', 'TD-078', 'TDD: GREEN'],
+        body: `<p>control.annotations table created with 7-column schema. Closes TD-078.</p><h3>Files Changed</h3><div class="file-list"><span class="file-tag">src/notebooks/nb_bootstrap.py</span><span class="file-tag">tests/test_nb_bootstrap.py</span></div>`
+      },
+      '8ba4160': {
+        hash: '8ba4160 · 2026-05-09 · vnext',
+        title: 'chore: sprint 18 close — OneLake RBAC + Livy CI smoke; score 1302 → 1310',
+        chips: ['vnext', 'Sprint 18', 'Close', 'TD-079'],
+        body: `<p>Sprint 18 marked COMPLETE. Score 1302→1310. TD-079 raised as carryover (Livy HITL gate).</p><h3>Files Changed</h3><div class="file-list"><span class="file-tag">.agents/SPRINT_REGISTER.md</span><span class="file-tag">.agents/TECH_DEBT.md</span><span class="file-tag">CHANGELOG.md</span><span class="file-tag">__guides/agent-guide.html</span></div>`
+      },
+      '7ba353a': {
+        hash: '7ba353a · 2026-05-09 · vnext',
+        title: 'fix(livy): Sessions API, statement state fix, HITL validated; sprint-19 close',
+        chips: ['vnext', 'Sprint 18→19', 'Fix'],
+        body: `<p>Batch API → Sessions API rewrite. Batch API requires ABFSS file URI; Sessions API accepts raw code. Statement state polling fixed.</p><h3>Files Changed</h3><div class="file-list"><span class="file-tag">scripts/smoke_livy.py</span><span class="file-tag">.agents/SPRINT_REGISTER.md</span><span class="file-tag">azure-pipelines.yml</span></div>`
+      },
+      '6076f9e': {
+        hash: '6076f9e · 2026-05-09 · vnext',
+        title: 'docs(adr): ADR-061 — agentic QA framework for Power BI',
+        chips: ['vnext', 'ADR-061', 'Accepted'],
+        body: `<p>Captures the decision to implement a multi-tier automated testing framework for Power BI. Status: Accepted. Required for Sprint 20 PBI-QA.</p><h3>Files Changed</h3><div class="file-list"><span class="file-tag">docs/adr/ADR-061-agentic-qa-framework-power-bi.md</span></div>`
+      }
+    };
+
+    const e = entries[hash];
+    if (!e) return;
+    const chips = e.chips.map(c => `<span class="diary-chip">${c}</span>`).join('');
+    document.getElementById('diary-content').innerHTML = `
+      <div class="diary-content-header">
+        <div class="diary-content-hash">${e.hash}</div>
+        <div class="diary-content-title">${e.title}</div>
+        <div class="diary-content-meta">${chips}</div>
+      </div>
+      <div class="diary-body">${e.body}</div>
+    `;
+  }
+
+  function openDetail(id) {
+    // Placeholder — in real app opens a detail side panel
+    console.log('Opening detail:', id);
+  }
+
+  function toggleFilter(el, filter) {
+    el.closest('.filter-row').querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function handleSearch(val) {
+    if (!val) return;
+    // Placeholder for real DuckDB-WASM search
+    console.log('Searching:', val);
+  }
+</script>
+
+</body>
+</html>
