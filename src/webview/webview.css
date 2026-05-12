@@ -227,6 +227,110 @@ body {
 }
 .mandala-setup button:hover { background: #1177bb; }
 
+/* Welcome screen enhancements */
+.mandala-welcome-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 540px;
+  gap: 20px;
+  padding: 40px 24px;
+  position: relative;
+}
+
+.mandala-welcome-glow {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 25%, transparent) 0%, transparent 70%);
+  filter: blur(40px);
+  z-index: 0;
+}
+
+.mandala-welcome-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  text-align: center;
+  z-index: 1;
+}
+
+.mandala-welcome-subtitle {
+  font-size: 14px;
+  color: var(--fg-dim);
+  text-align: center;
+  z-index: 1;
+}
+
+.mandala-welcome-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  z-index: 1;
+}
+
+.mandala-welcome-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg-dim);
+  text-align: center;
+  max-width: 420px;
+}
+
+.mandala-welcome-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.mandala-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.mandala-btn-primary {
+  background: var(--accent);
+  color: var(--bg);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.mandala-btn-primary:hover {
+  background: color-mix(in srgb, var(--accent) 90%, white);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 50%, transparent);
+  transform: translateY(-1px);
+}
+
+.mandala-btn-primary:active {
+  transform: translateY(0);
+}
+
+.mandala-btn-secondary {
+  background: color-mix(in srgb, var(--card) 85%, var(--accent) 15%);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.mandala-btn-secondary:hover {
+  background: color-mix(in srgb, var(--card) 75%, var(--accent) 25%);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
 .mandala-dashboard {
   display: flex;
   height: 100vh;

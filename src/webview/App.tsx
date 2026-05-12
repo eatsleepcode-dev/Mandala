@@ -61,6 +61,9 @@ interface AppState {
   hasGettingStartedExamples: boolean;
   inboxPath: string;
   diaryPath: string;
+  sprintsPath: string;
+  techDebtPath: string;
+  agentsPath: string;
 }
 
 type Action =
@@ -72,7 +75,7 @@ type Action =
   | { type: 'LOAD_AGENT_RESOURCES'; resources: AgentResources }
   | { type: 'LOAD_SETTINGS'; settings: IntegrationSettings }
   | { type: 'LOAD_THEME'; override: ThemeOverride }
-  | { type: 'LOAD_WORKSPACE_PATHS'; inboxPath: string; diaryPath: string }
+  | { type: 'LOAD_WORKSPACE_PATHS'; inboxPath: string; diaryPath: string; sprintsPath: string; techDebtPath: string; agentsPath: string }
   | { type: 'LOAD_EXAMPLE_STATE'; hasGettingStartedExamples: boolean }
   | { type: 'SET_VIEW'; view: ViewId };
 
@@ -120,7 +123,14 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, themeOverride: action.override };
 
     case 'LOAD_WORKSPACE_PATHS':
-      return { ...state, inboxPath: action.inboxPath, diaryPath: action.diaryPath };
+      return {
+        ...state,
+        inboxPath: action.inboxPath,
+        diaryPath: action.diaryPath,
+        sprintsPath: action.sprintsPath,
+        techDebtPath: action.techDebtPath,
+        agentsPath: action.agentsPath,
+      };
 
     case 'LOAD_EXAMPLE_STATE':
       return { ...state, hasGettingStartedExamples: action.hasGettingStartedExamples };
@@ -157,6 +167,9 @@ export default function App() {
     hasGettingStartedExamples: false,
     inboxPath: '.mandala/inbox',
     diaryPath: '.mandala/diary',
+    sprintsPath: '.mandala/sprints',
+    techDebtPath: '.mandala/tech-debt',
+    agentsPath: '.mandala/agents',
   });
   const [loadingMessage, setLoadingMessage] = useState('Starting extension');
   const [loadingElapsedMs, setLoadingElapsedMs] = useState<number | undefined>(undefined);
@@ -206,7 +219,14 @@ export default function App() {
           dispatch({ type: 'LOAD_THEME', override: msg.override });
           break;
         case 'workspacePaths':
-          dispatch({ type: 'LOAD_WORKSPACE_PATHS', inboxPath: msg.inboxPath, diaryPath: msg.diaryPath });
+          dispatch({
+            type: 'LOAD_WORKSPACE_PATHS',
+            inboxPath: msg.inboxPath,
+            diaryPath: msg.diaryPath,
+            sprintsPath: msg.sprintsPath,
+            techDebtPath: msg.techDebtPath,
+            agentsPath: msg.agentsPath,
+          });
           break;
         case 'loadExampleState':
           dispatch({ type: 'LOAD_EXAMPLE_STATE', hasGettingStartedExamples: msg.hasGettingStartedExamples });
@@ -303,27 +323,55 @@ export default function App() {
   if (phase.status === 'setup') {
     return (
       <div className={`mandala-setup mandala-boot-target${contentVisible ? ' is-visible' : ''}`}>
-        <h1>Mandala</h1>
-        {phase.hasMigratableData ? (
-          <>
-            <p>Existing data folders detected (.meridian/, __inbox/, diary/, or .agents/).</p>
-            <button onClick={() => vscode.postMessage({ command: 'migrateWorkspace' })}>
-              Migrate to .mandala/
-            </button>
-          </>
-        ) : (
-          <>
-            <p>No .mandala/ workspace found.</p>
-            <div className="mandala-setup-actions">
-              <button onClick={() => vscode.postMessage({ command: 'initWorkspace' })}>
-                Initialize Empty Workspace
-              </button>
-              <button onClick={() => vscode.postMessage({ command: 'initWorkspace', withExamples: true })}>
-                Initialize with Examples
-              </button>
+        <div className="mandala-welcome-container">
+          <div className="mandala-welcome-glow" aria-hidden="true" />
+          <h1 className="mandala-welcome-title">Welcome to Mandala</h1>
+          <p className="mandala-welcome-subtitle">Your developer diary and sprint planner</p>
+
+          {phase.hasMigratableData ? (
+            <div className="mandala-welcome-content">
+              <p className="mandala-welcome-text">
+                We found existing data in your workspace (.meridian/, __inbox/, diary/, or .agents/). 
+                Would you like to migrate it to the new .mandala/ structure?
+              </p>
+              <div className="mandala-welcome-actions">
+                <button 
+                  className="mandala-btn mandala-btn-primary"
+                  onClick={() => vscode.postMessage({ command: 'migrateWorkspace' })}
+                >
+                  Migrate Existing Data
+                </button>
+                <button 
+                  className="mandala-btn mandala-btn-secondary"
+                  onClick={() => vscode.postMessage({ command: 'initWorkspace' })}
+                >
+                  Start Fresh
+                </button>
+              </div>
             </div>
-          </>
-        )}
+          ) : (
+            <div className="mandala-welcome-content">
+              <p className="mandala-welcome-text">
+                To get started, initialize a new Mandala workspace. This creates the .mandala/ folder 
+                with all necessary directories for managing your diary, sprints, tasks, and more.
+              </p>
+              <div className="mandala-welcome-actions">
+                <button 
+                  className="mandala-btn mandala-btn-primary"
+                  onClick={() => vscode.postMessage({ command: 'initWorkspace', withExamples: true })}
+                >
+                  Initialize with Examples
+                </button>
+                <button 
+                  className="mandala-btn mandala-btn-secondary"
+                  onClick={() => vscode.postMessage({ command: 'initWorkspace' })}
+                >
+                  Initialize Empty Workspace
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -366,6 +414,9 @@ export default function App() {
             hasGettingStartedExamples={state.hasGettingStartedExamples}
             inboxPath={state.inboxPath}
             diaryPath={state.diaryPath}
+            sprintsPath={state.sprintsPath}
+            techDebtPath={state.techDebtPath}
+            agentsPath={state.agentsPath}
             onThemeOverrideChange={setThemeOverride}
             onWorkspacePathChange={(path, value) => {
               vscode.postMessage({ command: 'updateWorkspacePath', path, value });

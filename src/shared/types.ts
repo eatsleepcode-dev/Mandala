@@ -211,6 +211,9 @@ export interface WorkspacePathsMessage {
   command: 'workspacePaths';
   inboxPath: string;
   diaryPath: string;
+  sprintsPath: string;
+  techDebtPath: string;
+  agentsPath: string;
 }
 
 // ─── Webview → Host messages ─────────────────────────────────────────────────
@@ -243,7 +246,7 @@ export interface RunSdlcStepMessage {
 }
 export interface UpdateWorkspacePathMessage {
   command: 'updateWorkspacePath';
-  path: 'inbox' | 'diary';
+  path: 'inbox' | 'diary' | 'sprints' | 'tech-debt' | 'agents';
   value: string;
 }
 

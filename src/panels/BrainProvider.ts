@@ -223,10 +223,22 @@ export class BrainProvider implements vscode.WebviewViewProvider {
           case 'updateWorkspacePath': {
             const { path, value } = message;
             const cfg = vscode.workspace.getConfiguration('mandala');
-            if (path === 'inbox') {
-              await cfg.update('inboxPath', value, vscode.ConfigurationTarget.Workspace);
-            } else if (path === 'diary') {
-              await cfg.update('diaryPath', value, vscode.ConfigurationTarget.Workspace);
+            switch (path) {
+              case 'inbox':
+                await cfg.update('inboxPath', value, vscode.ConfigurationTarget.Workspace);
+                break;
+              case 'diary':
+                await cfg.update('diaryPath', value, vscode.ConfigurationTarget.Workspace);
+                break;
+              case 'sprints':
+                await cfg.update('sprintsPath', value, vscode.ConfigurationTarget.Workspace);
+                break;
+              case 'tech-debt':
+                await cfg.update('techDebtPath', value, vscode.ConfigurationTarget.Workspace);
+                break;
+              case 'agents':
+                await cfg.update('agentsPath', value, vscode.ConfigurationTarget.Workspace);
+                break;
             }
             // Refresh data after path change
             await this._pushData();
@@ -383,11 +395,17 @@ export class BrainProvider implements vscode.WebviewViewProvider {
     const cfg = vscode.workspace.getConfiguration('mandala');
     const inboxPath = cfg.get<string>('inboxPath', '.mandala/inbox');
     const diaryPath = cfg.get<string>('diaryPath', '.mandala/diary');
+    const sprintsPath = cfg.get<string>('sprintsPath', '.mandala/sprints');
+    const techDebtPath = cfg.get<string>('techDebtPath', '.mandala/tech-debt');
+    const agentsPath = cfg.get<string>('agentsPath', '.mandala/agents');
 
     this._view?.webview.postMessage({
       command: 'workspacePaths',
       inboxPath,
       diaryPath,
+      sprintsPath,
+      techDebtPath,
+      agentsPath,
     });
   }
 
@@ -432,13 +450,15 @@ export class BrainProvider implements vscode.WebviewViewProvider {
 
     const inboxPath = cfg.get<string>('inboxPath', '.mandala/inbox').split('/');
     const diaryPath = cfg.get<string>('diaryPath', '.mandala/diary').split('/');
-    const techDebtPath = ['.mandala', 'tech-debt'];
-    const sprintsPath = ['.mandala', 'sprints'];
+    const techDebtPath = cfg.get<string>('techDebtPath', '.mandala/tech-debt').split('/');
+    const sprintsPath = cfg.get<string>('sprintsPath', '.mandala/sprints').split('/');
+    const agentsPath = cfg.get<string>('agentsPath', '.mandala/agents').split('/');
 
     const inboxUri = vscode.Uri.joinPath(root, ...inboxPath);
     const diaryUri = vscode.Uri.joinPath(root, ...diaryPath);
     const techDebtUri = vscode.Uri.joinPath(root, ...techDebtPath);
     const sprintsUri = vscode.Uri.joinPath(root, ...sprintsPath);
+    const agentsUri = vscode.Uri.joinPath(root, ...agentsPath);
 
     const { loadTechDebtCards, loadSprintRecords } = await import('../lib/workspace');
 
@@ -447,7 +467,7 @@ export class BrainProvider implements vscode.WebviewViewProvider {
       loadDiaryEntries(diaryUri, fs),
       loadTechDebtCards(techDebtUri, fs),
       loadSprintRecords(sprintsUri, fs),
-      loadAgentResources(root, fs),
+      loadAgentResources(agentsUri, fs),
     ]);
 
     const extensionAgentResources = await loadAgentResources(this._extensionUri, fs);

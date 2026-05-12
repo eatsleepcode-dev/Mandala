@@ -90,15 +90,30 @@
     "configuration": {
       "title": "Mandala",
       "properties": {
+        "mandala.inboxPath": {
+          "type": "string",
+          "default": ".mandala/inbox",
+          "description": "Workspace-relative path to the sprint task card folder (default: .mandala/inbox)"
+        },
         "mandala.diaryPath": {
           "type": "string",
           "default": ".mandala/diary",
           "description": "Workspace-relative path to the diary folder (default: .mandala/diary)"
         },
-        "mandala.inboxPath": {
+        "mandala.sprintsPath": {
           "type": "string",
-          "default": ".mandala/inbox",
-          "description": "Workspace-relative path to the sprint task card folder (default: .mandala/inbox)"
+          "default": ".mandala/sprints",
+          "description": "Workspace-relative path to the sprints folder (default: .mandala/sprints)"
+        },
+        "mandala.techDebtPath": {
+          "type": "string",
+          "default": ".mandala/tech-debt",
+          "description": "Workspace-relative path to the tech-debt folder (default: .mandala/tech-debt)"
+        },
+        "mandala.agentsPath": {
+          "type": "string",
+          "default": ".mandala/agents",
+          "description": "Workspace-relative path to the agents folder (default: .mandala/agents)"
         },
         "mandala.themeOverride": {
           "type": "string",

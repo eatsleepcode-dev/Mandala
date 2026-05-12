@@ -9,9 +9,12 @@ interface Props {
   hasGettingStartedExamples?: boolean;
   inboxPath?: string;
   diaryPath?: string;
+  sprintsPath?: string;
+  techDebtPath?: string;
+  agentsPath?: string;
   onSave: (settings: IntegrationSettings) => void;
   onThemeOverrideChange?: (override: ThemeOverride) => void;
-  onWorkspacePathChange?: (path: 'inbox' | 'diary', value: string) => void;
+  onWorkspacePathChange?: (path: 'inbox' | 'diary' | 'sprints' | 'tech-debt' | 'agents', value: string) => void;
   onSeedExamples?: () => void;
   onRemoveExamples?: () => void;
 }
@@ -30,6 +33,9 @@ export function SettingsView({
   hasGettingStartedExamples = false,
   inboxPath = '.mandala/inbox',
   diaryPath = '.mandala/diary',
+  sprintsPath = '.mandala/sprints',
+  techDebtPath = '.mandala/tech-debt',
+  agentsPath = '.mandala/agents',
   onSave,
   onThemeOverrideChange = () => undefined,
   onWorkspacePathChange = () => undefined,
@@ -109,7 +115,7 @@ export function SettingsView({
 
       <section className="settings-section">
         <h2>Workspace Paths</h2>
-        <p className="settings-hint">Configure where Mandala stores diary entries and task cards within the workspace.</p>
+        <p className="settings-hint">Configure where Mandala stores workspace data. All paths are relative to the workspace root.</p>
         <label className="settings-theme-row">
           <span>Inbox Path</span>
           <input
@@ -117,7 +123,7 @@ export function SettingsView({
             value={inboxPath}
             onChange={(e) => onWorkspacePathChange('inbox', e.target.value)}
             placeholder=".mandala/inbox"
-            title="Relative path to inbox folder (relative to workspace root)"
+            title="Relative path to inbox folder (where task cards are stored)"
           />
         </label>
         <label className="settings-theme-row">
@@ -127,7 +133,37 @@ export function SettingsView({
             value={diaryPath}
             onChange={(e) => onWorkspacePathChange('diary', e.target.value)}
             placeholder=".mandala/diary"
-            title="Relative path to diary folder (relative to workspace root)"
+            title="Relative path to diary folder (where diary entries are stored)"
+          />
+        </label>
+        <label className="settings-theme-row">
+          <span>Sprints Path</span>
+          <input
+            type="text"
+            value={sprintsPath}
+            onChange={(e) => onWorkspacePathChange('sprints', e.target.value)}
+            placeholder=".mandala/sprints"
+            title="Relative path to sprints folder (where sprint records are stored)"
+          />
+        </label>
+        <label className="settings-theme-row">
+          <span>Tech Debt Path</span>
+          <input
+            type="text"
+            value={techDebtPath}
+            onChange={(e) => onWorkspacePathChange('tech-debt', e.target.value)}
+            placeholder=".mandala/tech-debt"
+            title="Relative path to tech-debt folder (where tech debt cards are stored)"
+          />
+        </label>
+        <label className="settings-theme-row">
+          <span>Agents Path</span>
+          <input
+            type="text"
+            value={agentsPath}
+            onChange={(e) => onWorkspacePathChange('agents', e.target.value)}
+            placeholder=".mandala/agents"
+            title="Relative path to agents folder (where agent configs, skills, and workflows are stored)"
           />
         </label>
       </section>
