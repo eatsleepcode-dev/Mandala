@@ -401,9 +401,7 @@ export default function App() {
     <div className={`mandala-dashboard mandala-boot-target${contentVisible ? ' is-visible' : ''}`}>
       <Sidebar active={activeView} onSelect={(v) => dispatch({ type: 'SET_VIEW', view: v })} />
       <main className="mandala-main">
-        {phase.status === 'ready' && (
-          <Topbar sprintRecords={phase.sprintRecords} cards={phase.cards} />
-        )}
+        <Topbar sprintRecords={phase.sprintRecords} cards={phase.cards} />
         {state.hasGettingStartedExamples && (
           <div className="mandala-example-badge-row" role="status" aria-live="polite">
             <span className="mandala-example-badge">Starter Examples Active</span>
