@@ -8,6 +8,13 @@ interface InboxViewProps {
 
 type Filter = 'all' | 'active' | 'planned' | 'complete';
 
+const FILTER_OPTIONS: { id: Filter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'active', label: '🔴 Active' },
+  { id: 'planned', label: '📋 Planned' },
+  { id: 'complete', label: '✅ Complete' },
+];
+
 export function InboxView({ cards, onOpenFile }: InboxViewProps) {
   const [filter, setFilter] = useState<Filter>('all');
 
@@ -25,30 +32,15 @@ export function InboxView({ cards, onOpenFile }: InboxViewProps) {
           <div className="subtitle">{cards.length} total tasks</div>
         </div>
         <div className="filter-row" style={{ margin: '0 0 0 auto' }}>
-          <span
-            className={`filter-chip ${filter === 'all' ? 'active' : ''}`}
-            onClick={() => setFilter('all')}
-          >
-            All
-          </span>
-          <span
-            className={`filter-chip ${filter === 'active' ? 'active' : ''}`}
-            onClick={() => setFilter('active')}
-          >
-            🔴 Active
-          </span>
-          <span
-            className={`filter-chip ${filter === 'planned' ? 'active' : ''}`}
-            onClick={() => setFilter('planned')}
-          >
-            📋 Planned
-          </span>
-          <span
-            className={`filter-chip ${filter === 'complete' ? 'active' : ''}`}
-            onClick={() => setFilter('complete')}
-          >
-            ✅ Complete
-          </span>
+          {FILTER_OPTIONS.map((f) => (
+            <span
+              key={f.id}
+              className={`filter-chip ${filter === f.id ? 'active' : ''}`}
+              onClick={() => setFilter(f.id)}
+            >
+              {f.label}
+            </span>
+          ))}
         </div>
       </div>
 
@@ -62,9 +54,7 @@ export function InboxView({ cards, onOpenFile }: InboxViewProps) {
             >
               <div className="td-header">
                 <span className="td-id">{card.id}</span>
-                <span className={`td-sev sev-low`}>
-                  Sprint {card.sprint}
-                </span>
+                <span className="td-sev sev-low">Sprint {card.sprint}</span>
               </div>
               <div className="td-title">{card.title}</div>
               <div className="td-desc">
@@ -73,9 +63,7 @@ export function InboxView({ cards, onOpenFile }: InboxViewProps) {
               <div className="td-footer">
                 <span className="td-chip">{card.type}</span>
                 {card.tags.map((tag) => (
-                  <span key={tag} className="td-chip">
-                    {tag}
-                  </span>
+                  <span key={tag} className="td-chip">{tag}</span>
                 ))}
               </div>
             </div>

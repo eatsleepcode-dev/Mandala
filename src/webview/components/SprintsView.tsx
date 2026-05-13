@@ -1,5 +1,6 @@
 import React from 'react';
-import type { SprintRecord, TaskStatus } from '../../shared/types';
+import type { SprintRecord } from '../../shared/types';
+import { fmtDateRange } from '../dates';
 
 interface SprintsViewProps {
   records: SprintRecord[];
@@ -7,7 +8,6 @@ interface SprintsViewProps {
 }
 
 export function SprintsView({ records, onOpenFile }: SprintsViewProps) {
-  // Group by status
   const inProgress = records.filter((r) => r.status === 'in-progress');
   const planned = records.filter((r) => r.status === 'planned');
   const complete = records.filter((r) => r.status === 'complete');
@@ -19,23 +19,20 @@ export function SprintsView({ records, onOpenFile }: SprintsViewProps) {
         <span className="sprint-count">{items.length}</span>
       </div>
       <div className="sprint-cards">
-        {items.map((r) => (
-          <div
-            key={r.sprint}
-            className={`sprint-card ${statusClass}`}
-            onClick={() => onOpenFile(r.path)}
-          >
-            <div className="sprint-card-num">Sprint {r.sprint}</div>
-            <div className="sprint-card-title">{r.goal}</div>
-            {(r.startDate || r.endDate) && (
-              <div className="sprint-card-meta">
-                {r.startDate && <span>{r.startDate}</span>}
-                {r.startDate && r.endDate && <span> → </span>}
-                {r.endDate && <span>{r.endDate}</span>}
-              </div>
-            )}
-          </div>
-        ))}
+        {items.map((r) => {
+          const dateRange = fmtDateRange(r.startDate, r.endDate);
+          return (
+            <div
+              key={r.sprint}
+              className={`sprint-card ${statusClass}`}
+              onClick={() => onOpenFile(r.path)}
+            >
+              <div className="sprint-card-num">Sprint {r.sprint}</div>
+              <div className="sprint-card-title">{r.goal}</div>
+              {dateRange && <div className="sprint-card-meta">{dateRange}</div>}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
