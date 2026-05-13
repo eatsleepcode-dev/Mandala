@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import type { TaskCard, TaskStatus, SprintRecord } from '../../shared/types';
+import { fmtDateRange } from '../dates';
 
 interface Props {
   cards: TaskCard[];
   sprintRecords: SprintRecord[];
   onOpenFile: (path: string) => void;
+  onSelectCard?: (card: TaskCard) => void;
 }
 
 type Filter = 'all' | 'complete' | 'planned' | 'blocked';
@@ -62,7 +64,7 @@ const FILTER_OPTIONS: { id: Filter; label: string }[] = [
   { id: 'blocked', label: '🔴 Blocked' },
 ];
 
-export function StoryMapView({ cards, sprintRecords, onOpenFile }: Props) {
+export function StoryMapView({ cards, sprintRecords, onOpenFile, onSelectCard }: Props) {
   const [filter, setFilter] = useState<Filter>('all');
 
   const filteredCards = cards.filter((c) => {
@@ -124,10 +126,12 @@ export function StoryMapView({ cards, sprintRecords, onOpenFile }: Props) {
                 record?.status === 'complete' ? 'COMPLETE'
                 : record?.status === 'in-progress' ? 'ACTIVE'
                 : 'PLANNED';
+              const dateRange = record ? fmtDateRange(record.startDate, record.endDate) : null;
               return (
                 <div key={sp} className="sprint-label-cell">
                   <span className="sprint-num">Sprint {sp}</span>
                   {record?.goal && <span className="sprint-title">{record.goal}</span>}
+                  {dateRange && <span className="sprint-date-range">{dateRange}</span>}
                   <span className={`sprint-status-badge ${badgeClass}`}>{badgeLabel}</span>
                 </div>
               );
@@ -159,10 +163,10 @@ export function StoryMapView({ cards, sprintRecords, onOpenFile }: Props) {
                           key={c.id}
                           className={`story-card ${c.status}`}
                           data-status={c.status}
-                          onClick={() => onOpenFile(c.path)}
+                          onClick={() => onSelectCard ? onSelectCard(c) : onOpenFile(c.path)}
                           role="button"
                           tabIndex={0}
-                          onKeyDown={(e) => e.key === 'Enter' && onOpenFile(c.path)}
+                          onKeyDown={(e) => e.key === 'Enter' && (onSelectCard ? onSelectCard(c) : onOpenFile(c.path))}
                         >
                           <div className="card-title">
                             <span className={`card-status-dot ${STATUS_DOT[c.status]}`} />

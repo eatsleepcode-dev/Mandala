@@ -10,6 +10,7 @@ import { SprintsView } from './components/SprintsView';
 import { InboxView } from './components/InboxView';
 import { SettingsView } from './components/SettingsView';
 import { AgentsView } from './components/AgentsView';
+import { CardDetailPanel } from './components/CardDetailPanel';
 import type {
   AgentResources,
   FolderCandidates,
@@ -355,6 +356,7 @@ export default function App() {
     vscode.postMessage({ command: 'setThemeOverride', override });
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCard, setSelectedCard] = useState<TaskCard | null>(null);
 
   const { phase, activeView, settings } = state;
 
@@ -420,8 +422,18 @@ export default function App() {
           </div>
         )}
         {activeView === 'storymap' && (
-          <StoryMapView cards={visibleCards} sprintRecords={phase.sprintRecords} onOpenFile={openFile} />
+          <StoryMapView
+            cards={visibleCards}
+            sprintRecords={phase.sprintRecords}
+            onOpenFile={openFile}
+            onSelectCard={setSelectedCard}
+          />
         )}
+        <CardDetailPanel
+          card={selectedCard}
+          onClose={() => setSelectedCard(null)}
+          onOpenFile={(path) => { openFile(path); setSelectedCard(null); }}
+        />
         {activeView === 'diary' && (
           <DiaryView entries={phase.entries} onOpenFile={openFile} />
         )}
