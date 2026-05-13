@@ -1,6 +1,8 @@
 import React, { useEffect, useReducer, useRef, useState } from 'react';
 import { vscode } from './vscode';
+import { computeScore } from './score';
 import { Sidebar } from './components/Sidebar';
+import { Topbar } from './components/Topbar';
 import { StoryMapView } from './components/StoryMapView';
 import { DiaryView } from './components/DiaryView';
 import { TechDebtView } from './components/TechDebtView';
@@ -8,6 +10,7 @@ import { SprintsView } from './components/SprintsView';
 import { InboxView } from './components/InboxView';
 import { SettingsView } from './components/SettingsView';
 import { AgentsView } from './components/AgentsView';
+import { CardDetailPanel } from './components/CardDetailPanel';
 import type {
   AgentResources,
   FolderCandidates,
@@ -352,6 +355,9 @@ export default function App() {
   const setThemeOverride = (override: ThemeOverride) =>
     vscode.postMessage({ command: 'setThemeOverride', override });
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCard, setSelectedCard] = useState<TaskCard | null>(null);
+
   const { phase, activeView, settings } = state;
 
   if (phase.status === 'loading') {
@@ -382,18 +388,52 @@ export default function App() {
     return <WorkspaceSetupForm candidates={phase.folderCandidates} contentVisible={contentVisible} />;
   }
 
+  const q = searchQuery.trim().toLowerCase();
+  const visibleCards = q
+    ? phase.cards.filter(
+        (c) =>
+          c.title.toLowerCase().includes(q) ||
+          c.id?.toLowerCase().includes(q) ||
+          c.activity?.toLowerCase().includes(q) ||
+          c.tags?.some((t) => t.toLowerCase().includes(q))
+      )
+    : phase.cards;
+
+  const statusLabel = (() => {
+    const active = phase.sprintRecords.find((r) => r.status === 'in-progress');
+    const latest = phase.sprintRecords.slice().sort((a, b) => b.sprint - a.sprint)[0];
+    const sprint = active ?? latest;
+    const { done, total, pct } = computeScore(phase.cards);
+    const parts: string[] = [];
+    if (sprint) parts.push(`Sprint ${sprint.sprint}`);
+    if (total > 0) parts.push(`${done}/${total} pts (${pct}%)`);
+    parts.push(`${phase.cards.length} tasks`);
+    return parts.join(' · ');
+  })();
+
   return (
     <div className={`mandala-dashboard mandala-boot-target${contentVisible ? ' is-visible' : ''}`}>
-      <Sidebar active={activeView} onSelect={(v) => dispatch({ type: 'SET_VIEW', view: v })} />
+      <Sidebar active={activeView} onSelect={(v) => { dispatch({ type: 'SET_VIEW', view: v }); setSelectedCard(null); }} />
       <main className="mandala-main">
+        <Topbar sprintRecords={phase.sprintRecords} cards={phase.cards} onSearch={setSearchQuery} />
         {state.hasGettingStartedExamples && (
           <div className="mandala-example-badge-row" role="status" aria-live="polite">
             <span className="mandala-example-badge">Starter Examples Active</span>
           </div>
         )}
         {activeView === 'storymap' && (
-          <StoryMapView cards={phase.cards} onOpenFile={openFile} />
+          <StoryMapView
+            cards={visibleCards}
+            sprintRecords={phase.sprintRecords}
+            onOpenFile={openFile}
+            onSelectCard={setSelectedCard}
+          />
         )}
+        <CardDetailPanel
+          card={selectedCard}
+          onClose={() => setSelectedCard(null)}
+          onOpenFile={(path) => { openFile(path); setSelectedCard(null); }}
+        />
         {activeView === 'diary' && (
           <DiaryView entries={phase.entries} onOpenFile={openFile} />
         )}
@@ -404,7 +444,7 @@ export default function App() {
           <SprintsView records={phase.sprintRecords} onOpenFile={openFile} />
         )}
         {activeView === 'inbox' && (
-          <InboxView cards={phase.cards} onOpenFile={openFile} />
+          <InboxView cards={visibleCards} onOpenFile={openFile} />
         )}
         {activeView === 'agents' && (
           <AgentsView
@@ -436,6 +476,12 @@ export default function App() {
               vscode.postMessage({ command: 'saveSettings', settings: nextSettings });
             }}
           />
+        )}
+        {statusLabel && (
+          <div className="mandala-status-bar">
+            <span className="mandala-status-ok">●</span>
+            <span>{statusLabel}</span>
+          </div>
         )}
       </main>
     </div>

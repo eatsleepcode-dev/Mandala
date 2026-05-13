@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { TechDebtCard } from '../../shared/types';
+import { fmtDate } from '../dates';
 
 interface TechDebtViewProps {
   cards: TechDebtCard[];
@@ -8,13 +9,30 @@ interface TechDebtViewProps {
 
 type Filter = 'all' | 'open' | 'resolved';
 
+const FILTER_OPTIONS: { id: Filter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'open', label: '🔴 Open' },
+  { id: 'resolved', label: '✅ Resolved' },
+];
+
+const SEVERITY_RANK: Record<string, number> = { high: 0, medium: 1, low: 2 };
+
+function sortCards(cards: TechDebtCard[]): TechDebtCard[] {
+  return [...cards].sort((a, b) => {
+    if (a.status !== b.status) return a.status === 'open' ? -1 : 1;
+    return (SEVERITY_RANK[a.severity] ?? 3) - (SEVERITY_RANK[b.severity] ?? 3);
+  });
+}
+
 export function TechDebtView({ cards, onOpenFile }: TechDebtViewProps) {
   const [filter, setFilter] = useState<Filter>('all');
 
-  const filteredCards = cards.filter((card) => {
-    if (filter === 'all') return true;
-    return card.status === filter;
-  });
+  const filteredCards = sortCards(
+    cards.filter((card) => {
+      if (filter === 'all') return true;
+      return card.status === filter;
+    })
+  );
 
   return (
     <div className="view active" id="view-tech-debt">
@@ -26,24 +44,17 @@ export function TechDebtView({ cards, onOpenFile }: TechDebtViewProps) {
           </div>
         </div>
         <div className="filter-row" style={{ margin: '0 0 0 auto' }}>
-          <span
-            className={`filter-chip ${filter === 'all' ? 'active' : ''}`}
-            onClick={() => setFilter('all')}
-          >
-            All
-          </span>
-          <span
-            className={`filter-chip ${filter === 'open' ? 'active' : ''}`}
-            onClick={() => setFilter('open')}
-          >
-            🔴 Open
-          </span>
-          <span
-            className={`filter-chip ${filter === 'resolved' ? 'active' : ''}`}
-            onClick={() => setFilter('resolved')}
-          >
-            ✅ Resolved
-          </span>
+          {FILTER_OPTIONS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              className={`filter-chip ${filter === f.id ? 'active' : ''}`}
+              aria-pressed={filter === f.id}
+              onClick={() => setFilter(f.id)}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -60,7 +71,7 @@ export function TechDebtView({ cards, onOpenFile }: TechDebtViewProps) {
                 <span className={`td-sev sev-${card.severity}`}>
                   {card.severity.toUpperCase()}
                 </span>
-                <span className="td-date">Added {card.added}</span>
+                <span className="td-date">Added {fmtDate(card.added)}</span>
               </div>
               <div className="td-title">{card.title}</div>
               <div className="td-desc">
@@ -69,9 +80,7 @@ export function TechDebtView({ cards, onOpenFile }: TechDebtViewProps) {
               {card.tags.length > 0 && (
                 <div className="td-footer">
                   {card.tags.map((tag) => (
-                    <span key={tag} className="td-chip">
-                      {tag}
-                    </span>
+                    <span key={tag} className="td-chip">{tag}</span>
                   ))}
                 </div>
               )}

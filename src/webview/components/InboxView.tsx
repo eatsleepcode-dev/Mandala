@@ -8,6 +8,21 @@ interface InboxViewProps {
 
 type Filter = 'all' | 'active' | 'planned' | 'complete';
 
+const FILTER_OPTIONS: { id: Filter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'active', label: '🔴 Active' },
+  { id: 'planned', label: '📋 Planned' },
+  { id: 'complete', label: '✅ Complete' },
+];
+
+function pointsScore(cards: TaskCard[]): string | null {
+  const withPoints = cards.filter((c) => c.points !== undefined);
+  if (withPoints.length === 0) return null;
+  const total = withPoints.reduce((s, c) => s + (c.points ?? 0), 0);
+  const done = withPoints.filter((c) => c.status === 'complete').reduce((s, c) => s + (c.points ?? 0), 0);
+  return `${done}/${total} pts`;
+}
+
 export function InboxView({ cards, onOpenFile }: InboxViewProps) {
   const [filter, setFilter] = useState<Filter>('all');
 
@@ -17,38 +32,29 @@ export function InboxView({ cards, onOpenFile }: InboxViewProps) {
     return card.status === filter;
   });
 
+  const score = pointsScore(cards);
+
   return (
     <div className="view active" id="view-inbox">
       <div className="view-header">
         <div>
           <h2>Inbox</h2>
-          <div className="subtitle">{cards.length} total tasks</div>
+          <div className="subtitle">
+            {cards.length} total tasks{score && ` · ${score}`}
+          </div>
         </div>
         <div className="filter-row" style={{ margin: '0 0 0 auto' }}>
-          <span
-            className={`filter-chip ${filter === 'all' ? 'active' : ''}`}
-            onClick={() => setFilter('all')}
-          >
-            All
-          </span>
-          <span
-            className={`filter-chip ${filter === 'active' ? 'active' : ''}`}
-            onClick={() => setFilter('active')}
-          >
-            🔴 Active
-          </span>
-          <span
-            className={`filter-chip ${filter === 'planned' ? 'active' : ''}`}
-            onClick={() => setFilter('planned')}
-          >
-            📋 Planned
-          </span>
-          <span
-            className={`filter-chip ${filter === 'complete' ? 'active' : ''}`}
-            onClick={() => setFilter('complete')}
-          >
-            ✅ Complete
-          </span>
+          {FILTER_OPTIONS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              className={`filter-chip ${filter === f.id ? 'active' : ''}`}
+              aria-pressed={filter === f.id}
+              onClick={() => setFilter(f.id)}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -62,9 +68,7 @@ export function InboxView({ cards, onOpenFile }: InboxViewProps) {
             >
               <div className="td-header">
                 <span className="td-id">{card.id}</span>
-                <span className={`td-sev sev-low`}>
-                  Sprint {card.sprint}
-                </span>
+                <span className="td-sev sev-low">Sprint {card.sprint}</span>
               </div>
               <div className="td-title">{card.title}</div>
               <div className="td-desc">
@@ -73,9 +77,7 @@ export function InboxView({ cards, onOpenFile }: InboxViewProps) {
               <div className="td-footer">
                 <span className="td-chip">{card.type}</span>
                 {card.tags.map((tag) => (
-                  <span key={tag} className="td-chip">
-                    {tag}
-                  </span>
+                  <span key={tag} className="td-chip">{tag}</span>
                 ))}
               </div>
             </div>

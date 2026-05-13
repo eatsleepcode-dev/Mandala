@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { HostMessage } from '../shared/types';
+import type { FolderCandidates, HostMessage } from '../shared/types';
 
 const mockPostMessage = jest.fn();
 
@@ -16,9 +16,26 @@ jest.mock('./vscode', () => ({
 // App must be imported AFTER jest.mock so it picks up the mock
 import App from './App';
 
+const BLANK_CANDIDATES: FolderCandidates = {
+  inbox: '.mandala/inbox',
+  diary: '.mandala/diary',
+  sprints: '.mandala/sprints',
+  techDebt: '.mandala/tech-debt',
+  agents: '.mandala/agents',
+};
+
 function fireHostMessage(msg: HostMessage) {
   act(() => {
     window.dispatchEvent(new MessageEvent('message', { data: msg }));
+  });
+}
+
+function fireInit(initialized: boolean, hasMigratableData = false) {
+  fireHostMessage({
+    command: 'initState',
+    initialized,
+    hasMigratableData,
+    folderCandidates: BLANK_CANDIDATES,
   });
 }
 
@@ -30,28 +47,21 @@ describe('App', () => {
     expect(mockPostMessage).toHaveBeenCalledWith({ command: 'ready' });
   });
 
-  it('renders the setup screen when initState.initialized is false', () => {
+  it('renders the folder-mapping setup screen when not initialized', () => {
     render(<App />);
-    fireHostMessage({ command: 'initState', initialized: false, hasMigratableData: false });
-    expect(screen.getByText(/no \.mandala\/ workspace found/i)).toBeInTheDocument();
+    fireInit(false);
+    expect(screen.getByText(/map your folders/i)).toBeInTheDocument();
   });
 
-  it('offers empty and example workspace initialization from setup', () => {
+  it('shows apply button on setup screen', () => {
     render(<App />);
-    fireHostMessage({ command: 'initState', initialized: false, hasMigratableData: false });
-    expect(screen.getByRole('button', { name: /initialize empty workspace/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /initialize with examples/i })).toBeInTheDocument();
-  });
-
-  it('shows migrate option when hasMigratableData is true', () => {
-    render(<App />);
-    fireHostMessage({ command: 'initState', initialized: false, hasMigratableData: true });
-    expect(screen.getByText(/migrate/i)).toBeInTheDocument();
+    fireInit(false);
+    expect(screen.getByRole('button', { name: /apply/i })).toBeInTheDocument();
   });
 
   it('renders sidebar navigation when initialized', () => {
     render(<App />);
-    fireHostMessage({ command: 'initState', initialized: true, hasMigratableData: false });
+    fireInit(true);
     fireHostMessage({ command: 'loadStoryMap', cards: [] });
     fireHostMessage({ command: 'loadDiary', entries: [] });
     expect(screen.getByRole('navigation')).toBeInTheDocument();
@@ -59,7 +69,7 @@ describe('App', () => {
 
   it('switches to diary view when diary nav item is clicked', async () => {
     render(<App />);
-    fireHostMessage({ command: 'initState', initialized: true, hasMigratableData: false });
+    fireInit(true);
     fireHostMessage({ command: 'loadStoryMap', cards: [] });
     fireHostMessage({ command: 'loadDiary', entries: [] });
     await userEvent.click(screen.getByTitle(/diary/i));
@@ -68,7 +78,7 @@ describe('App', () => {
 
   it('shows story map view by default when initialized', () => {
     render(<App />);
-    fireHostMessage({ command: 'initState', initialized: true, hasMigratableData: false });
+    fireInit(true);
     fireHostMessage({ command: 'loadStoryMap', cards: [] });
     fireHostMessage({ command: 'loadDiary', entries: [] });
     expect(screen.getByTestId('story-map-view')).toBeInTheDocument();
@@ -76,7 +86,7 @@ describe('App', () => {
 
   it('shows a starter-examples badge when example state is active', () => {
     render(<App />);
-    fireHostMessage({ command: 'initState', initialized: true, hasMigratableData: false });
+    fireInit(true);
     fireHostMessage({ command: 'loadStoryMap', cards: [] });
     fireHostMessage({ command: 'loadDiary', entries: [] });
     fireHostMessage({ command: 'loadExampleState', hasGettingStartedExamples: true });

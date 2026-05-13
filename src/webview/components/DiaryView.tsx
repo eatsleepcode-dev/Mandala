@@ -62,16 +62,29 @@ function buildCalendarCells(viewMonth: Date): Array<string | undefined> {
 
 export function DiaryView({ entries, onOpenFile }: Props) {
   const [selectedIdx, setSelectedIdx] = useState(0);
-
-  const selected = entries[selectedIdx];
-  const selectedDate = selected ? parseDate(selected.date) : undefined;
-  const [viewMonth, setViewMonth] = useState(() => startOfMonth(selectedDate ?? new Date()));
+  const [techDebtOnly, setTechDebtOnly] = useState(false);
 
   useEffect(() => {
-    if (selectedDate) {
-      setViewMonth(startOfMonth(selectedDate));
+    if (techDebtOnly) {
+      const idx = entries.findIndex((e) => e.techDebt);
+      if (idx >= 0) setSelectedIdx(idx);
+    } else {
+      setSelectedIdx(0);
     }
-  }, [selected?.date, selectedDate]);
+  }, [techDebtOnly, entries]);
+
+  const selected = entries[selectedIdx];
+  const [viewMonth, setViewMonth] = useState(() => {
+    const d = selected ? parseDate(selected.date) : undefined;
+    return startOfMonth(d ?? new Date());
+  });
+
+  useEffect(() => {
+    if (selected?.date) {
+      const d = parseDate(selected.date);
+      if (d) setViewMonth(startOfMonth(d));
+    }
+  }, [selected?.date]);
 
   useEffect(() => {
     if (entries.length > 0 && selectedIdx >= entries.length) {
@@ -175,10 +188,21 @@ export function DiaryView({ entries, onOpenFile }: Props) {
             <span>Entries</span>
             <span>{monthEntries.length}</span>
           </div>
-          {entries.map((e, i) => (
+          <div className="diary-filter-row">
+            <button
+              type="button"
+              className={`diary-filter-chip ${techDebtOnly ? 'active' : ''}`}
+              onClick={() => setTechDebtOnly((v) => !v)}
+              aria-label="Tech Debt"
+              aria-pressed={techDebtOnly}
+            >
+              Tech Debt
+            </button>
+          </div>
+          {entries.filter((e) => !techDebtOnly || e.techDebt).map((e) => (
             <div
               key={e.path}
-              className={`diary-entry-row ${i === selectedIdx ? 'active' : ''}`}
+              className={`diary-entry-row ${e.date === selected?.date ? 'active' : ''}`}
               onClick={() => selectEntryByDate(e.date)}
               role="button"
               tabIndex={0}
