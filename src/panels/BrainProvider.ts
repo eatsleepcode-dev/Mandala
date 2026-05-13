@@ -30,7 +30,7 @@ export class BrainProvider implements vscode.WebviewViewProvider {
 
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
-    context: vscode.WebviewViewResolveContext,
+    _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken,
   ) {
     this._view = webviewView;
@@ -74,7 +74,7 @@ export class BrainProvider implements vscode.WebviewViewProvider {
             this._workspaceRoot,
             known,
             config,
-            vscode.workspace.fs as any
+            vscode.workspace.fs
           );
         }
       }
@@ -272,7 +272,7 @@ export class BrainProvider implements vscode.WebviewViewProvider {
               this._workspaceRoot,
               settings.known as KnownIntegrationFlags,
               config,
-              vscode.workspace.fs as any
+              vscode.workspace.fs
             );
             return;
           }
@@ -613,6 +613,7 @@ export class BrainProvider implements vscode.WebviewViewProvider {
 export function getNonce(): string {
   const buf = new Uint8Array(16);
   // crypto is available in both Node 15+ and the VS Code extension host
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   (globalThis.crypto ?? require('crypto').webcrypto).getRandomValues(buf);
   return Array.from(buf, (b) => b.toString(16).padStart(2, '0')).join('');
 }

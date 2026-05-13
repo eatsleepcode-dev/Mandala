@@ -9,5 +9,5 @@ export const vscode = typeof acquireVsCodeApi !== 'undefined'
   : {
       postMessage: (message: unknown) => { console.log('postMessage mock:', message); },
       getState: () => ({}),
-      setState: (state: unknown) => {},
+      setState: (_state: unknown) => {},
     };

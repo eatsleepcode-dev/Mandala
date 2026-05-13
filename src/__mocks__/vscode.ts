@@ -27,9 +27,11 @@ const commands = {
 
 const Uri = {
   file: jest.fn((path: string) => ({ fsPath: path, path })),
-  joinPath: jest.fn((base: { fsPath: string }, ...segments: string[]) => ({
-    fsPath: require('path').join(base.fsPath, ...segments),
-  })),
+  joinPath: jest.fn((base: { fsPath: string }, ...segments: string[]) => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const path = require('path');
+    return { fsPath: path.join(base.fsPath, ...segments) };
+  }),
 };
 
 const ViewColumn = { One: 1, Two: 2, Three: 3 };

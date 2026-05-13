@@ -1,4 +1,5 @@
 import * as path from 'path';
+import { asUri, asFs } from '../test-utils/types';
 import {
   KNOWN_INTEGRATIONS,
   syncIntegrations,
@@ -50,7 +51,7 @@ describe('loadIntegrationConfig', () => {
     const mockFs = {
       readFile: jest.fn().mockRejectedValue(new Error('ENOENT')),
     };
-    const config = await loadIntegrationConfig(root as any, mockFs as any);
+    const config = await loadIntegrationConfig(asUri(root), asFs(mockFs));
     expect(config.custom).toEqual([]);
   });
 
@@ -61,7 +62,7 @@ describe('loadIntegrationConfig', () => {
     const mockFs = {
       readFile: jest.fn().mockResolvedValue(enc.encode(JSON.stringify(stored))),
     };
-    const config = await loadIntegrationConfig(root as any, mockFs as any);
+    const config = await loadIntegrationConfig(asUri(root), asFs(mockFs));
     expect(config.custom).toHaveLength(1);
     expect(config.custom[0].label).toBe('My Tool');
   });
@@ -70,7 +71,7 @@ describe('loadIntegrationConfig', () => {
     const mockFs = {
       readFile: jest.fn().mockResolvedValue(enc.encode('not json {')),
     };
-    const config = await loadIntegrationConfig(root as any, mockFs as any);
+    const config = await loadIntegrationConfig(asUri(root), asFs(mockFs));
     expect(config.custom).toEqual([]);
   });
 });
@@ -83,7 +84,7 @@ describe('saveIntegrationConfig', () => {
       writeFile: jest.fn().mockResolvedValue(undefined),
     };
     const config: IntegrationConfig = { custom: [] };
-    await saveIntegrationConfig(root as any, config, mockFs as any);
+    await saveIntegrationConfig(asUri(root), config, asFs(mockFs));
     const [uri, data] = mockFs.writeFile.mock.calls[0];
     expect(uri.fsPath).toContain(path.join('.mandala', 'config.json'));
     const written = JSON.parse(new TextDecoder().decode(data));
@@ -106,10 +107,10 @@ describe('syncIntegrations', () => {
   it('creates source seed file when it does not exist', async () => {
     const mockFs = baseFs();
     await syncIntegrations(
-      root as any,
+      asUri(root),
       { claude: true, copilot: false, cursor: false, cline: false, claudeCommands: false },
       { custom: [] },
-      mockFs as any
+      asFs(mockFs)
     );
     const writtenPaths: string[] = mockFs.writeFile.mock.calls.map(
       (c: [{ fsPath: string }]) => c[0].fsPath
@@ -122,10 +123,10 @@ describe('syncIntegrations', () => {
     // Pretend source file exists
     mockFs.readFile.mockResolvedValue(enc.encode('# Claude context'));
     await syncIntegrations(
-      root as any,
+      asUri(root),
       { claude: true, copilot: false, cursor: false, cline: false, claudeCommands: false },
       { custom: [] },
-      mockFs as any
+      asFs(mockFs)
     );
     expect(mockFs.symlink).toHaveBeenCalled();
     const [src, tgt] = mockFs.symlink.mock.calls[0];
@@ -138,10 +139,10 @@ describe('syncIntegrations', () => {
     mockFs.readFile.mockResolvedValue(enc.encode('# Claude context'));
     mockFs.symlink.mockRejectedValue(new Error('EPERM'));
     await syncIntegrations(
-      root as any,
+      asUri(root),
       { claude: true, copilot: false, cursor: false, cline: false, claudeCommands: false },
       { custom: [] },
-      mockFs as any
+      asFs(mockFs)
     );
     const writtenPaths: string[] = mockFs.writeFile.mock.calls.map(
       (c: [{ fsPath: string }]) => c[0].fsPath
@@ -153,10 +154,10 @@ describe('syncIntegrations', () => {
   it('skips disabled integrations', async () => {
     const mockFs = baseFs();
     await syncIntegrations(
-      root as any,
+      asUri(root),
       { claude: false, copilot: false, cursor: false, cline: false, claudeCommands: false },
       { custom: [] },
-      mockFs as any
+      asFs(mockFs)
     );
     expect(mockFs.symlink).not.toHaveBeenCalled();
   });
@@ -165,10 +166,10 @@ describe('syncIntegrations', () => {
     const mockFs = baseFs();
     mockFs.readFile.mockResolvedValue(enc.encode('# Copilot'));
     await syncIntegrations(
-      root as any,
+      asUri(root),
       { claude: false, copilot: true, cursor: false, cline: false, claudeCommands: false },
       { custom: [] },
-      mockFs as any
+      asFs(mockFs)
     );
     const createdDirs: string[] = mockFs.createDirectory.mock.calls.map(
       (c: [{ fsPath: string }]) => c[0].fsPath
@@ -182,10 +183,10 @@ describe('syncIntegrations', () => {
       { id: 'mytool', label: 'My Tool', source: 'context/CUSTOM.md', target: '.mytool/rules.md' },
     ];
     await syncIntegrations(
-      root as any,
+      asUri(root),
       { claude: false, copilot: false, cursor: false, cline: false, claudeCommands: false },
       { custom },
-      mockFs as any
+      asFs(mockFs)
     );
     expect(mockFs.symlink).toHaveBeenCalled();
     const [, tgt] = mockFs.symlink.mock.calls[0];
@@ -196,10 +197,10 @@ describe('syncIntegrations', () => {
     const mockFs = baseFs();
     mockFs.readFile.mockResolvedValue(enc.encode('content'));
     const report = await syncIntegrations(
-      root as any,
+      asUri(root),
       { claude: true, copilot: false, cursor: false, cline: false, claudeCommands: false },
       { custom: [] },
-      mockFs as any
+      asFs(mockFs)
     );
     expect(typeof report.synced).toBe('number');
     expect(typeof report.failed).toBe('number');

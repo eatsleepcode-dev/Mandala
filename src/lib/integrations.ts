@@ -29,7 +29,7 @@ interface IntegrationFsLike {
   readFile(uri: UriLike): Thenable<Uint8Array>;
   writeFile(uri: UriLike, data: Uint8Array): Thenable<void>;
   createDirectory(uri: UriLike): Thenable<void>;
-  symlink(source: UriLike, target: UriLike): Thenable<void>;
+  symlink?: (source: UriLike, target: UriLike) => Thenable<void>;
 }
 
 const MANDALA_ROOT = '.mandala';
@@ -104,7 +104,11 @@ export async function syncIntegrations(
 
     // Try symlink; fall back to copying the file
     try {
-      await fs.symlink(sourceUri, targetUri);
+      if (fs.symlink) {
+        await fs.symlink(sourceUri, targetUri);
+      } else {
+        throw new Error('symlink not supported');
+      }
       synced++;
     } catch {
       try {

@@ -11,7 +11,7 @@ import {
   seedGettingStartedExamples,
 } from './workspace';
 
-const makeUri = (fsPath: string) => ({ fsPath });
+import { makeUri, asUri, asFs } from '../test-utils/types';
 const enc = new TextEncoder();
 const md = (content: string) => enc.encode(content);
 
@@ -24,7 +24,7 @@ describe('detectDevBrainFolders', () => {
     const mockFs = {
       readDirectory: jest.fn().mockRejectedValue(new Error('ENOENT')),
     };
-    const result = await detectDevBrainFolders(root as any, mockFs as any);
+    const result = await detectDevBrainFolders(asUri(root), asFs(mockFs));
     expect(result.found).toBe(false);
     expect(result.missing).toEqual(expect.arrayContaining([...MANDALA_SUBDIRS]));
   });
@@ -33,7 +33,7 @@ describe('detectDevBrainFolders', () => {
     const mockFs = {
       readDirectory: jest.fn().mockResolvedValue([]),
     };
-    const result = await detectDevBrainFolders(root as any, mockFs as any);
+    const result = await detectDevBrainFolders(asUri(root), asFs(mockFs));
     expect(result.found).toBe(true);
     expect(result.missing).toHaveLength(0);
   });
@@ -42,7 +42,7 @@ describe('detectDevBrainFolders', () => {
     const mockFs = {
       readDirectory: jest.fn().mockResolvedValue([]),
     };
-    await detectDevBrainFolders(root as any, mockFs as any);
+    await detectDevBrainFolders(asUri(root), asFs(mockFs));
     const probedPaths: string[] = mockFs.readDirectory.mock.calls.map(
       (c: [{ fsPath: string }]) => c[0].fsPath
     );
@@ -58,7 +58,7 @@ describe('detectDevBrainFolders', () => {
         return Promise.reject(new Error('ENOENT'));
       }),
     };
-    const result = await detectDevBrainFolders(root as any, mockFs as any);
+    const result = await detectDevBrainFolders(asUri(root), asFs(mockFs));
     expect(result.found).toBe(false);
     expect(result.missing).not.toContain('diary');
     expect(result.missing).toContain('inbox');
@@ -75,7 +75,7 @@ describe('loadTaskCards', () => {
       readDirectory: jest.fn().mockResolvedValue([]),
       readFile: jest.fn(),
     };
-    const cards = await loadTaskCards(inboxUri as any, mockFs as any);
+    const cards = await loadTaskCards(asUri(inboxUri), asFs(mockFs));
     expect(cards).toEqual([]);
   });
 
@@ -92,7 +92,7 @@ describe('loadTaskCards', () => {
       ),
     };
 
-    const cards = await loadTaskCards(inboxUri as any, mockFs as any);
+    const cards = await loadTaskCards(asUri(inboxUri), asFs(mockFs));
     expect(cards).toHaveLength(1);
     expect(cards[0].id).toBe('GAP-01');
     expect(cards[0].title).toBe('Nested task');
@@ -103,7 +103,7 @@ describe('loadTaskCards', () => {
       readDirectory: jest.fn().mockResolvedValue([['README.txt', 1], ['image.png', 1]]),
       readFile: jest.fn(),
     };
-    const cards = await loadTaskCards(inboxUri as any, mockFs as any);
+    const cards = await loadTaskCards(asUri(inboxUri), asFs(mockFs));
     expect(cards).toHaveLength(0);
     expect(mockFs.readFile).not.toHaveBeenCalled();
   });
@@ -125,7 +125,7 @@ activity: User Auth
 Implementation notes.`)
       ),
     };
-    const cards = await loadTaskCards(inboxUri as any, mockFs as any);
+    const cards = await loadTaskCards(asUri(inboxUri), asFs(mockFs));
     expect(cards).toHaveLength(1);
     const card = cards[0];
     expect(card.id).toBe('T-001');
@@ -153,7 +153,7 @@ type: chore
 `)
       ),
     };
-    const cards = await loadTaskCards(inboxUri as any, mockFs as any);
+    const cards = await loadTaskCards(asUri(inboxUri), asFs(mockFs));
     expect(cards[0].id).toBe('my-task');
   });
 
@@ -173,7 +173,7 @@ type: chore
 `)
         ),
     };
-    const cards = await loadTaskCards(inboxUri as any, mockFs as any);
+    const cards = await loadTaskCards(asUri(inboxUri), asFs(mockFs));
     expect(cards).toHaveLength(1);
     expect(cards[0].title).toBe('Good');
   });
@@ -189,7 +189,7 @@ describe('loadDiaryEntries', () => {
       readDirectory: jest.fn().mockResolvedValue([]),
       readFile: jest.fn(),
     };
-    const entries = await loadDiaryEntries(diaryUri as any, mockFs as any);
+    const entries = await loadDiaryEntries(asUri(diaryUri), asFs(mockFs));
     expect(entries).toEqual([]);
   });
 
@@ -209,7 +209,7 @@ adr: false
 Today I implemented JWT...`)
       ),
     };
-    const entries = await loadDiaryEntries(diaryUri as any, mockFs as any);
+    const entries = await loadDiaryEntries(asUri(diaryUri), asFs(mockFs));
     expect(entries).toHaveLength(1);
     const e = entries[0];
     expect(e.date).toBe('2026-05-09');
@@ -240,7 +240,7 @@ title: Entry ${dateStem}
         );
       }),
     };
-    const entries = await loadDiaryEntries(diaryUri as any, mockFs as any);
+    const entries = await loadDiaryEntries(asUri(diaryUri), asFs(mockFs));
     expect(entries[0].date).toBe('2026-05-09');
     expect(entries[1].date).toBe('2026-05-08');
     expect(entries[2].date).toBe('2026-05-07');
@@ -257,7 +257,7 @@ type: chore
 `)
       ),
     };
-    const entries = await loadDiaryEntries(diaryUri as any, mockFs as any);
+    const entries = await loadDiaryEntries(asUri(diaryUri), asFs(mockFs));
     expect(entries[0].date).toBe('2026-01-01');
   });
 });
@@ -281,8 +281,9 @@ status: "open"
 Need to fix the token expiration logic.`)
       ),
     };
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { loadTechDebtCards } = require('./workspace');
-    const cards = await loadTechDebtCards(techDebtUri as any, mockFs as any);
+    const cards = await loadTechDebtCards(asUri(techDebtUri), asFs(mockFs));
     expect(cards).toHaveLength(1);
     const c = cards[0];
     expect(c.id).toBe('TD-001');
@@ -313,8 +314,9 @@ endDate: "2026-05-14"
 Sprint 2 details here.`)
       ),
     };
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { loadSprintRecords } = require('./workspace');
-    const records = await loadSprintRecords(sprintsUri as any, mockFs as any);
+    const records = await loadSprintRecords(asUri(sprintsUri), asFs(mockFs));
     expect(records).toHaveLength(1);
     const r = records[0];
     expect(r.sprint).toBe(2);
@@ -329,7 +331,8 @@ Sprint 2 details here.`)
 // ─── migrateToMandalaFolder ─────────────────────────────────────────────────
 
 describe('migrateToMandalaFolder', () => {
-  const { migrateToMandalaFolder } = require('./workspace');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { migrateToMandalaFolder } = require('./workspace');
   const root = makeUri('/workspace');
 
   it('moves __inbox/__todo/ contents to .mandala/inbox/', async () => {
@@ -343,7 +346,7 @@ describe('migrateToMandalaFolder', () => {
       writeFile: jest.fn().mockResolvedValue(undefined),
       delete: jest.fn().mockResolvedValue(undefined),
     };
-    const report = await migrateToMandalaFolder(root as any, mockFs as any);
+    const report = await migrateToMandalaFolder(asUri(root), asFs(mockFs));
     expect(report.moved.some((p: string) => p.includes('T-001.md'))).toBe(true);
   });
 
@@ -359,7 +362,7 @@ describe('migrateToMandalaFolder', () => {
       writeFile: jest.fn().mockResolvedValue(undefined),
       delete: jest.fn().mockResolvedValue(undefined),
     };
-    const report = await migrateToMandalaFolder(root as any, mockFs as any);
+    const report = await migrateToMandalaFolder(asUri(root), asFs(mockFs));
     expect(report.moved.some((p: string) => p.includes('2026-05-09.md'))).toBe(true);
   });
 
@@ -375,7 +378,7 @@ describe('migrateToMandalaFolder', () => {
       writeFile: jest.fn().mockResolvedValue(undefined),
       delete: jest.fn().mockResolvedValue(undefined),
     };
-    const report = await migrateToMandalaFolder(root as any, mockFs as any);
+    const report = await migrateToMandalaFolder(asUri(root), asFs(mockFs));
     expect(report.moved.length).toBeGreaterThan(0);
   });
 
@@ -387,7 +390,7 @@ describe('migrateToMandalaFolder', () => {
       writeFile: jest.fn(),
       delete: jest.fn(),
     };
-    const report = await migrateToMandalaFolder(root as any, mockFs as any);
+    const report = await migrateToMandalaFolder(asUri(root), asFs(mockFs));
     expect(report.moved).toHaveLength(0);
     expect(report.skipped).toHaveLength(0);
   });
@@ -403,7 +406,7 @@ describe('migrateToMandalaFolder', () => {
       writeFile: jest.fn(),
       delete: jest.fn(),
     };
-    const report = await migrateToMandalaFolder(root as any, mockFs as any);
+    const report = await migrateToMandalaFolder(asUri(root), asFs(mockFs));
     expect(report.skipped.some((p: string) => p.includes('broken.md'))).toBe(true);
   });
 });
@@ -417,8 +420,9 @@ describe('initDevBrainFolders', () => {
       createDirectory: jest.fn().mockResolvedValue(undefined),
       writeFile: jest.fn().mockResolvedValue(undefined),
     };
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { initDevBrainFolders } = require('./workspace');
-    await initDevBrainFolders(root as any, mockFs as any);
+    await initDevBrainFolders(asUri(root), asFs(mockFs));
     const created: string[] = mockFs.createDirectory.mock.calls.map(
       (c: [{ fsPath: string }]) => c[0].fsPath
     );
@@ -437,7 +441,7 @@ describe('initDevBrainFolders', () => {
       writeFile: jest.fn().mockResolvedValue(undefined),
     };
 
-    await initDevBrainFolders(root as any, mockFs as any, { includeExamples: true });
+    await initDevBrainFolders(asUri(root), asFs(mockFs), { includeExamples: true });
     expect(mockFs.writeFile).toHaveBeenCalled();
     const writtenPaths: string[] = mockFs.writeFile.mock.calls.map((c: [{ fsPath: string }]) => c[0].fsPath);
     expect(writtenPaths.some((p) => p.includes(path.join('.mandala', 'inbox')))).toBe(true);
@@ -455,7 +459,7 @@ describe('getting started examples', () => {
       writeFile: jest.fn().mockResolvedValue(undefined),
     };
 
-    const count = await seedGettingStartedExamples(root as any, mockFs as any);
+    const count = await seedGettingStartedExamples(asUri(root), asFs(mockFs));
     expect(count).toBeGreaterThan(0);
     expect(mockFs.writeFile).toHaveBeenCalled();
     const writtenPaths: string[] = mockFs.writeFile.mock.calls.map((c: [{ fsPath: string }]) => c[0].fsPath);
@@ -467,7 +471,7 @@ describe('getting started examples', () => {
       readFile: jest.fn().mockResolvedValue(md(JSON.stringify({ version: 1, files: ['.mandala/inbox/example.md'] }))),
     };
 
-    await expect(hasGettingStartedExamples(root as any, mockFs as any)).resolves.toBe(true);
+    await expect(hasGettingStartedExamples(asUri(root), asFs(mockFs))).resolves.toBe(true);
   });
 
   it('removes only manifest-tracked starter files', async () => {
@@ -480,7 +484,7 @@ describe('getting started examples', () => {
       delete: jest.fn().mockResolvedValue(undefined),
     };
 
-    const removed = await removeGettingStartedExamples(root as any, mockFs as any);
+    const removed = await removeGettingStartedExamples(asUri(root), asFs(mockFs));
     expect(removed).toBe(2);
     const deletedPaths: string[] = mockFs.delete.mock.calls.map((c: [{ fsPath: string }]) => c[0].fsPath);
     expect(deletedPaths.some((p) => p.endsWith(path.join('.mandala', 'inbox', 'example.md')))).toBe(true);
