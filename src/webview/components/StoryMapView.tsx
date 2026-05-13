@@ -13,6 +13,7 @@ function buildMatrix(cards: TaskCard[]): {
   activities: string[];
   sprints: number[];
   grid: Map<string, Map<number, TaskCard[]>>;
+  activityTags: Map<string, string[]>;
 } {
   const activitySet = new Set<string>();
   const sprintSet = new Set<number>();
@@ -26,17 +27,25 @@ function buildMatrix(cards: TaskCard[]): {
   const sprints = [...sprintSet].sort((a, b) => a - b);
 
   const grid = new Map<string, Map<number, TaskCard[]>>();
+  const activityTags = new Map<string, string[]>();
   for (const act of activities) {
     const bySprint = new Map<number, TaskCard[]>();
     for (const sp of sprints) bySprint.set(sp, []);
     grid.set(act, bySprint);
+    activityTags.set(act, []);
   }
   for (const c of cards) {
     const act = c.activity ?? 'Uncategorized';
     grid.get(act)!.get(c.sprint)!.push(c);
+    if (c.tags?.length) {
+      const existing = activityTags.get(act)!;
+      for (const tag of c.tags) {
+        if (!existing.includes(tag)) existing.push(tag);
+      }
+    }
   }
 
-  return { activities, sprints, grid };
+  return { activities, sprints, grid, activityTags };
 }
 
 const STATUS_DOT: Record<TaskStatus, string> = {
@@ -72,7 +81,7 @@ export function StoryMapView({ cards, sprintRecords, onOpenFile }: Props) {
     );
   }
 
-  const { activities, sprints, grid } = buildMatrix(filteredCards);
+  const { activities, sprints, grid, activityTags } = buildMatrix(filteredCards);
   const sprintMap = new Map(sprintRecords.map((r) => [r.sprint, r]));
 
   const completedTotal = cards.filter((c) => c.status === 'complete').length;
@@ -126,9 +135,20 @@ export function StoryMapView({ cards, sprintRecords, onOpenFile }: Props) {
           </div>
 
           {/* Activity columns */}
-          {activities.map((act) => (
+          {activities.map((act) => {
+            const tags = activityTags.get(act) ?? [];
+            return (
             <div key={act} className="activity-col">
-              <div className="activity-header">{act}</div>
+              <div className="activity-header">
+                {act}
+                {tags.length > 0 && (
+                  <div className="activity-meta" data-testid={`activity-meta-${act}`}>
+                    {tags.map((tag) => (
+                      <span key={tag} className="activity-meta-tag" data-tag={tag}>{tag}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
               {sprints.map((sp) => {
                 const cellCards = grid.get(act)!.get(sp)!;
                 return (
@@ -162,7 +182,8 @@ export function StoryMapView({ cards, sprintRecords, onOpenFile }: Props) {
                 );
               })}
             </div>
-          ))}
+          );
+          })}
 
         </div>
       </div>

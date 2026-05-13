@@ -5,13 +5,14 @@ import { computeScore } from '../score';
 interface TopbarProps {
   sprintRecords: SprintRecord[];
   cards: TaskCard[];
+  onSearch: (query: string) => void;
 }
 
 function formatDate(d: Date): string {
   return new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(d);
 }
 
-export function Topbar({ sprintRecords, cards }: TopbarProps) {
+export function Topbar({ sprintRecords, cards, onSearch }: TopbarProps) {
   const activeSprint =
     sprintRecords.find((r) => r.status === 'in-progress') ??
     sprintRecords.slice().sort((a, b) => b.sprint - a.sprint)[0];
@@ -35,6 +36,14 @@ export function Topbar({ sprintRecords, cards }: TopbarProps) {
       {badgeLabel && (
         <span className={`mandala-topbar-badge ${badgeClass}`}>{badgeLabel}</span>
       )}
+      <input
+        type="search"
+        role="searchbox"
+        className="mandala-topbar-search"
+        placeholder="⌕ Search tasks…"
+        aria-label="Search tasks"
+        onChange={(e) => onSearch(e.target.value)}
+      />
       <span className="mandala-topbar-score">
         {total > 0 && (
           <>

@@ -761,6 +761,22 @@ body {
 .mandala-topbar-badge.active   { background: var(--amber-dim); color: var(--warn); }
 .mandala-topbar-badge.planned  { background: var(--tag-bg);    color: var(--muted); }
 
+.mandala-topbar-search {
+  flex: 1;
+  max-width: 280px;
+  height: 22px;
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, var(--border));
+  color: var(--vscode-input-foreground, var(--text));
+  border-radius: var(--radius);
+  padding: 0 8px;
+  font-size: 12px;
+  outline: none;
+}
+.mandala-topbar-search:focus {
+  border-color: var(--vscode-focusBorder);
+}
+
 .mandala-topbar-score {
   margin-left: auto;
   font-family: var(--font-mono);
@@ -780,21 +796,21 @@ body {
 /* ─── Status bar ─────────────────────────────────────────────────────────── */
 .mandala-status-bar {
   height: 22px;
-  background: var(--panel);
-  border-top: 1px solid var(--border);
+  background: var(--blue);
+  border-top: none;
   display: flex;
   align-items: center;
   padding: 0 16px;
   gap: 16px;
   font-size: 11px;
-  color: var(--muted);
+  color: #ffffff;
   font-family: var(--font-mono);
   flex-shrink: 0;
   white-space: nowrap;
   overflow: hidden;
 }
 
-.mandala-status-ok   { color: var(--ok); }
+.mandala-status-ok   { color: #a5d6a7; }
 .mandala-status-warn { color: var(--warn); }
 
 /* ─── View chrome ────────────────────────────────────────────────────────── */
@@ -839,12 +855,25 @@ body {
 
 /* ─── Story Map enhancements ─────────────────────────────────────────────── */
 .activity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
   font-size: 10px;
-  color: var(--fg-muted);
+  color: var(--muted);
   font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
-  margin-top: 2px;
+  margin-top: 4px;
+}
+
+.activity-meta-tag {
+  background: var(--tag-bg);
+  color: var(--blue-bright);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  white-space: nowrap;
 }
 
 .swim-lane-label {
