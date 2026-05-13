@@ -4,6 +4,7 @@ import type { TaskCard } from '../../shared/types';
 interface InboxViewProps {
   cards: TaskCard[];
   onOpenFile: (path: string) => void;
+  onOpenMarkdownPreview?: (path: string) => void;
 }
 
 type Filter = 'all' | 'active' | 'planned' | 'complete';
@@ -23,7 +24,7 @@ function pointsScore(cards: TaskCard[]): string | null {
   return `${done}/${total} pts`;
 }
 
-export function InboxView({ cards, onOpenFile }: InboxViewProps) {
+export function InboxView({ cards, onOpenFile, onOpenMarkdownPreview }: InboxViewProps) {
   const [filter, setFilter] = useState<Filter>('all');
 
   const filteredCards = cards.filter((card) => {
@@ -69,6 +70,30 @@ export function InboxView({ cards, onOpenFile }: InboxViewProps) {
               <div className="td-header">
                 <span className="td-id">{card.id}</span>
                 <span className="td-sev sev-low">Sprint {card.sprint}</span>
+                {onOpenMarkdownPreview && (
+                  <button
+                    className="inbox-preview-btn"
+                    title="Preview rendered markdown"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenMarkdownPreview(card.path);
+                    }}
+                    style={{
+                      marginLeft: 'auto',
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '2px 4px',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: 'inherit',
+                      opacity: 0.7
+                    }}
+                  >
+                    <span className="codicon codicon-eye" />
+                  </button>
+                )}
               </div>
               <div className="td-title">{card.title}</div>
               <div className="td-desc">

@@ -454,10 +454,10 @@ export default function App() {
           <TechDebtView cards={phase.techDebtCards} onOpenFile={openFile} onOpenMarkdownPreview={openMarkdownPreview} />
         )}
         {activeView === 'sprints' && (
-          <SprintsView records={phase.sprintRecords} onOpenFile={openFile} />
+          <SprintsView records={phase.sprintRecords} onOpenFile={openFile} onOpenMarkdownPreview={openMarkdownPreview} />
         )}
         {activeView === 'inbox' && (
-          <InboxView cards={visibleCards} onOpenFile={openFile} />
+          <InboxView cards={visibleCards} onOpenFile={openFile} onOpenMarkdownPreview={openMarkdownPreview} />
         )}
         {activeView === 'agents' && (
           <AgentsView

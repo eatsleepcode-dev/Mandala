@@ -5,9 +5,10 @@ import { fmtDateRange } from '../dates';
 interface SprintsViewProps {
   records: SprintRecord[];
   onOpenFile: (path: string) => void;
+  onOpenMarkdownPreview?: (path: string) => void;
 }
 
-export function SprintsView({ records, onOpenFile }: SprintsViewProps) {
+export function SprintsView({ records, onOpenFile, onOpenMarkdownPreview }: SprintsViewProps) {
   const inProgress = records.filter((r) => r.status === 'in-progress');
   const planned = records.filter((r) => r.status === 'planned');
   const complete = records.filter((r) => r.status === 'complete');
@@ -29,7 +30,31 @@ export function SprintsView({ records, onOpenFile }: SprintsViewProps) {
             >
               <div className="sprint-card-num">Sprint {r.sprint}</div>
               <div className="sprint-card-title">{r.goal}</div>
-              {dateRange && <div className="sprint-card-meta">{dateRange}</div>}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                {dateRange && <div className="sprint-card-meta">{dateRange}</div>}
+                {onOpenMarkdownPreview && (
+                  <button
+                    className="sprint-preview-btn"
+                    title="Preview rendered markdown"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenMarkdownPreview(r.path);
+                    }}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '2px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: 'inherit',
+                      opacity: 0.6
+                    }}
+                  >
+                    <span className="codicon codicon-eye" />
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}
