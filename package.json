@@ -93,27 +93,32 @@
         "mandala.inboxPath": {
           "type": "string",
           "default": ".mandala/inbox",
-          "description": "Workspace-relative path to the sprint task card folder (default: .mandala/inbox)"
+          "description": "Workspace-relative path to the sprint task card folder (default: .mandala/inbox)",
+          "order": 1
         },
         "mandala.diaryPath": {
           "type": "string",
           "default": ".mandala/diary",
-          "description": "Workspace-relative path to the diary folder (default: .mandala/diary)"
+          "description": "Workspace-relative path to the diary folder (default: .mandala/diary)",
+          "order": 2
         },
         "mandala.sprintsPath": {
           "type": "string",
           "default": ".mandala/sprints",
-          "description": "Workspace-relative path to the sprints folder (default: .mandala/sprints)"
+          "description": "Workspace-relative path to the sprints folder (default: .mandala/sprints)",
+          "order": 3
         },
         "mandala.techDebtPath": {
           "type": "string",
           "default": ".mandala/tech-debt",
-          "description": "Workspace-relative path to the tech-debt folder (default: .mandala/tech-debt)"
+          "description": "Workspace-relative path to the tech-debt folder (default: .mandala/tech-debt)",
+          "order": 4
         },
         "mandala.agentsPath": {
           "type": "string",
           "default": ".mandala/agents",
-          "description": "Workspace-relative path to the agents folder (default: .mandala/agents)"
+          "description": "Workspace-relative path to the agents folder (default: .mandala/agents)",
+          "order": 5
         },
         "mandala.themeOverride": {
           "type": "string",
@@ -124,47 +129,56 @@
             "dark",
             "neuromancer"
           ],
-          "description": "Theme mode for the Mandala dashboard. 'auto' follows VS Code theme colors, 'light' and 'dark' force those palettes, and 'neuromancer' applies the cyberpunk override."
+          "description": "Theme mode for the Mandala dashboard. 'auto' follows VS Code theme colors, 'light' and 'dark' force those palettes, and 'neuromancer' applies the cyberpunk override.",
+          "order": 6
         },
         "mandala.integrations.claude": {
           "type": "boolean",
           "default": true,
-          "description": "Sync CLAUDE.md at workspace root from .mandala/agents/context/CLAUDE.md (symlink or generated)"
+          "description": "Sync CLAUDE.md at workspace root from .mandala/agents/context/CLAUDE.md (symlink or generated)",
+          "order": 7
         },
         "mandala.integrations.copilot": {
           "type": "boolean",
           "default": false,
-          "description": "Sync .github/copilot-instructions.md from .mandala/agents/context/COPILOT.md"
+          "description": "Sync .github/copilot-instructions.md from .mandala/agents/context/COPILOT.md",
+          "order": 8
         },
         "mandala.integrations.cursor": {
           "type": "boolean",
           "default": false,
-          "description": "Sync .cursorrules from .mandala/agents/context/CURSORRULES.md"
+          "description": "Sync .cursorrules from .mandala/agents/context/CURSORRULES.md",
+          "order": 9
         },
         "mandala.integrations.cline": {
           "type": "boolean",
           "default": false,
-          "description": "Sync .clinerules from .mandala/agents/context/CLINERULES.md"
+          "description": "Sync .clinerules from .mandala/agents/context/CLINERULES.md",
+          "order": 10
         },
         "mandala.integrations.claudeCommands": {
           "type": "boolean",
           "default": true,
-          "description": "Symlink .claude/commands/ to .mandala/agents/skills/ so skills appear as Claude Code slash commands"
+          "description": "Symlink .claude/commands/ to .mandala/agents/skills/ so skills appear as Claude Code slash commands",
+          "order": 11
         },
         "mandala.adoOrgUrl": {
           "type": "string",
           "default": "",
-          "description": "Azure DevOps Organization URL (e.g. https://dev.azure.com/myorg)"
+          "description": "Azure DevOps Organization URL (e.g. https://dev.azure.com/myorg)",
+          "order": 12
         },
         "mandala.adoProject": {
           "type": "string",
           "default": "",
-          "description": "Azure DevOps Project Name"
+          "description": "Azure DevOps Project Name",
+          "order": 13
         },
         "mandala.adoWorkItemType": {
           "type": "string",
           "default": "Task",
-          "description": "Work Item Type to create in Azure DevOps (e.g. Task, User Story)"
+          "description": "Work Item Type to create in Azure DevOps (e.g. Task, User Story)",
+          "order": 14
         }
       }
     }

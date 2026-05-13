@@ -287,9 +287,23 @@ export async function loadTaskCards(
 ): Promise<TaskCard[]> {
   const files = await readMarkdownFilesRecursive(inboxUri, fs);
 
-  return files.map(({ name, uri, meta, body }) => {
+  const taskCards: TaskCard[] = [];
+  for (const { name, uri, meta, body } of files) {
+    // Only treat it as a task card if it explicitly defines a task status, sprint, type,
+    // or if the filename implies it is a task.
+    const isTask =
+      name.toLowerCase().startsWith('task-') ||
+      meta.status !== undefined ||
+      meta.sprint !== undefined ||
+      meta.type !== undefined ||
+      meta.activity !== undefined;
+
+    if (!isTask) {
+      continue;
+    }
+
     const id = typeof meta.id === 'string' ? meta.id : stem(name);
-    return {
+    taskCards.push({
       id,
       title: typeof meta.title === 'string' ? meta.title : id,
       sprint: typeof meta.sprint === 'number' ? meta.sprint : 0,
@@ -300,8 +314,10 @@ export async function loadTaskCards(
       activity: typeof meta.activity === 'string' ? meta.activity : undefined,
       path: uri.fsPath,
       body,
-    };
-  });
+    });
+  }
+
+  return taskCards;
 }
 
 // ─── loadDiaryEntries ────────────────────────────────────────────────────────
