@@ -11,6 +11,15 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
   return (
     <nav className="mandala-sidebar">
       <div
+        className={`mandala-sidebar-icon ${active === 'inbox' ? 'active' : ''}`}
+        onClick={() => onSelect('inbox')}
+        title="Inbox"
+      >
+        <span className="codicon codicon-inbox"></span>
+        <span className="mandala-sidebar-tooltip">Inbox</span>
+      </div>
+      <div className="mandala-sidebar-divider"></div>
+      <div
         className={`mandala-sidebar-icon ${active === 'storymap' ? 'active' : ''}`}
         onClick={() => onSelect('storymap')}
         title="Story Map"
@@ -44,14 +53,6 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
         <span className="mandala-sidebar-tooltip">Tech Debt</span>
       </div>
       <div className="mandala-sidebar-divider"></div>
-      <div
-        className={`mandala-sidebar-icon ${active === 'inbox' ? 'active' : ''}`}
-        onClick={() => onSelect('inbox')}
-        title="Inbox"
-      >
-        <span className="codicon codicon-inbox"></span>
-        <span className="mandala-sidebar-tooltip">Inbox</span>
-      </div>
       <div
         className={`mandala-sidebar-icon ${active === 'agents' ? 'active' : ''}`}
         onClick={() => onSelect('agents')}
