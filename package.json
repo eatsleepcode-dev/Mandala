@@ -277,6 +277,7 @@
     "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "^8.59.3",
     "@typescript-eslint/parser": "^8.59.3",
+    "@vscode/codicons": "^0.0.45",
     "@vscode/vsce": "^3.9.1",
     "ajv": "^8.20.0",
     "css-loader": "^7.0.0",
@@ -284,14 +285,17 @@
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^30.4.1",
     "mini-css-extract-plugin": "^2.10.2",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
     "style-loader": "^4.0.0",
     "ts-jest": "^29.4.9",
     "ts-loader": "^9.5.0",
     "typescript": "^5.4.0",
     "webpack": "^5.91.0",
-    "webpack-cli": "^5.1.0",
-    "@vscode/codicons": "^0.0.45",
-    "react": "^18.3.0",
-    "react-dom": "^18.3.0"
+    "webpack-cli": "^5.1.0"
+  },
+  "dependencies": {
+    "@fluentui/react-components": "^9.73.8",
+    "@fluentui/react-icons": "^2.0.326"
   }
 }

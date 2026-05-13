@@ -15,6 +15,7 @@ import {
   syncIntegrations,
 } from '../lib/integrations';
 import { CredentialManager } from '../lib/credentials';
+import { FabricThermostat } from '../lib/fabricThermostat';
 import type { WebviewMessage, KnownIntegrationFlags, IntegrationSettings, ThemeOverride, FolderCandidates, SaveSecretMessage } from '../shared/types';
 
 export class BrainProvider implements vscode.WebviewViewProvider {
@@ -25,6 +26,7 @@ export class BrainProvider implements vscode.WebviewViewProvider {
   private _startupStartedAt?: number;
 
   private _credentialManager: CredentialManager;
+  private _thermostat = new FabricThermostat();
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
@@ -127,6 +129,36 @@ export class BrainProvider implements vscode.WebviewViewProvider {
               .openTextDocument(message.path)
               .then((doc) => vscode.window.showTextDocument(doc));
             return;
+
+          case 'openMarkdownPreview': {
+            const previewUri = vscode.Uri.file((message as any).path);
+            await vscode.commands.executeCommand('markdown.showPreview', previewUri);
+            return;
+          }
+
+          case 'openInPanel': {
+            const { panelId, title, initialView } = message as any;
+            const panel = vscode.window.createWebviewPanel(
+              `mandala-${panelId}`,
+              title,
+              vscode.ViewColumn.One,
+              {
+                enableScripts: true,
+                retainContextWhenHidden: true,
+                localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview')],
+              }
+            );
+            panel.webview.html = buildWebviewHtml(panel.webview, this._extensionUri, getNonce());
+            // Once the panel's webview signals ready, tell it which view to show
+            if (initialView) {
+              panel.webview.onDidReceiveMessage((msg) => {
+                if (msg.command === 'ready') {
+                  panel.webview.postMessage({ command: 'setView', view: initialView });
+                }
+              });
+            }
+            return;
+          }
 
           case 'initWorkspace': {
             const { initDevBrainFolders } = await import('../lib/workspace');
@@ -422,6 +454,27 @@ export class BrainProvider implements vscode.WebviewViewProvider {
             vscode.window.showWarningMessage(
               `Unable to open chat directly. ${prompt} was copied to your clipboard.`
             );
+            return;
+          }
+
+          case 'thermostatApi': {
+            const { reqId, method, args } = message as any;
+            try {
+              let result;
+              if (method === 'getConfig') {
+                result = await this._thermostat.getConfig(this._workspaceRoot.fsPath);
+              } else if (method === 'putConfig') {
+                result = await this._thermostat.putConfig(this._workspaceRoot.fsPath, args.config);
+              } else if (method === 'getCapacityState') {
+                result = await this._thermostat.getCapacityState(args.capacityId);
+              } else if (method === 'triggerCapacity') {
+                result = await this._thermostat.triggerCapacity(args.capacityId, args.action, args.sku);
+              }
+              
+              webview.postMessage({ type: 'thermostatApiResult', reqId, result });
+            } catch (err: any) {
+              webview.postMessage({ type: 'thermostatApiResult', reqId, error: err.message });
+            }
             return;
           }
         }

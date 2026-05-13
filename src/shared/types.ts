@@ -280,6 +280,27 @@ export interface SaveSecretMessage {
   key: string;
   value: string;
 }
+export interface ThermostatApiMessage {
+  command: 'thermostatApi';
+  reqId: number;
+  method: string;
+  args: Record<string, unknown>;
+}
+export interface OpenMarkdownPreviewMessage {
+  command: 'openMarkdownPreview';
+  path: string;
+}
+export interface OpenInPanelMessage {
+  command: 'openInPanel';
+  panelId: string;
+  title: string;
+  initialView?: string;
+}
+
+export interface SetViewMessage {
+  command: 'setView';
+  view: string;
+}
 
 export type HostMessage =
   | LoadStoryMapMessage
@@ -294,7 +315,8 @@ export type HostMessage =
   | ErrorMessage
   | LoadSettingsMessage
   | WorkspacePathsMessage
-  | PathSelectedMessage;
+  | PathSelectedMessage
+  | SetViewMessage;
 
 export interface BrowsePathMessage {
   command: 'browsePath';
@@ -319,5 +341,8 @@ export type WebviewMessage =
   | OpenGuideMessage
   | SetThemeOverrideMessage
   | RunSdlcStepMessage
-  | SaveSecretMessage;
+  | SaveSecretMessage
+  | ThermostatApiMessage
+  | OpenMarkdownPreviewMessage
+  | OpenInPanelMessage;
 

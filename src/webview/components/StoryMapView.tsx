@@ -7,6 +7,7 @@ interface Props {
   sprintRecords: SprintRecord[];
   onOpenFile: (path: string) => void;
   onSelectCard?: (card: TaskCard) => void;
+  onExpand?: () => void;
 }
 
 type Filter = 'all' | 'complete' | 'planned' | 'blocked';
@@ -68,7 +69,7 @@ const FILTER_OPTIONS: { id: Filter; label: string }[] = [
   { id: 'blocked', label: '🔴 Blocked' },
 ];
 
-export function StoryMapView({ cards, sprintRecords, onOpenFile, onSelectCard }: Props) {
+export function StoryMapView({ cards, sprintRecords, onOpenFile, onSelectCard, onExpand }: Props) {
   const [filter, setFilter] = useState<Filter>('all');
 
   const filteredCards = cards.filter((c) => {
@@ -100,7 +101,19 @@ export function StoryMapView({ cards, sprintRecords, onOpenFile, onSelectCard }:
           <h2>Jeff Patton Story Map</h2>
           <div className="subtitle">{subtitle}</div>
         </div>
-        <div className="filter-row" style={{ marginLeft: 'auto' }}>
+        <div className="filter-row" style={{ marginLeft: 'auto', gap: '6px' }}>
+          {onExpand && (
+            <button
+              type="button"
+              className="filter-chip"
+              title="Open in main editor tab"
+              onClick={onExpand}
+              aria-label="Expand story map to main editor tab"
+            >
+              <span className="codicon codicon-screen-full" style={{ marginRight: 4 }} />
+              Expand
+            </button>
+          )}
           {FILTER_OPTIONS.map((f) => (
             <button
               key={f.id}

@@ -5,6 +5,7 @@ import { fmtDate } from '../dates';
 interface TechDebtViewProps {
   cards: TechDebtCard[];
   onOpenFile: (path: string) => void;
+  onOpenMarkdownPreview?: (path: string) => void;
 }
 
 type Filter = 'all' | 'open' | 'resolved';
@@ -24,7 +25,7 @@ function sortCards(cards: TechDebtCard[]): TechDebtCard[] {
   });
 }
 
-export function TechDebtView({ cards, onOpenFile }: TechDebtViewProps) {
+export function TechDebtView({ cards, onOpenFile, onOpenMarkdownPreview }: TechDebtViewProps) {
   const [filter, setFilter] = useState<Filter>('all');
 
   const filteredCards = sortCards(
@@ -72,6 +73,30 @@ export function TechDebtView({ cards, onOpenFile }: TechDebtViewProps) {
                   {card.severity.toUpperCase()}
                 </span>
                 <span className="td-date">Added {fmtDate(card.added)}</span>
+                {onOpenMarkdownPreview && (
+                  <button
+                    className="td-preview-btn"
+                    title="Preview rendered markdown"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenMarkdownPreview(card.path);
+                    }}
+                    style={{
+                      marginLeft: 'auto',
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '2px 4px',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: 'inherit',
+                      opacity: 0.7
+                    }}
+                  >
+                    <span className="codicon codicon-eye" />
+                  </button>
+                )}
               </div>
               <div className="td-title">{card.title}</div>
               <div className="td-desc">

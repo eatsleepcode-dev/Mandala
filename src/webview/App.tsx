@@ -11,6 +11,7 @@ import { InboxView } from './components/InboxView';
 import { SettingsView } from './components/SettingsView';
 import { AgentsView } from './components/AgentsView';
 import { CardDetailPanel } from './components/CardDetailPanel';
+import { ThermostatSettingsPage } from './components/ThermostatSettingsPage';
 import type {
   AgentResources,
   FolderCandidates,
@@ -301,6 +302,9 @@ export default function App() {
           setLoadingMessage(msg.step);
           setLoadingElapsedMs(msg.elapsedMs);
           break;
+        case 'setView':
+          dispatch({ type: 'SET_VIEW', view: msg.view as any });
+          break;
       }
     };
     window.addEventListener('message', handler);
@@ -352,6 +356,9 @@ export default function App() {
   })();
 
   const openFile = (path: string) => vscode.postMessage({ command: 'openFile', path });
+  const openMarkdownPreview = (path: string) => vscode.postMessage({ command: 'openMarkdownPreview', path });
+  const openInPanel = (panelId: string, title: string, initialView?: string) =>
+    vscode.postMessage({ command: 'openInPanel', panelId, title, initialView });
   const runSdlcStep = (
     step: 'plan' | 'execute' | 'validate' | 'close',
     suggestedSlash: string,
@@ -432,6 +439,7 @@ export default function App() {
             sprintRecords={phase.sprintRecords}
             onOpenFile={openFile}
             onSelectCard={setSelectedCard}
+            onExpand={() => openInPanel('storymap', 'Story Map', 'storymap')}
           />
         )}
         <CardDetailPanel
@@ -440,10 +448,10 @@ export default function App() {
           onOpenFile={(path) => { openFile(path); setSelectedCard(null); }}
         />
         {activeView === 'diary' && (
-          <DiaryView entries={phase.entries} onOpenFile={openFile} />
+          <DiaryView entries={phase.entries} onOpenFile={openFile} onOpenMarkdownPreview={openMarkdownPreview} />
         )}
         {activeView === 'techdebt' && (
-          <TechDebtView cards={phase.techDebtCards} onOpenFile={openFile} />
+          <TechDebtView cards={phase.techDebtCards} onOpenFile={openFile} onOpenMarkdownPreview={openMarkdownPreview} />
         )}
         {activeView === 'sprints' && (
           <SprintsView records={phase.sprintRecords} onOpenFile={openFile} />
@@ -457,6 +465,11 @@ export default function App() {
             onOpenFile={openFile}
             onRunSdlcStep={runSdlcStep}
           />
+        )}
+        {activeView === 'thermostat' && (
+          <div className="mandala-view-container" style={{ overflowY: 'auto', height: '100%' }}>
+            <ThermostatSettingsPage onExpand={() => openInPanel('thermostat', 'Fabric Thermostat', 'thermostat')} />
+          </div>
         )}
         {activeView === 'settings' && (
           <SettingsView

@@ -99,7 +99,6 @@ export function AgentsView({ resources, onOpenFile, onRunSdlcStep }: AgentsViewP
         <div className="agent-summary-grid">
           <div className="agent-stat"><span>Workflows</span><strong>{resources.workflows.length}</strong></div>
           <div className="agent-stat"><span>Skills</span><strong>{resources.skills.length}</strong></div>
-          <div className="agent-stat"><span>Task Cards</span><strong>{resources.tasks.length}</strong></div>
           <div className="agent-stat"><span>Registry</span><strong>{resources.registry.length}</strong></div>
           <div className="agent-stat"><span>Guides</span><strong>{resources.guides.length}</strong></div>
         </div>
@@ -183,7 +182,6 @@ export function AgentsView({ resources, onOpenFile, onRunSdlcStep }: AgentsViewP
         </section>
         {renderFileList('Workflows', resources.workflows, onOpenFile)}
         {renderFileList('Skills', resources.skills, onOpenFile)}
-        {renderFileList('Task Cards', resources.tasks, onOpenFile)}
         {renderFileList('Registry', resources.registry, onOpenFile)}
       </div>
     </div>

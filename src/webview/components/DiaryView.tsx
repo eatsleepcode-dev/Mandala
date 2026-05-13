@@ -4,6 +4,7 @@ import type { DiaryEntry } from '../../shared/types';
 interface Props {
   entries: DiaryEntry[];
   onOpenFile: (path: string) => void;
+  onOpenMarkdownPreview?: (path: string) => void;
 }
 
 function parseDate(value: string): Date | undefined {
@@ -60,7 +61,7 @@ function buildCalendarCells(viewMonth: Date): Array<string | undefined> {
   return cells;
 }
 
-export function DiaryView({ entries, onOpenFile }: Props) {
+export function DiaryView({ entries, onOpenFile, onOpenMarkdownPreview }: Props) {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [techDebtOnly, setTechDebtOnly] = useState(false);
 
@@ -236,6 +237,15 @@ export function DiaryView({ entries, onOpenFile }: Props) {
             >
               ↗ Open in editor
             </button>
+            {onOpenMarkdownPreview && (
+              <button
+                className="diary-chip"
+                title="Preview rendered markdown"
+                onClick={() => onOpenMarkdownPreview(selected.path)}
+              >
+                👁 Preview
+              </button>
+            )}
           </div>
         </div>
 
