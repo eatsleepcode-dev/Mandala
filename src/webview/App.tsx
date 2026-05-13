@@ -216,7 +216,7 @@ export default function App() {
     typeof navigator !== 'undefined' && /jsdom/i.test(navigator.userAgent);
   const isTestEnv =
     isJsdom || typeof (globalThis as { acquireVsCodeApi?: unknown }).acquireVsCodeApi !== 'function';
-  const minLoadingMs = isTestEnv ? 0 : 450;
+  const minLoadingMs = 0;
 
   const loadingSteps = [
     'Booting dashboard shell',

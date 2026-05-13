@@ -82,7 +82,7 @@ export function StoryMapView({ cards, sprintRecords, onOpenFile, onSelectCard }:
   if (cards.length === 0) {
     return (
       <div data-testid="story-map-view" className="empty-state">
-        <p>No tasks found in .mandala/inbox/</p>
+        <p>No tasks found in inbox.</p>
       </div>
     );
   }

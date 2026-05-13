@@ -112,23 +112,6 @@ export function SettingsView({
   return (
     <div className="settings-view">
       <section className="settings-section">
-        <h2>Theme</h2>
-        <p className="settings-hint">Choose how the Mandala dashboard should be themed.</p>
-        <label className="settings-theme-row">
-          <span>Dashboard Theme</span>
-          <select
-            value={themeOverride}
-            onChange={(e) => onThemeOverrideChange(e.target.value as ThemeOverride)}
-          >
-            <option value="auto">VS Code Default</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-            <option value="neuromancer">Neuromancer</option>
-          </select>
-        </label>
-      </section>
-
-      <section className="settings-section">
         <h2>Workspace Paths</h2>
         <p className="settings-hint">Configure where Mandala stores workspace data. All paths are relative to the workspace root.</p>
         <label className="settings-theme-row">
@@ -181,6 +164,21 @@ export function SettingsView({
             title="Relative path to agents folder (where agent configs, skills, and workflows are stored)"
           />
         </label>
+      </section>
+
+      <section className="settings-section">
+        <h2>Workspace Management</h2>
+        <p className="settings-hint">
+          Map folder paths or reinitialize the workspace structure.
+        </p>
+        <div className="settings-example-actions">
+          <button className="settings-example-btn" onClick={onRemapWorkspace}>
+            Remap Folder Paths
+          </button>
+          <button className="settings-example-btn" onClick={onReinitializeWorkspace}>
+            Reinitialize Workspace
+          </button>
+        </div>
       </section>
 
       <section className="settings-section">
@@ -264,40 +262,6 @@ export function SettingsView({
             <button className="mandala-btn" onClick={() => handleSaveSecret('mandala.azure.key')}>Save Azure Foundry Key</button>
           </div>
         </label>
-      </section>
-
-      <section className="settings-section">
-        <h2>Getting Started</h2>
-        <p className="settings-hint">
-          Add a small sample diary, sprint, story-map, and tech-debt set to explore the dashboard.
-          Mandala tracks these example files and can remove them later without touching your own notes.
-        </p>
-        <div className="settings-example-actions">
-          {hasGettingStartedExamples ? (
-            <button className="settings-example-btn danger" onClick={onRemoveExamples}>
-              Remove Getting Started Examples
-            </button>
-          ) : (
-            <button className="settings-example-btn" onClick={onSeedExamples}>
-              Add Getting Started Examples
-            </button>
-          )}
-        </div>
-      </section>
-
-      <section className="settings-section">
-        <h2>Workspace Management</h2>
-        <p className="settings-hint">
-          Map folder paths or reinitialize the workspace structure.
-        </p>
-        <div className="settings-example-actions">
-          <button className="settings-example-btn" onClick={onRemapWorkspace}>
-            Remap Folder Paths
-          </button>
-          <button className="settings-example-btn" onClick={onReinitializeWorkspace}>
-            Reinitialize Workspace
-          </button>
-        </div>
       </section>
 
       <section className="settings-section">
@@ -410,6 +374,42 @@ export function SettingsView({
             Add Custom Integration
           </button>
         )}
+      </section>
+
+      <section className="settings-section">
+        <h2>Theme</h2>
+        <p className="settings-hint">Choose how the Mandala dashboard should be themed.</p>
+        <label className="settings-theme-row">
+          <span>Dashboard Theme</span>
+          <select
+            value={themeOverride}
+            onChange={(e) => onThemeOverrideChange(e.target.value as ThemeOverride)}
+          >
+            <option value="auto">VS Code Default</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+            <option value="neuromancer">Neuromancer</option>
+          </select>
+        </label>
+      </section>
+
+      <section className="settings-section">
+        <h2>Getting Started</h2>
+        <p className="settings-hint">
+          Add a small sample diary, sprint, story-map, and tech-debt set to explore the dashboard.
+          Mandala tracks these example files and can remove them later without touching your own notes.
+        </p>
+        <div className="settings-example-actions">
+          {hasGettingStartedExamples ? (
+            <button className="settings-example-btn danger" onClick={onRemoveExamples}>
+              Remove Getting Started Examples
+            </button>
+          ) : (
+            <button className="settings-example-btn" onClick={onSeedExamples}>
+              Add Getting Started Examples
+            </button>
+          )}
+        </div>
       </section>
     </div>
   );
