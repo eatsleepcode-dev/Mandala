@@ -12,6 +12,11 @@ const defaultSettings = (): IntegrationSettings => ({
     claudeCommands: true,
   },
   custom: [],
+  ado: {
+    orgUrl: '',
+    project: '',
+    workItemType: 'Task',
+  },
 });
 
 describe('SettingsView', () => {
@@ -143,5 +148,35 @@ describe('SettingsView', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /remove getting started examples/i }));
     expect(onRemoveExamples).toHaveBeenCalled();
+  });
+
+  it('renders Authentication & Secrets section with credential inputs and ADO config inputs', () => {
+    render(<SettingsView settings={defaultSettings()} onSave={jest.fn()} />);
+    expect(screen.getByRole('heading', { name: /Authentication & Secrets/i })).toBeInTheDocument();
+    
+    // Check for ADO config inputs
+    expect(screen.getByPlaceholderText(/Azure DevOps Organization URL/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Azure DevOps Project/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Work Item Type/i)).toBeInTheDocument();
+
+    // Check for PAT/Key inputs
+    expect(screen.getByPlaceholderText(/Azure DevOps PAT/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Claude API Key/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Azure Foundry Key/i)).toBeInTheDocument();
+  });
+
+  it('calls onSaveSecret when a credential is saved', () => {
+    const onSaveSecret = jest.fn();
+    render(<SettingsView settings={defaultSettings()} onSave={jest.fn()} onSaveSecret={onSaveSecret} />);
+    
+    const input = screen.getByPlaceholderText(/Claude API Key/i);
+    fireEvent.change(input, { target: { value: 'sk-ant-123' } });
+    
+    const saveBtn = screen.getByRole('button', { name: /Save Claude API Key/i });
+    fireEvent.click(saveBtn);
+    
+    expect(onSaveSecret).toHaveBeenCalledWith('mandala.claude.key', 'sk-ant-123');
+    // The field should show placeholders after save
+    expect(input).toHaveValue('');
   });
 });

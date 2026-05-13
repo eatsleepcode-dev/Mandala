@@ -7,7 +7,7 @@ export function activate(context: vscode.ExtensionContext): void {
   (async () => {
     const root = await getWorkspaceRoot();
     if (root) {
-      const provider = new BrainProvider(context.extensionUri, root);
+      const provider = new BrainProvider(context.extensionUri, root, context.secrets);
       context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(BrainProvider.viewType, provider)
       );

@@ -17,3 +17,8 @@ STORY_MAP.md
 TECH_DEBT.md
 README.md
 CHANGELOG.md
+.agents/**
+.claude/**
+.github/**
+scripts/**
+ui-prototype*.html

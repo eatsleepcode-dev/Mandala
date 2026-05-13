@@ -35,6 +35,11 @@ const DEFAULT_SETTINGS: IntegrationSettings = {
     claudeCommands: true,
   },
   custom: [],
+  ado: {
+    orgUrl: '',
+    project: '',
+    workItemType: 'Task',
+  },
 };
 
 const EMPTY_AGENT_RESOURCES: AgentResources = {
@@ -471,6 +476,7 @@ export default function App() {
             onRemoveExamples={() => vscode.postMessage({ command: 'removeExamples' })}
             onReinitializeWorkspace={() => vscode.postMessage({ command: 'reinitializeWorkspace' })}
             onRemapWorkspace={() => vscode.postMessage({ command: 'remapWorkspace' })}
+            onSaveSecret={(key, value) => vscode.postMessage({ command: 'saveSecret', key, value })}
             onSave={(nextSettings) => {
               dispatch({ type: 'LOAD_SETTINGS', settings: nextSettings });
               vscode.postMessage({ command: 'saveSettings', settings: nextSettings });

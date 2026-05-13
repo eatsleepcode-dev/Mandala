@@ -198,9 +198,16 @@ export interface KnownIntegrationFlags {
   claudeCommands: boolean;
 }
 
+export interface AdoConfig {
+  orgUrl: string;
+  project: string;
+  workItemType: string;
+}
+
 export interface IntegrationSettings {
   known: KnownIntegrationFlags;
   custom: CustomIntegration[];
+  ado: AdoConfig;
 }
 
 // ─── Host → Webview: settings ────────────────────────────────────────────────
@@ -268,6 +275,11 @@ export interface UpdateWorkspacePathMessage {
   path: 'inbox' | 'diary' | 'sprints' | 'tech-debt' | 'agents';
   value: string;
 }
+export interface SaveSecretMessage {
+  command: 'saveSecret';
+  key: string;
+  value: string;
+}
 
 export type HostMessage =
   | LoadStoryMapMessage
@@ -306,5 +318,6 @@ export type WebviewMessage =
   | OpenSettingsMessage
   | OpenGuideMessage
   | SetThemeOverrideMessage
-  | RunSdlcStepMessage;
+  | RunSdlcStepMessage
+  | SaveSecretMessage;
 

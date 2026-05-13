@@ -150,6 +150,21 @@
           "type": "boolean",
           "default": true,
           "description": "Symlink .claude/commands/ to .mandala/agents/skills/ so skills appear as Claude Code slash commands"
+        },
+        "mandala.adoOrgUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Azure DevOps Organization URL (e.g. https://dev.azure.com/myorg)"
+        },
+        "mandala.adoProject": {
+          "type": "string",
+          "default": "",
+          "description": "Azure DevOps Project Name"
+        },
+        "mandala.adoWorkItemType": {
+          "type": "string",
+          "default": "Task",
+          "description": "Work Item Type to create in Azure DevOps (e.g. Task, User Story)"
         }
       }
     }
@@ -260,9 +275,7 @@
     "ts-loader": "^9.5.0",
     "typescript": "^5.4.0",
     "webpack": "^5.91.0",
-    "webpack-cli": "^5.1.0"
-  },
-  "dependencies": {
+    "webpack-cli": "^5.1.0",
     "@vscode/codicons": "^0.0.45",
     "react": "^18.3.0",
     "react-dom": "^18.3.0"

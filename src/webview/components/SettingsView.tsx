@@ -19,6 +19,7 @@ interface Props {
   onRemoveExamples?: () => void;
   onReinitializeWorkspace?: () => void;
   onRemapWorkspace?: () => void;
+  onSaveSecret?: (key: string, value: string) => void;
 }
 
 interface AddForm {
@@ -45,9 +46,11 @@ export function SettingsView({
   onRemoveExamples = () => undefined,
   onReinitializeWorkspace = () => undefined,
   onRemapWorkspace = () => undefined,
+  onSaveSecret = () => undefined,
 }: Props) {
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState<AddForm>(EMPTY_FORM);
+  const [secrets, setSecrets] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
@@ -96,6 +99,14 @@ export function SettingsView({
   function cancelAdd() {
     setAdding(false);
     setForm(EMPTY_FORM);
+  }
+
+  function handleSaveSecret(key: string) {
+    const val = secrets[key];
+    if (val) {
+      onSaveSecret(key, val);
+      setSecrets((s) => ({ ...s, [key]: '' }));
+    }
   }
 
   return (
@@ -169,6 +180,89 @@ export function SettingsView({
             placeholder=".mandala/agents"
             title="Relative path to agents folder (where agent configs, skills, and workflows are stored)"
           />
+        </label>
+      </section>
+
+      <section className="settings-section">
+        <h2>Authentication &amp; Secrets</h2>
+        <p className="settings-hint">
+          API keys and tokens are stored securely in your OS keychain via VS Code SecretStorage and are never written to disk or settings files.
+        </p>
+
+        <label className="settings-theme-row">
+          <span>Azure DevOps Org URL</span>
+          <input
+            type="text"
+            value={settings.ado?.orgUrl || ''}
+            onChange={(e) => onSave({ ...settings, ado: { ...settings.ado, orgUrl: e.target.value } })}
+            placeholder="Azure DevOps Organization URL (e.g. https://dev.azure.com/myorg)"
+            title="Azure DevOps Organization URL"
+          />
+        </label>
+        <label className="settings-theme-row">
+          <span>Azure DevOps Project</span>
+          <input
+            type="text"
+            value={settings.ado?.project || ''}
+            onChange={(e) => onSave({ ...settings, ado: { ...settings.ado, project: e.target.value } })}
+            placeholder="Azure DevOps Project"
+            title="Azure DevOps Project"
+          />
+        </label>
+        <label className="settings-theme-row">
+          <span>Work Item Type</span>
+          <input
+            type="text"
+            value={settings.ado?.workItemType || 'Task'}
+            onChange={(e) => onSave({ ...settings, ado: { ...settings.ado, workItemType: e.target.value } })}
+            placeholder="Work Item Type (e.g. Task)"
+            title="Work Item Type"
+          />
+        </label>
+        
+        <label className="settings-theme-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+          <span>Azure DevOps PAT</span>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input
+              type="password"
+              value={secrets['mandala.ado.pat'] || ''}
+              onChange={(e) => setSecrets({ ...secrets, 'mandala.ado.pat': e.target.value })}
+              placeholder="Azure DevOps PAT (●●●●● if saved)"
+              title="Personal Access Token for Azure DevOps"
+              style={{ flex: 1 }}
+            />
+            <button className="mandala-btn" onClick={() => handleSaveSecret('mandala.ado.pat')}>Save Azure DevOps PAT</button>
+          </div>
+        </label>
+
+        <label className="settings-theme-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <span>Claude API Key</span>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input
+              type="password"
+              value={secrets['mandala.claude.key'] || ''}
+              onChange={(e) => setSecrets({ ...secrets, 'mandala.claude.key': e.target.value })}
+              placeholder="Claude API Key (●●●●● if saved)"
+              title="API Key for Anthropic Claude"
+              style={{ flex: 1 }}
+            />
+            <button className="mandala-btn" onClick={() => handleSaveSecret('mandala.claude.key')}>Save Claude API Key</button>
+          </div>
+        </label>
+
+        <label className="settings-theme-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <span>Azure Foundry Key</span>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input
+              type="password"
+              value={secrets['mandala.azure.key'] || ''}
+              onChange={(e) => setSecrets({ ...secrets, 'mandala.azure.key': e.target.value })}
+              placeholder="Azure Foundry Key (●●●●● if saved)"
+              title="API Key for Azure AI Foundry"
+              style={{ flex: 1 }}
+            />
+            <button className="mandala-btn" onClick={() => handleSaveSecret('mandala.azure.key')}>Save Azure Foundry Key</button>
+          </div>
         </label>
       </section>
 

@@ -14,7 +14,8 @@ import {
   saveIntegrationConfig,
   syncIntegrations,
 } from '../lib/integrations';
-import type { WebviewMessage, KnownIntegrationFlags, IntegrationSettings, ThemeOverride, FolderCandidates } from '../shared/types';
+import { CredentialManager } from '../lib/credentials';
+import type { WebviewMessage, KnownIntegrationFlags, IntegrationSettings, ThemeOverride, FolderCandidates, SaveSecretMessage } from '../shared/types';
 
 export class BrainProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'mandalaDashboard';
@@ -23,10 +24,15 @@ export class BrainProvider implements vscode.WebviewViewProvider {
   private _disposables: vscode.Disposable[] = [];
   private _startupStartedAt?: number;
 
+  private _credentialManager: CredentialManager;
+
   constructor(
     private readonly _extensionUri: vscode.Uri,
-    private readonly _workspaceRoot: vscode.Uri
-  ) {}
+    private readonly _workspaceRoot: vscode.Uri,
+    private readonly _secretStorage: vscode.SecretStorage
+  ) {
+    this._credentialManager = new CredentialManager(this._secretStorage);
+  }
 
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
@@ -69,13 +75,26 @@ export class BrainProvider implements vscode.WebviewViewProvider {
             cline: wsConfig.get('cline', false),
             claudeCommands: wsConfig.get('claudeCommands', true),
           };
-          const config = await loadIntegrationConfig(this._workspaceRoot, vscode.workspace.fs);
-          await syncIntegrations(
-            this._workspaceRoot,
-            known,
-            config,
-            vscode.workspace.fs
-          );
+            const config = await loadIntegrationConfig(this._workspaceRoot, vscode.workspace.fs);
+            const adoConfig = vscode.workspace.getConfiguration('mandala');
+            this._view?.webview.postMessage({
+              command: 'loadSettings',
+              settings: {
+                known,
+                custom: config.custom,
+                ado: {
+                  orgUrl: adoConfig.get<string>('adoOrgUrl') || '',
+                  project: adoConfig.get<string>('adoProject') || '',
+                  workItemType: adoConfig.get<string>('adoWorkItemType') || 'Task',
+                }
+              }
+            });
+            await syncIntegrations(
+              this._workspaceRoot,
+              known,
+              config,
+              vscode.workspace.fs
+            );
         }
       }
     }, null, this._disposables);
@@ -267,6 +286,14 @@ export class BrainProvider implements vscode.WebviewViewProvider {
               await wsConfig.update(key, value, vscode.ConfigurationTarget.Workspace);
             }
 
+            // Update VS Code workspace settings for ADO
+            if (settings.ado) {
+              const adoWsConfig = vscode.workspace.getConfiguration('mandala');
+              await adoWsConfig.update('adoOrgUrl', settings.ado.orgUrl, vscode.ConfigurationTarget.Workspace);
+              await adoWsConfig.update('adoProject', settings.ado.project, vscode.ConfigurationTarget.Workspace);
+              await adoWsConfig.update('adoWorkItemType', settings.ado.workItemType, vscode.ConfigurationTarget.Workspace);
+            }
+
             // Run sync
             await syncIntegrations(
               this._workspaceRoot,
@@ -274,6 +301,13 @@ export class BrainProvider implements vscode.WebviewViewProvider {
               config,
               vscode.workspace.fs
             );
+            return;
+          }
+
+          case 'saveSecret': {
+            const { key, value } = message as SaveSecretMessage;
+            await this._credentialManager.storeSecret(key, value);
+            vscode.window.showInformationMessage(`Mandala securely stored ${key}.`);
             return;
           }
 
@@ -401,12 +435,12 @@ export class BrainProvider implements vscode.WebviewViewProvider {
     this._startupStartedAt = Date.now();
     this._emitProgress('Checking workspace state');
 
-    const detection = await detectDevBrainFolders(
-      this._workspaceRoot,
-      vscode.workspace.fs
-    );
+    // Run folder detection and legacy checks in parallel
+    const [detection, candidates] = await Promise.all([
+      detectDevBrainFolders(this._workspaceRoot, vscode.workspace.fs),
+      this._detectFolderCandidates(),
+    ]);
 
-    // Check if legacy folders exist for migration prompt (.meridian/ rename or old flat layout)
     let hasMigratableData = false;
     if (!detection.found) {
       const legacyCandidates = [
@@ -414,18 +448,19 @@ export class BrainProvider implements vscode.WebviewViewProvider {
         vscode.Uri.joinPath(this._workspaceRoot, '__inbox', '__todo'),
         vscode.Uri.joinPath(this._workspaceRoot, 'diary'),
       ];
-      for (const uri of legacyCandidates) {
-        try {
-          await vscode.workspace.fs.readDirectory(uri);
-          hasMigratableData = true;
-          break;
-        } catch {
-          // not present, try next
-        }
-      }
+      const legacyResults = await Promise.all(
+        legacyCandidates.map(async (uri) => {
+          try {
+            await vscode.workspace.fs.readDirectory(uri);
+            return true;
+          } catch {
+            return false;
+          }
+        })
+      );
+      hasMigratableData = legacyResults.some((res) => res);
     }
 
-    const candidates = await this._detectFolderCandidates();
     this._view?.webview.postMessage({
       command: 'initState',
       initialized: detection.found,
@@ -433,16 +468,17 @@ export class BrainProvider implements vscode.WebviewViewProvider {
       folderCandidates: candidates,
     });
 
-    // Send current integration settings
-    this._emitProgress('Loading integration settings');
-    await this._pushSettings();
-    this._emitProgress('Applying theme');
-    await this._pushTheme();
-    await this._pushWorkspacePaths();
+    this._emitProgress('Loading settings and theme');
+    
+    // Push settings, theme, paths, and examples state in parallel
+    await Promise.all([
+      this._pushSettings(),
+      this._pushTheme(),
+      this._pushWorkspacePaths(),
+      detection.found ? this._pushExampleState() : Promise.resolve(),
+    ]);
 
     if (detection.found) {
-      this._emitProgress('Checking starter content');
-      await this._pushExampleState();
       this._emitProgress('Hydrating dashboard data');
       await this._pushData();
     } else {
@@ -524,8 +560,19 @@ export class BrainProvider implements vscode.WebviewViewProvider {
       cline: getWithFallback('cline', false),
       claudeCommands: getWithFallback('claudeCommands', true),
     };
+    
+    const adoConfig = vscode.workspace.getConfiguration('mandala');
+    
     const config = await loadIntegrationConfig(this._workspaceRoot, vscode.workspace.fs);
-    const settings: IntegrationSettings = { known, custom: config.custom };
+    const settings: IntegrationSettings = { 
+      known, 
+      custom: config.custom,
+      ado: {
+        orgUrl: adoConfig.get<string>('adoOrgUrl') || '',
+        project: adoConfig.get<string>('adoProject') || '',
+        workItemType: adoConfig.get<string>('adoWorkItemType') || 'Task',
+      }
+    };
     this._view?.webview.postMessage({ command: 'loadSettings', settings });
   }
 
@@ -548,13 +595,11 @@ export class BrainProvider implements vscode.WebviewViewProvider {
     const diaryPath = cfg.get<string>('diaryPath', '.mandala/diary').split('/');
     const techDebtPath = cfg.get<string>('techDebtPath', '.mandala/tech-debt').split('/');
     const sprintsPath = cfg.get<string>('sprintsPath', '.mandala/sprints').split('/');
-    const agentsPath = cfg.get<string>('agentsPath', '.mandala/agents').split('/');
 
     const inboxUri = vscode.Uri.joinPath(root, ...inboxPath);
     const diaryUri = vscode.Uri.joinPath(root, ...diaryPath);
     const techDebtUri = vscode.Uri.joinPath(root, ...techDebtPath);
     const sprintsUri = vscode.Uri.joinPath(root, ...sprintsPath);
-    const agentsUri = vscode.Uri.joinPath(root, ...agentsPath);
 
     const { loadTechDebtCards, loadSprintRecords } = await import('../lib/workspace');
 
@@ -563,7 +608,7 @@ export class BrainProvider implements vscode.WebviewViewProvider {
       loadDiaryEntries(diaryUri, fs),
       loadTechDebtCards(techDebtUri, fs),
       loadSprintRecords(sprintsUri, fs),
-      loadAgentResources(agentsUri, fs),
+      loadAgentResources(this._workspaceRoot, fs),
     ]);
 
     const extensionAgentResources = await loadAgentResources(this._extensionUri, fs);

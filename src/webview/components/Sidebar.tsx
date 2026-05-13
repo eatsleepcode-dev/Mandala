@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type ViewId = 'storymap' | 'diary' | 'calendar' | 'sprints' | 'techdebt' | 'inbox' | 'agents' | 'settings';
+export type ViewId = 'storymap' | 'diary' | 'sprints' | 'techdebt' | 'inbox' | 'agents' | 'settings';
 
 interface SidebarProps {
   active: ViewId;
@@ -25,14 +25,6 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
       >
         <span className="codicon codicon-book"></span>
         <span className="mandala-sidebar-tooltip">Code Diary</span>
-      </div>
-      <div
-        className={`mandala-sidebar-icon ${active === 'calendar' ? 'active' : ''}`}
-        onClick={() => onSelect('calendar')}
-        title="Calendar"
-      >
-        <span className="codicon codicon-calendar"></span>
-        <span className="mandala-sidebar-tooltip">Calendar</span>
       </div>
       <div className="mandala-sidebar-divider"></div>
       <div

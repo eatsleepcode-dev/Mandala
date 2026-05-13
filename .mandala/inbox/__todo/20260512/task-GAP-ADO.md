@@ -90,14 +90,14 @@ created: 2026-05-12
 **Hypothesis**: if the user enters ADO org/project/PAT and clicks Save, the PAT is stored in SecretStorage and never appears in settings.json  
 **Assertion**: `context.secrets.get('mandala.ado.pat')` returns the stored value; `vscode.workspace.getConfiguration('mandala')` does NOT contain the PAT
 
-- [ ] 🔴 RED: `src/lib/ado.test.ts::AdoCredentials::stores_pat_in_secret_storage` — mock `SecretStorage`, assert `store()` called with key `mandala.ado.pat` and PAT value; assert settings.get never called with PAT
-- [ ] 🔴 RED: `src/lib/ado.test.ts::AdoCredentials::retrieves_pat_from_secret_storage` — mock `SecretStorage.get()`, assert credential object returned
-- [ ] 🟢 GREEN: implement `src/lib/ado.ts` — `AdoCredentials` class with `store(secrets, pat)` / `retrieve(secrets)` methods
+- [ ] 🔴 RED: `src/lib/credentials.test.ts::CredentialManager::stores_secret_in_secret_storage` — mock `SecretStorage`, assert `store()` called with key `mandala.ado.pat` and PAT value; assert settings.get never called with PAT
+- [ ] 🔴 RED: `src/lib/credentials.test.ts::CredentialManager::retrieves_secret_from_secret_storage` — mock `SecretStorage.get()`, assert credential object returned
+- [ ] 🟢 GREEN: implement `src/lib/credentials.ts` — `CredentialManager` class with `store(secrets, key, value)` / `retrieve(secrets, key)` methods (supports ADO PAT, Claude API Key, Azure Foundry Keys)
 - [ ] 🟢 GREEN: add `mandala.adoOrgUrl`, `mandala.adoProject`, `mandala.adoWorkItemType` to `package.json` configuration schema (strings only — no PAT in settings)
 - [ ] 🟢 GREEN: add ADO config section to `SettingsView.tsx` with org/project/work-item-type inputs + PAT input (type=password, shows ●●●●● once saved)
-- [ ] 🟢 GREEN: wire `saveAdoCredentials` message from SettingsView → BrainProvider → `context.secrets.store()`
+- [ ] 🟢 GREEN: wire `saveSecret` message from SettingsView → BrainProvider → `context.secrets.store()` (generalised for ADO PAT, Claude Key, Azure Foundry Key)
 - [ ] 🔵 REFACTOR: extract credential types to `shared/types.ts`
-- [ ] COMMIT: `feat(ado): credential storage via SecretStorage + settings UI`
+- [ ] COMMIT: `feat(credentials): generic credential storage via SecretStorage + settings UI`
 
 ---
 
