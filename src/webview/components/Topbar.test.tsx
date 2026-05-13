@@ -23,7 +23,7 @@ const card = (overrides: Partial<TaskCard> = {}): TaskCard => ({
 describe('Topbar', () => {
   it('renders the workspace title', () => {
     render(<Topbar sprintRecords={noSprints} cards={noCards} onSearch={jest.fn()} />);
-    expect(screen.getByText('Dev Brain')).toBeInTheDocument();
+    expect(screen.getByText('Mandala')).toBeInTheDocument();
   });
 
   it('renders a search input', () => {

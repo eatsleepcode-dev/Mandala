@@ -45,13 +45,15 @@ export function TechDebtView({ cards, onOpenFile }: TechDebtViewProps) {
         </div>
         <div className="filter-row" style={{ margin: '0 0 0 auto' }}>
           {FILTER_OPTIONS.map((f) => (
-            <span
+            <button
               key={f.id}
+              type="button"
               className={`filter-chip ${filter === f.id ? 'active' : ''}`}
+              aria-pressed={filter === f.id}
               onClick={() => setFilter(f.id)}
             >
               {f.label}
-            </span>
+            </button>
           ))}
         </div>
       </div>

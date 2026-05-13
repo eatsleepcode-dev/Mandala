@@ -32,7 +32,7 @@ export function Topbar({ sprintRecords, cards, onSearch }: TopbarProps) {
 
   return (
     <div className="mandala-topbar">
-      <span className="mandala-topbar-title">Dev Brain</span>
+      <span className="mandala-topbar-title">Mandala</span>
       {badgeLabel && (
         <span className={`mandala-topbar-badge ${badgeClass}`}>{badgeLabel}</span>
       )}

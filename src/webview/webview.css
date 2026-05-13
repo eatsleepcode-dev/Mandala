@@ -794,13 +794,20 @@ body {
 }
 
 /* ─── Status bar ─────────────────────────────────────────────────────────── */
+.story-map-empty-filter {
+  padding: 40px 24px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
 /* ─── Card detail panel ──────────────────────────────────────────────────── */
 .card-detail-panel {
   position: fixed;
-  top: 0;
+  top: 36px;   /* topbar height */
   right: 0;
   width: 360px;
-  height: 100vh;
+  height: calc(100vh - 36px - 22px); /* minus topbar + statusbar */
   background: var(--panel);
   border-left: 1px solid var(--border);
   display: flex;
@@ -955,6 +962,9 @@ body {
   transition: all 0.15s;
   white-space: nowrap;
   user-select: none;
+  font-family: inherit;
+  line-height: inherit;
+  appearance: none;
 }
 
 .filter-chip:hover { border-color: var(--accent); color: var(--text); }

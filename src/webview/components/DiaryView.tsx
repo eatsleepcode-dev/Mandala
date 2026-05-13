@@ -199,10 +199,10 @@ export function DiaryView({ entries, onOpenFile }: Props) {
               Tech Debt
             </button>
           </div>
-          {entries.filter((e) => !techDebtOnly || e.techDebt).map((e, i) => (
+          {entries.filter((e) => !techDebtOnly || e.techDebt).map((e) => (
             <div
               key={e.path}
-              className={`diary-entry-row ${i === selectedIdx ? 'active' : ''}`}
+              className={`diary-entry-row ${e.date === selected?.date ? 'active' : ''}`}
               onClick={() => selectEntryByDate(e.date)}
               role="button"
               tabIndex={0}

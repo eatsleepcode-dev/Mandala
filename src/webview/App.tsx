@@ -413,7 +413,7 @@ export default function App() {
 
   return (
     <div className={`mandala-dashboard mandala-boot-target${contentVisible ? ' is-visible' : ''}`}>
-      <Sidebar active={activeView} onSelect={(v) => dispatch({ type: 'SET_VIEW', view: v })} />
+      <Sidebar active={activeView} onSelect={(v) => { dispatch({ type: 'SET_VIEW', view: v }); setSelectedCard(null); }} />
       <main className="mandala-main">
         <Topbar sprintRecords={phase.sprintRecords} cards={phase.cards} onSearch={setSearchQuery} />
         {state.hasGettingStartedExamples && (

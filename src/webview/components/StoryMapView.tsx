@@ -98,19 +98,27 @@ export function StoryMapView({ cards, sprintRecords, onOpenFile, onSelectCard }:
         </div>
         <div className="filter-row" style={{ marginLeft: 'auto' }}>
           {FILTER_OPTIONS.map((f) => (
-            <span
+            <button
               key={f.id}
+              type="button"
               className={`filter-chip ${filter === f.id ? 'active' : ''}`}
+              aria-pressed={filter === f.id}
               onClick={() => setFilter(f.id)}
             >
               {f.label}
-            </span>
+            </button>
           ))}
         </div>
       </div>
 
+      {filteredCards.length === 0 && (
+        <div className="story-map-empty-filter">
+          No tasks match the current filter.
+        </div>
+      )}
+
       {/* Activities = columns, Sprints = rows */}
-      <div className="story-map-container">
+      {filteredCards.length > 0 && <div className="story-map-container">
         <div className="story-map-activities">
 
           {/* Sprint label column (leftmost) */}
@@ -190,7 +198,7 @@ export function StoryMapView({ cards, sprintRecords, onOpenFile, onSelectCard }:
           })}
 
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
