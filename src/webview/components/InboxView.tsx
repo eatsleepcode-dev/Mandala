@@ -15,6 +15,14 @@ const FILTER_OPTIONS: { id: Filter; label: string }[] = [
   { id: 'complete', label: '✅ Complete' },
 ];
 
+function pointsScore(cards: TaskCard[]): string | null {
+  const withPoints = cards.filter((c) => c.points !== undefined);
+  if (withPoints.length === 0) return null;
+  const total = withPoints.reduce((s, c) => s + (c.points ?? 0), 0);
+  const done = withPoints.filter((c) => c.status === 'complete').reduce((s, c) => s + (c.points ?? 0), 0);
+  return `${done}/${total} pts`;
+}
+
 export function InboxView({ cards, onOpenFile }: InboxViewProps) {
   const [filter, setFilter] = useState<Filter>('all');
 
@@ -24,12 +32,16 @@ export function InboxView({ cards, onOpenFile }: InboxViewProps) {
     return card.status === filter;
   });
 
+  const score = pointsScore(cards);
+
   return (
     <div className="view active" id="view-inbox">
       <div className="view-header">
         <div>
           <h2>Inbox</h2>
-          <div className="subtitle">{cards.length} total tasks</div>
+          <div className="subtitle">
+            {cards.length} total tasks{score && ` · ${score}`}
+          </div>
         </div>
         <div className="filter-row" style={{ margin: '0 0 0 auto' }}>
           {FILTER_OPTIONS.map((f) => (

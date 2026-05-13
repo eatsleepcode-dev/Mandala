@@ -15,13 +15,24 @@ const FILTER_OPTIONS: { id: Filter; label: string }[] = [
   { id: 'resolved', label: '✅ Resolved' },
 ];
 
+const SEVERITY_RANK: Record<string, number> = { high: 0, medium: 1, low: 2 };
+
+function sortCards(cards: TechDebtCard[]): TechDebtCard[] {
+  return [...cards].sort((a, b) => {
+    if (a.status !== b.status) return a.status === 'open' ? -1 : 1;
+    return (SEVERITY_RANK[a.severity] ?? 3) - (SEVERITY_RANK[b.severity] ?? 3);
+  });
+}
+
 export function TechDebtView({ cards, onOpenFile }: TechDebtViewProps) {
   const [filter, setFilter] = useState<Filter>('all');
 
-  const filteredCards = cards.filter((card) => {
-    if (filter === 'all') return true;
-    return card.status === filter;
-  });
+  const filteredCards = sortCards(
+    cards.filter((card) => {
+      if (filter === 'all') return true;
+      return card.status === filter;
+    })
+  );
 
   return (
     <div className="view active" id="view-tech-debt">
