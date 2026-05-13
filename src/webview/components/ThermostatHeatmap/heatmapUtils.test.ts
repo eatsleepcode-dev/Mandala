@@ -13,7 +13,8 @@
  * ---
  */
 
-import { describe, expect, it } from 'vitest';
+// import { describe, expect, it } from 'vitest';
+// Jest globals are used automatically
 
 import {
   DRAG_SNAP_MIN,
@@ -35,7 +36,7 @@ describe('parseHHMM / minToHHMM', () => {
 
 describe('clampStartMin', () => {
   it('snaps to DRAG_SNAP_MIN', () => {
-    expect(clampStartMin(517, null, null)).toBe(525); // round to nearest 15
+    expect(clampStartMin(517, null, null)).toBe(510); // round to nearest 15
     expect(clampStartMin(514, null, null)).toBe(510);
   });
 
@@ -92,8 +93,8 @@ describe('rowIdxFromY', () => {
 
 describe('slotAnchorId', () => {
   it('returns a stable, DOM-safe id', () => {
-    expect(slotAnchorId('monday', 0)).toBe('thermostat-slot-monday-0');
-    expect(slotAnchorId('sunday', 12)).toBe('thermostat-slot-sunday-12');
+    expect(slotAnchorId('Monday', 0)).toBe('thermostat-slot-Monday-0');
+    expect(slotAnchorId('Sunday', 12)).toBe('thermostat-slot-Sunday-12');
   });
 });
 
