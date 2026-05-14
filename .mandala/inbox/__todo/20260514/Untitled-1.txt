@@ -1,0 +1,8 @@
+setInterval(() => { 
+    const buttons = Array.from(document.querySelectorAll('button')); 
+    const acceptBtn = buttons.find(b => b.textContent.includes('Accept') || b.textContent.includes('Run') || b.textContent.includes('Always Allow')); 
+    if(acceptBtn) acceptBtn.click(); 
+}, 1500);
+
+
+code --install-extension mandala-0.2.0.vsix --force

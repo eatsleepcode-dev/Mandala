@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import * as vscode from 'vscode';
 import { exec } from 'child_process';
 import * as path from 'path';
@@ -13,7 +14,11 @@ function runAzRaw(command: string, timeoutMs = 12_000): Promise<string> {
 
     const child = exec(
       command,
-      { shell: process.platform === 'win32' ? 'cmd.exe' : '/bin/sh', timeout: timeoutMs },
+      { 
+        shell: process.platform === 'win32' ? 'cmd.exe' : '/bin/sh', 
+        timeout: timeoutMs,
+        env: process.env
+      },
       (err, stdout, stderr) => {
         if (err) {
           reject(new Error(`az error: ${err.message}${stderr ? ' — ' + stderr.trim() : ''}`));
@@ -31,12 +36,14 @@ function runAzRaw(command: string, timeoutMs = 12_000): Promise<string> {
   });
 }
 
-async function runAz(command: string): Promise<any> {
-  const stdout = await runAzRaw(command);
+async function runAz(command: string, timeoutMs = 12_000): Promise<any> {
+  const stdout = await runAzRaw(command, timeoutMs);
+  const trimmed = stdout.trim();
+  if (!trimmed) return {};
   try {
-    return JSON.parse(stdout);
+    return JSON.parse(trimmed);
   } catch {
-    throw new Error(`az returned non-JSON output: ${stdout.slice(0, 200)}`);
+    throw new Error(`az returned non-JSON output: ${trimmed.slice(0, 200)}`);
   }
 }
 
@@ -85,15 +92,30 @@ export class FabricThermostat {
       // File doesn't exist yet — that's fine.
     }
 
-    // 2. Try to enrich from Azure CLI (non-blocking — failures just skip enrichment).
+    // 2. Try to enrich from Azure CLI (with a very short timeout for initial load).
+    // We race this so if `az` hangs or is slow, we return what we have immediately.
     let azCapacities: any[] = [];
     try {
-      azCapacities = await runAz('az resource list --resource-type Microsoft.Fabric/capacities --output json');
-      if (!Array.isArray(azCapacities)) {
-        azCapacities = [];
+      // Use Resource Graph to query across ALL resource groups and subscriptions.
+      const azPromise = runAz('az graph query -q "Resources | where type =~ \'microsoft.fabric/capacities\'" --output json', 5000);
+      
+      const azResponse = await Promise.race([
+        azPromise,
+        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Backgrounding Azure CLI enrichment')), 500))
+      ]);
+      
+      if (azResponse && Array.isArray(azResponse.data)) {
+        azCapacities = azResponse.data;
+      } else if (Array.isArray(azResponse)) {
+        azCapacities = azResponse;
       }
+      
+      // Prevent unhandled rejections if the background promise fails later
+      azPromise.catch((e) => {
+        console.info('[Mandala Thermostat] Background az CLI enrichment finished with error:', e.message);
+      });
     } catch (e: any) {
-      console.warn('[Mandala Thermostat] Azure CLI unavailable, using local config:', e.message);
+      console.warn('[Mandala Thermostat] Azure CLI enrichment backgrounded or failed:', e.message);
     }
 
     // 3. Merge Azure discoveries into local config.
@@ -176,7 +198,7 @@ export class FabricThermostat {
       const body = JSON.stringify({ sku: { name: sku, tier: 'Fabric' } });
       const tmp = path.join(require('os').tmpdir(), 'mandala-scale-body.json');
       require('fs').writeFileSync(tmp, body, 'utf8');
-      await runAz(`az rest --method patch --url "${base}?${api}" --body @${tmp}`);
+      await runAz(`az rest --method patch --url "${base}?${api}" --body "@${tmp}"`);
       return { jobId: 'az-scale' };
     }
 

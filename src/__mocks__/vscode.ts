@@ -1,3 +1,5 @@
+import * as path from 'path';
+
 const window = {
   showInformationMessage: jest.fn(),
   showWarningMessage: jest.fn(),
@@ -28,8 +30,6 @@ const commands = {
 const Uri = {
   file: jest.fn((path: string) => ({ fsPath: path, path })),
   joinPath: jest.fn((base: { fsPath: string }, ...segments: string[]) => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const path = require('path');
     return { fsPath: path.join(base.fsPath, ...segments) };
   }),
 };

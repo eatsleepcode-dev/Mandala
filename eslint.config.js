@@ -36,6 +36,7 @@ export default [
     files: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'src/__mocks__/**/*.ts'],
     rules: {
       '@typescript-eslint/no-var-requires': 'warn',
+      '@typescript-eslint/no-require-imports': 'warn',
     },
   },
 ];

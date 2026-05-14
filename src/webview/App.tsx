@@ -12,6 +12,7 @@ import { SettingsView } from './components/SettingsView';
 import { AgentsView } from './components/AgentsView';
 import { CardDetailPanel } from './components/CardDetailPanel';
 import { ThermostatSettingsPage } from './components/ThermostatSettingsPage';
+import { FluentProvider, webDarkTheme, webLightTheme } from '@fluentui/react-components';
 import type {
   AgentResources,
   FolderCandidates,
@@ -215,6 +216,7 @@ function WorkspaceSetupForm({ candidates, contentVisible }: { candidates: Folder
 export default function App() {
   const isJsdom =
     typeof navigator !== 'undefined' && /jsdom/i.test(navigator.userAgent);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const isTestEnv =
     isJsdom || typeof (globalThis as { acquireVsCodeApi?: unknown }).acquireVsCodeApi !== 'function';
   const minLoadingMs = 0;
@@ -303,7 +305,7 @@ export default function App() {
           setLoadingElapsedMs(msg.elapsedMs);
           break;
         case 'setView':
-          dispatch({ type: 'SET_VIEW', view: msg.view as any });
+          dispatch({ type: 'SET_VIEW', view: msg.view as ViewId });
           break;
       }
     };
@@ -320,6 +322,20 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-mandala-theme', state.themeOverride);
   }, [state.themeOverride]);
+
+  const [isLightTheme, setIsLightTheme] = useState(false);
+  useEffect(() => {
+    const checkTheme = () => {
+      setIsLightTheme(
+        document.body.classList.contains('vscode-light') ||
+        document.body.classList.contains('vscode-high-contrast-light')
+      );
+    };
+    checkTheme();
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (state.phase.status !== 'loading') {
@@ -468,7 +484,9 @@ export default function App() {
         )}
         {activeView === 'thermostat' && (
           <div className="mandala-view-container" style={{ overflowY: 'auto', height: '100%' }}>
-            <ThermostatSettingsPage onExpand={() => openInPanel('thermostat', 'Fabric Thermostat', 'thermostat')} />
+            <FluentProvider theme={isLightTheme ? webLightTheme : webDarkTheme} style={{ height: '100%', background: 'transparent' }}>
+              <ThermostatSettingsPage onExpand={() => openInPanel('thermostat', 'Fabric Thermostat', 'thermostat')} />
+            </FluentProvider>
           </div>
         )}
         {activeView === 'settings' && (

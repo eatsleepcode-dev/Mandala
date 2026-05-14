@@ -35,26 +35,26 @@ import {
 } from './heatmapUtils';
 
 // ── Heat ramp ────────────────────────────────────────────────────────────────
-const SUSPEND_COLOR = '#6B7280'; // slate-500
-const SUSPEND_TEXT = '#FFFFFF';
-const EMPTY_COLOR = '#F3F4F6'; // gray-100
+const SUSPEND_COLOR = '#E5E7EB'; // gray-200 (soft light gray)
+const SUSPEND_TEXT = '#1F2937';  // gray-800
+const EMPTY_COLOR = '#F3F4F6';   // gray-100
 
 const SKU_COLORS: Record<FabricSku, string> = {
-  F2:    '#FEF3C7', // amber-100
-  F4:    '#FDE68A', // amber-200
-  F8:    '#FCD34D', // amber-300
-  F16:   '#FBBF24', // amber-400
-  F32:   '#F59E0B', // amber-500
-  F64:   '#EA580C', // orange-600
-  F128:  '#DC2626', // red-600
-  F256:  '#B91C1C', // red-700
-  F512:  '#991B1B', // red-800
-  F1024: '#7F1D1D', // red-900
-  F2048: '#450A0A', // red-950
+  F2:    '#CCFBF1', // teal-100
+  F4:    '#99F6E4', // teal-200
+  F8:    '#5EEAD4', // teal-300
+  F16:   '#2DD4BF', // teal-400
+  F32:   '#14B8A6', // teal-500
+  F64:   '#0D9488', // teal-600
+  F128:  '#0F766E', // teal-700
+  F256:  '#115E59', // teal-800
+  F512:  '#134E4A', // teal-900
+  F1024: '#042F2E', // teal-950
+  F2048: '#021A1A', // very dark teal
 };
 
 // White text below this band fill, dark text above.
-const LIGHT_SKUS: ReadonlySet<FabricSku> = new Set(['F2', 'F4', 'F8']);
+const LIGHT_SKUS: ReadonlySet<FabricSku> = new Set(['F2', 'F4', 'F8', 'F16']);
 
 const bandFill = (slot: ScheduleSlot | null): string => {
   if (!slot) return EMPTY_COLOR;

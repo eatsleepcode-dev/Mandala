@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "capacities": [
+    {
+      "id": "/subscriptions/918867ec-3bb2-4617-ab18-026dc0418230/resourceGroups/rg-duk-dev-phoric/providers/Microsoft.Fabric/capacities/fabricdevsuk02",
+      "displayName": "fabricdevsuk02",
+      "subscriptionId": "918867ec-3bb2-4617-ab18-026dc0418230",
+      "resourceGroup": "rg-duk-dev-phoric",
+      "timezone": "Europe/London",
+      "enabled": true,
+      "respectBankHolidays": true,
+      "bankHolidayMode": "Suspend",
+      "defaultSku": "F4",
+      "schedule": {
+        "Monday": [],
+        "Tuesday": [],
+        "Wednesday": [],
+        "Thursday": [
+          {
+            "start": "08:00",
+            "action": "Resume",
+            "sku": "F4"
+          },
+          {
+            "start": "18:05",
+            "action": "Suspend",
+            "sku": "F4"
+          }
+        ],
+        "Friday": [
+          {
+            "start": "09:00",
+            "action": "Resume",
+            "sku": "F4"
+          },
+          {
+            "start": "19:00",
+            "action": "Suspend",
+            "sku": "F4"
+          }
+        ],
+        "Saturday": [],
+        "Sunday": []
+      }
+    }
+  ]
+}

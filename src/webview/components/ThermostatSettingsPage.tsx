@@ -360,7 +360,6 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
           <Badge appearance="tint">{config.capacities.length} capacity(ies)</Badge>
         </div>
         <div className={styles.toolbar}>
-            <Button icon={<Add24Regular />} onClick={addCapacity}>Add capacity</Button>
             {onExpand && (
               <Button
                 icon={<span className="codicon codicon-screen-full" />}
@@ -399,14 +398,19 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
         </Card>
       ) : (
         <>
-          <TabList
-            selectedValue={activeId}
-            onTabSelect={(_e: SelectTabEvent, d: SelectTabData) => setActiveId(String(d.value))}
-          >
-            {config.capacities.map((c) => (
-              <Tab key={c.id} value={c.id}>{c.displayName || c.id}</Tab>
-            ))}
-          </TabList>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '16px' }}>
+            <Dropdown
+              value={activeCap?.displayName || activeId || 'Select a capacity'}
+              selectedOptions={[activeId]}
+              onOptionSelect={(_e, data) => setActiveId(data.optionValue as string)}
+              style={{ minWidth: '300px' }}
+            >
+              {config.capacities.map((c) => (
+                <Option key={c.id} value={c.id}>{c.displayName || c.id}</Option>
+              ))}
+            </Dropdown>
+            <Button icon={<Add24Regular />} onClick={addCapacity}>Add capacity</Button>
+          </div>
 
           {activeCap && (
             <>
@@ -469,7 +473,7 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
                   <Field label="Display name">
                     <Input
                       value={activeCap.displayName}
-                      onChange={(_: any, d: any) => updateCap({ ...activeCap, displayName: d.value })}
+                      onChange={(_: unknown, d: { value: string }) => updateCap({ ...activeCap, displayName: d.value })}
                     />
                   </Field>
                   <Field label="Resource id (Azure name)">
@@ -478,20 +482,20 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
                   <Field label="Subscription id">
                     <Input
                       value={activeCap.subscriptionId}
-                      onChange={(_: any, d: any) => updateCap({ ...activeCap, subscriptionId: d.value })}
+                      onChange={(_: unknown, d: { value: string }) => updateCap({ ...activeCap, subscriptionId: d.value })}
                     />
                   </Field>
                   <Field label="Resource group">
                     <Input
                       value={activeCap.resourceGroup}
-                      onChange={(_: any, d: any) => updateCap({ ...activeCap, resourceGroup: d.value })}
+                      onChange={(_: unknown, d: { value: string }) => updateCap({ ...activeCap, resourceGroup: d.value })}
                     />
                   </Field>
                   <Field label="Time zone (handles BST/GMT automatically)">
                     <Dropdown
                       value={activeCap.timezone}
                       selectedOptions={[activeCap.timezone]}
-                      onOptionSelect={(_: any, d: any) =>
+                      onOptionSelect={(_: unknown, d: { optionValue?: string }) =>
                         updateCap({ ...activeCap, timezone: String(d.optionValue ?? activeCap.timezone) })
                       }
                     >
@@ -502,7 +506,7 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
                     <Dropdown
                       value={activeCap.bankHolidayMode}
                       selectedOptions={[activeCap.bankHolidayMode]}
-                      onOptionSelect={(_: any, d: any) =>
+                      onOptionSelect={(_: unknown, d: { optionValue?: string }) =>
                         updateCap({
                           ...activeCap,
                           bankHolidayMode: (d.optionValue ?? 'Suspend') as CapacityConfig['bankHolidayMode'],
@@ -516,7 +520,7 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
                     <Dropdown
                       value={activeCap.defaultSku}
                       selectedOptions={[activeCap.defaultSku]}
-                      onOptionSelect={(_: any, d: any) =>
+                      onOptionSelect={(_: unknown, d: { optionValue?: string }) =>
                         updateCap({
                           ...activeCap,
                           defaultSku: (d.optionValue ?? 'F2') as FabricSku,
@@ -531,12 +535,12 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
                   <Switch
                     label="Enabled"
                     checked={activeCap.enabled}
-                    onChange={(_: any, d: any) => updateCap({ ...activeCap, enabled: d.checked })}
+                    onChange={(_: unknown, d: { checked: boolean }) => updateCap({ ...activeCap, enabled: d.checked })}
                   />
                   <Switch
                     label="Respect UK bank holidays"
                     checked={activeCap.respectBankHolidays}
-                    onChange={(_: any, d: any) => updateCap({ ...activeCap, respectBankHolidays: d.checked })}
+                    onChange={(_: unknown, d: { checked: boolean }) => updateCap({ ...activeCap, respectBankHolidays: d.checked })}
                   />
                   <Button
                     appearance="subtle"
@@ -549,12 +553,28 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
                 <Divider />
                 <div className={styles.slotRow}>
                   <Text weight="semibold">On-demand:</Text>
-                  <Button icon={<PlayCircle24Regular />} onClick={() => { void fireNow('Suspend'); }}>
-                    Suspend now
-                  </Button>
-                  <Button icon={<PlayCircle24Regular />} onClick={() => { void fireNow('Resume', activeCap.defaultSku as FabricSku); }}>
-                    Resume now ({activeCap.defaultSku})
-                  </Button>
+                  {(() => {
+                    const isScaleNeeded = liveState?.state === 'Active' && liveState.sku && liveState.sku !== activeCap.defaultSku;
+                    if (isScaleNeeded) {
+                      return (
+                        <Button icon={<PlayCircle24Regular />} onClick={() => { void fireNow('Scale', activeCap.defaultSku as FabricSku); }}>
+                          Scale now ({activeCap.defaultSku})
+                        </Button>
+                      );
+                    }
+                    if (liveState?.state === 'Active') {
+                      return (
+                        <Button icon={<PlayCircle24Regular />} onClick={() => { void fireNow('Suspend'); }}>
+                          Suspend now
+                        </Button>
+                      );
+                    }
+                    return (
+                      <Button icon={<PlayCircle24Regular />} onClick={() => { void fireNow('Resume', activeCap.defaultSku as FabricSku); }}>
+                        Resume now ({activeCap.defaultSku})
+                      </Button>
+                    );
+                  })()}
                 </div>
               </Card>
 
@@ -604,13 +624,13 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
                           <Input
                             type="time"
                             value={slot.start}
-                            onChange={(_: any, d: any) => updateSlot(day, idx, { start: d.value })}
+                            onChange={(_: unknown, d: { value: string }) => updateSlot(day, idx, { start: d.value })}
                             style={{ width: '110px' }}
                           />
                           <Dropdown
                             value={slot.action}
                             selectedOptions={[slot.action]}
-                            onOptionSelect={(_: any, d: any) =>
+                            onOptionSelect={(_: unknown, d: { optionValue?: string }) =>
                               updateSlot(day, idx, { action: (d.optionValue ?? 'Suspend') as ThermostatAction })
                             }
                             style={{ minWidth: '120px' }}
@@ -621,7 +641,7 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
                             <Dropdown
                               value={slot.sku ?? ''}
                               selectedOptions={slot.sku ? [slot.sku] : []}
-                              onOptionSelect={(_: any, d: any) =>
+                              onOptionSelect={(_: unknown, d: { optionValue?: string }) =>
                                 updateSlot(day, idx, { sku: (d.optionValue ?? undefined) as FabricSku | undefined })
                               }
                               style={{ minWidth: '110px' }}
