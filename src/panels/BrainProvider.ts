@@ -462,7 +462,9 @@ export class BrainProvider implements vscode.WebviewViewProvider {
             try {
               let result;
               if (method === 'getConfig') {
-                result = await this._thermostat.getConfig(this._workspaceRoot.fsPath);
+                result = await this._thermostat.getConfig(this._workspaceRoot.fsPath, (newConfig) => {
+                  webview.postMessage({ command: 'thermostatRefresh' });
+                });
               } else if (method === 'putConfig') {
                 result = await this._thermostat.putConfig(this._workspaceRoot.fsPath, args.config);
               } else if (method === 'getCapacityState') {

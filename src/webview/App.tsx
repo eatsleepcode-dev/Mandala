@@ -307,6 +307,9 @@ export default function App() {
         case 'setView':
           dispatch({ type: 'SET_VIEW', view: msg.view as ViewId });
           break;
+        case 'thermostatRefresh':
+          window.dispatchEvent(new Event('thermostat:refresh'));
+          break;
       }
     };
     window.addEventListener('message', handler);

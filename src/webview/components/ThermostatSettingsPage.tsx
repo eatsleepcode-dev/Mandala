@@ -676,6 +676,17 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
                   </div>
                 </Card>
               )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', marginBottom: '32px' }}>
+                <Button
+                  appearance="primary"
+                  icon={<Save24Regular />}
+                  disabled={saving}
+                  onClick={() => { void save(); }}
+                >
+                  {saving ? 'Saving…' : 'Save Changes'}
+                </Button>
+              </div>
             </>
           )}
         </>

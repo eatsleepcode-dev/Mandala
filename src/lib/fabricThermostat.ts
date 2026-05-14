@@ -81,7 +81,14 @@ export class FabricThermostat {
     return vscode.Uri.file(path.join(workspaceRoot, '.mandala', 'thermostat.json'));
   }
 
-  async getConfig(workspaceRoot: string): Promise<{ config: ThermostatConfig; etag: string }> {
+  private hashConfig(config: ThermostatConfig): string {
+    return JSON.stringify(config).length.toString();
+  }
+
+  async getConfig(
+    workspaceRoot: string,
+    onBackgroundComplete?: (newConfig: ThermostatConfig) => void
+  ): Promise<{ config: ThermostatConfig; etag: string }> {
     // 1. Read local persisted config (fast, always returns even if no az).
     let localConfig: ThermostatConfig = { version: 1, capacities: [] };
     const configUri = this.getConfigUri(workspaceRoot);
@@ -92,71 +99,89 @@ export class FabricThermostat {
       // File doesn't exist yet — that's fine.
     }
 
-    // 2. Try to enrich from Azure CLI (with a very short timeout for initial load).
-    // We race this so if `az` hangs or is slow, we return what we have immediately.
+    // Helper to merge newly discovered capacities into local config
+    const mergeCapacities = (azCapacities: any[]) => {
+      const merged: CapacityConfig[] = [];
+      for (const azCap of azCapacities) {
+        const parts: string[] = (azCap.id ?? '').split('/');
+        const subId = parts[2] ?? '';
+        const rg = parts[4] ?? '';
+        const existing = localConfig.capacities.find(c => c.id.toLowerCase() === azCap.id.toLowerCase());
+        if (existing) {
+          merged.push({ ...existing, displayName: azCap.name, subscriptionId: subId, resourceGroup: rg });
+        } else {
+          merged.push({
+            id: azCap.id,
+            displayName: azCap.name,
+            subscriptionId: subId,
+            resourceGroup: rg,
+            timezone: 'Europe/London',
+            enabled: true,
+            respectBankHolidays: true,
+            bankHolidayMode: 'Suspend',
+            defaultSku: azCap.sku?.name ?? 'F2',
+            schedule: emptySchedule()
+          });
+        }
+      }
+      for (const existing of localConfig.capacities) {
+        if (!merged.some(c => c.id.toLowerCase() === existing.id.toLowerCase())) {
+          merged.push(existing);
+        }
+      }
+      merged.sort((a, b) => a.displayName.localeCompare(b.displayName));
+      return { ...localConfig, capacities: merged };
+    };
+
+    // 2. Try to enrich from Azure CLI (with a short timeout for initial load).
+    // We race this so the UI loads fast. If it times out, we let it finish in the background.
+    const queryBody = { query: "Resources | where type =~ 'microsoft.fabric/capacities'" };
+    const queryPath = path.join(workspaceRoot, '.mandala', 'graph_query.json');
+    
     let azCapacities: any[] = [];
+    
     try {
-      // Use Resource Graph to query across ALL resource groups and subscriptions.
-      const azPromise = runAz('az graph query -q "Resources | where type =~ \'microsoft.fabric/capacities\'" --output json', 5000);
+      await vscode.workspace.fs.writeFile(vscode.Uri.file(queryPath), Buffer.from(JSON.stringify(queryBody)));
       
-      const azResponse = await Promise.race([
-        azPromise,
-        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Backgrounding Azure CLI enrichment')), 500))
-      ]);
+      const azPromise = runAz(`az rest --method post --url "https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01" --body @"${queryPath}" --headers "Content-Type=application/json"`);
       
-      if (azResponse && Array.isArray(azResponse.data)) {
-        azCapacities = azResponse.data;
-      } else if (Array.isArray(azResponse)) {
-        azCapacities = azResponse;
-      }
+      // If az responds within 500ms, great! If not, we return local config and update later.
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 500));
+      const azResponse = await Promise.race([azPromise, timeoutPromise]);
       
-      // Prevent unhandled rejections if the background promise fails later
-      azPromise.catch((e) => {
-        console.info('[Mandala Thermostat] Background az CLI enrichment finished with error:', e.message);
-      });
-    } catch (e: any) {
-      console.warn('[Mandala Thermostat] Azure CLI enrichment backgrounded or failed:', e.message);
-    }
-
-    // 3. Merge Azure discoveries into local config.
-    const merged: CapacityConfig[] = [];
-
-    for (const azCap of azCapacities) {
-      const parts: string[] = (azCap.id ?? '').split('/');
-      const subId = parts[2] ?? '';
-      const rg = parts[4] ?? '';
-
-      const existing = localConfig.capacities.find(
-        c => c.id.toLowerCase() === azCap.id.toLowerCase()
-      );
-
-      if (existing) {
-        merged.push({ ...existing, displayName: azCap.name, subscriptionId: subId, resourceGroup: rg });
+      if (azResponse !== null) {
+        // Fast response!
+        if (Array.isArray(azResponse.data)) {
+          azCapacities = azResponse.data;
+        } else if (Array.isArray(azResponse)) {
+          azCapacities = azResponse;
+        }
+        localConfig = mergeCapacities(azCapacities);
       } else {
-        merged.push({
-          id: azCap.id,
-          displayName: azCap.name,
-          subscriptionId: subId,
-          resourceGroup: rg,
-          timezone: 'Europe/London',
-          enabled: true,
-          respectBankHolidays: true,
-          bankHolidayMode: 'Suspend',
-          defaultSku: azCap.sku?.name ?? 'F2',
-          schedule: emptySchedule(),
-        });
+        // Slow response, let it finish in the background
+        if (onBackgroundComplete) {
+          azPromise.then(async (bgResponse: any) => {
+            let bgCaps = [];
+            if (bgResponse && Array.isArray(bgResponse.data)) {
+              bgCaps = bgResponse.data;
+            } else if (Array.isArray(bgResponse)) {
+              bgCaps = bgResponse;
+            }
+            if (bgCaps.length > 0) {
+              const bgMerged = mergeCapacities(bgCaps);
+              await this.putConfig(workspaceRoot, bgMerged); // Save it so the UI etag changes
+              onBackgroundComplete(bgMerged);
+            }
+          }).catch(e => {
+            console.warn('[Mandala Thermostat] Azure CLI background enrichment failed:', e.message);
+          });
+        }
       }
+    } catch (e: any) {
+      console.warn('[Mandala Thermostat] Azure CLI enrichment failed:', e.message);
     }
 
-    // Keep locally-known capacities not found in this az query.
-    for (const loc of localConfig.capacities) {
-      if (!merged.find(c => c.id.toLowerCase() === loc.id.toLowerCase())) {
-        merged.push(loc);
-      }
-    }
-
-    localConfig.capacities = merged;
-    return { config: localConfig, etag: Date.now().toString() };
+    return { config: localConfig, etag: this.hashConfig(localConfig) };
   }
 
   async putConfig(workspaceRoot: string, config: ThermostatConfig): Promise<{ etag: string }> {

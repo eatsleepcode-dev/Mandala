@@ -316,7 +316,12 @@ export type HostMessage =
   | LoadSettingsMessage
   | WorkspacePathsMessage
   | PathSelectedMessage
-  | SetViewMessage;
+  | SetViewMessage
+  | ThermostatRefreshMessage;
+
+export interface ThermostatRefreshMessage {
+  command: 'thermostatRefresh';
+}
 
 export interface BrowsePathMessage {
   command: 'browsePath';
