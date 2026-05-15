@@ -164,3 +164,25 @@ npm run compile    # TypeScript type-check, must exit 0
 npm test           # Jest (86 tests across host + webview projects), must pass
 npm run build      # Webpack production build, must exit 0
 ```
+
+## Publishing and Versioning
+
+The VS Code Marketplace does not support semver pre-release tags (e.g. `-beta`). Mandala follows the recommended extension versioning convention:
+
+- **Stable Releases**: `major.EVEN.patch` (e.g., `0.2.0`)
+- **Pre-Releases**: `major.ODD.patch` (e.g., `0.3.0`)
+
+### Packaging & Publishing
+
+To package or publish a pre-release version:
+```bash
+vsce package --pre-release
+# or to publish directly
+vsce publish --pre-release
+```
+
+**Constraints and Auto-Update Behavior:**
+- Pre-release and stable versions must have distinct version numbers.
+- Pre-release extensions must declare `"engines": { "vscode": ">= 1.63.0" }` (or higher) in `package.json`.
+- VS Code auto-updates to the highest version available. If a stable release is published with a higher version number than the current pre-release, pre-release users will automatically be bumped to the stable version.
+- **User Installation**: Users can opt into pre-releases by clicking the dropdown on the "Install" button in the Marketplace and choosing **"Install Pre-Release Version"**.
