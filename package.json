@@ -2,7 +2,7 @@
   "name": "mandala",
   "displayName": "Mandala",
   "description": "Developer diary and sprint planner inside VS Code",
-  "version": "0.3.0",
+  "version": "0.2.1",
   "publisher": "eatsleepcode-dev",
   "engines": {
     "vscode": "^1.90.0"
