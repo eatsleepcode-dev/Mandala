@@ -106,12 +106,12 @@ export class FabricThermostat {
         const parts: string[] = (azCap.id ?? '').split('/');
         const subId = parts[2] ?? '';
         const rg = parts[4] ?? '';
-        const existing = localConfig.capacities.find(c => c.id.toLowerCase() === azCap.id.toLowerCase());
+        const existing = localConfig.capacities.find(c => c.id.toLowerCase() === azCap.name.toLowerCase());
         if (existing) {
           merged.push({ ...existing, displayName: azCap.name, subscriptionId: subId, resourceGroup: rg });
         } else {
           merged.push({
-            id: azCap.id,
+            id: azCap.name,
             displayName: azCap.name,
             subscriptionId: subId,
             resourceGroup: rg,
@@ -192,9 +192,14 @@ export class FabricThermostat {
     return { etag: Date.now().toString() };
   }
 
-  async getCapacityState(capacityId: string): Promise<{ state: string; sku: string; location: string }> {
+  async getCapacityState(workspaceRoot: string, capacityId: string): Promise<{ state: string; sku: string; location: string }> {
+    const config = (await this.getConfig(workspaceRoot)).config;
+    const cap = config.capacities.find(c => c.id === capacityId);
+    if (!cap) throw new Error(`Capacity ${capacityId} not found in local config`);
+    const fullId = `/subscriptions/${cap.subscriptionId}/resourceGroups/${cap.resourceGroup}/providers/Microsoft.Fabric/capacities/${cap.id}`;
+    
     const data = await runAz(
-      `az rest --method get --url "https://management.azure.com${capacityId}?api-version=2023-11-01"`
+      `az rest --method get --url "https://management.azure.com${fullId}?api-version=2023-11-01"`
     );
     return {
       state: data?.properties?.state ?? 'Unknown',
@@ -203,8 +208,13 @@ export class FabricThermostat {
     };
   }
 
-  async triggerCapacity(capacityId: string, action: string, sku?: string): Promise<{ jobId: string }> {
-    const base = `https://management.azure.com${capacityId}`;
+  async triggerCapacity(workspaceRoot: string, capacityId: string, action: string, sku?: string): Promise<{ jobId: string }> {
+    const config = (await this.getConfig(workspaceRoot)).config;
+    const cap = config.capacities.find(c => c.id === capacityId);
+    if (!cap) throw new Error(`Capacity ${capacityId} not found in local config`);
+    const fullId = `/subscriptions/${cap.subscriptionId}/resourceGroups/${cap.resourceGroup}/providers/Microsoft.Fabric/capacities/${cap.id}`;
+
+    const base = `https://management.azure.com${fullId}`;
     const api = 'api-version=2023-11-01';
 
     if (action === 'Suspend') {
@@ -228,5 +238,78 @@ export class FabricThermostat {
     }
 
     throw new Error(`Unknown action: ${action}`);
+  }
+
+  async triggerCapacityRemote(apiUrl: string, token: string, capacityId: string, action: string, sku?: string): Promise<{ jobId: string }> {
+    return this.callRemote(apiUrl, token, `/api/v1/thermostat/capacities/${encodeURIComponent(capacityId)}/trigger`, 'POST', {
+      action,
+      targetSku: sku
+    });
+  }
+
+  async getConfigRemote(apiUrl: string, token: string): Promise<{ config: ThermostatConfig; etag: string }> {
+    const res = await this.callRemoteRaw(apiUrl, token, '/api/v1/thermostat/config', 'GET');
+    return {
+      config: JSON.parse(res.body),
+      etag: res.headers['etag'] || ''
+    };
+  }
+
+  async putConfigRemote(apiUrl: string, token: string, config: ThermostatConfig, etag?: string): Promise<{ etag: string }> {
+    const headers: any = {};
+    if (etag) headers['if-match'] = etag;
+    const res = await this.callRemoteRaw(apiUrl, token, '/api/v1/thermostat/config', 'PUT', config, headers);
+    return {
+      etag: res.headers['etag'] || ''
+    };
+  }
+
+  async getCapacityStateRemote(apiUrl: string, token: string, capacityId: string): Promise<{ state: string; sku: string; location: string }> {
+    return this.callRemote(apiUrl, token, `/api/v1/thermostat/capacities/${encodeURIComponent(capacityId)}/state`, 'GET');
+  }
+
+  private async callRemote(apiUrl: string, token: string, path: string, method: string, body?: any): Promise<any> {
+    const res = await this.callRemoteRaw(apiUrl, token, path, method, body);
+    try {
+      return JSON.parse(res.body);
+    } catch {
+      return { result: res.body };
+    }
+  }
+
+  private async callRemoteRaw(apiUrl: string, token: string, path: string, method: string, body?: any, extraHeaders: any = {}): Promise<{ body: string, headers: any }> {
+    const https = require('https');
+    const { URL } = require('url');
+    const baseUrl = apiUrl.replace(/\/$/, '');
+    const endpoint = `${baseUrl}${path}`;
+    
+    const requestBody = body ? JSON.stringify(body) : '';
+
+    return new Promise((resolve, reject) => {
+      const url = new URL(endpoint);
+      const req = https.request(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(requestBody),
+          ...extraHeaders
+        }
+      }, (res: any) => {
+        let data = '';
+        res.on('data', (chunk: any) => data += chunk);
+        res.on('end', () => {
+          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+            resolve({ body: data, headers: res.headers });
+          } else {
+            reject(new Error(`Remote API error ${res.statusCode}: ${data}`));
+          }
+        });
+      });
+
+      req.on('error', (e: any) => reject(e));
+      if (requestBody) req.write(requestBody);
+      req.end();
+    });
   }
 }

@@ -62,6 +62,7 @@ import {
   grantRbac,
   listBankHolidays,
   putThermostatConfig,
+  setThermostatEnvironment,
   triggerCapacity,
 } from './thermostatService';
 import { ThermostatHeatmap, slotAnchorId } from './ThermostatHeatmap';
@@ -118,8 +119,12 @@ const blankCapacity = (id: string): CapacityConfig => ({
   schedule: emptySchedule(),
 });
 
-export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ onExpand }) => {
+export const ThermostatSettingsPage: React.FC<{ apiUrl?: string; onExpand?: () => void }> = ({ apiUrl = '', onExpand }) => {
   const styles = useStyles();
+
+  // Apply the standalone API URL synchronously so the first getThermostatConfig()
+  // call — fired by the useEffect below — already has the correct endpoint.
+  setThermostatEnvironment(apiUrl, '');
 
   const [config, setConfig] = React.useState<ThermostatConfig>({ version: 1, capacities: [] });
   const [etag, setEtag] = React.useState<string>('');
@@ -137,8 +142,9 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
   // from the heatmap. Cleared by a timer so the highlight fades automatically.
   const [flashedAnchor, setFlashedAnchor] = React.useState<string | null>(null);
 
-  // Load config + bank holidays on mount, and on `thermostat:refresh` events
-  // dispatched from the command palette.
+  // Load config + bank holidays on mount, and whenever apiUrl changes (e.g. when
+  // the loadSettings message arrives from the extension host), and on
+  // `thermostat:refresh` events dispatched from the command palette.
   React.useEffect(() => {
     let cancelled = false;
     const load = async (showSpinner: boolean): Promise<void> => {
@@ -166,7 +172,7 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
       cancelled = true;
       window.removeEventListener('thermostat:refresh', onRefresh);
     };
-  }, []);
+  }, [apiUrl]);
 
   const activeCap = config.capacities.find((c) => c.id === activeId);
 

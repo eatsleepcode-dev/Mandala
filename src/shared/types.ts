@@ -208,6 +208,9 @@ export interface IntegrationSettings {
   known: KnownIntegrationFlags;
   custom: CustomIntegration[];
   ado: AdoConfig;
+  thermostat: {
+    apiUrl: string;
+  };
 }
 
 // ─── Host → Webview: settings ────────────────────────────────────────────────

@@ -179,6 +179,12 @@
           "default": "Task",
           "description": "Work Item Type to create in Azure DevOps (e.g. Task, User Story)",
           "order": 14
+        },
+        "mandala.thermostatApiUrl": {
+          "type": "string",
+          "default": "",
+          "description": "The deployed endpoint URL for the Fabric Thermostat API runner.",
+          "order": 15
         }
       }
     }

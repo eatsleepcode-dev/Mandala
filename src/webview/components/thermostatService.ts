@@ -34,9 +34,29 @@ async function callExtension(method: string, args: any = {}, timeoutMs = 15_000)
   });
 }
 
-// ── Kept for backward compat but no longer needed ────────────────────────────
-export function setThermostatEnvironment(_apiUrl: string, _secret: string): void {
-  // No-op: Azure CLI / extension host handles auth directly.
+// ── Standalone API Configuration ───────────────────────────────────────────────
+let standaloneApiUrl: string | null = null;
+let standaloneSecret: string | null = null;
+
+export function setThermostatEnvironment(apiUrl: string, secret: string): void {
+  standaloneApiUrl = apiUrl?.replace(/\/$/, '') || null; // Remove trailing slash
+  standaloneSecret = secret || null;
+}
+
+async function fetchStandalone(path: string, options: RequestInit = {}): Promise<Response> {
+  if (!standaloneApiUrl) throw new Error('Standalone API URL not configured.');
+  const headers = new Headers(options.headers || {});
+  if (standaloneSecret) headers.set('Authorization', `Bearer ${standaloneSecret}`);
+  if (!headers.has('Content-Type') && options.method && options.method !== 'GET') {
+    headers.set('Content-Type', 'application/json');
+  }
+  
+  const response = await fetch(`${standaloneApiUrl}${path}`, { ...options, headers });
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new Error(`API Error ${response.status}: ${text || response.statusText}`);
+  }
+  return response;
 }
 
 // ── F-SKU ladder ─────────────────────────────────────────────────────────────
@@ -135,20 +155,14 @@ export async function getCapacityState(capacityId: string): Promise<CapacityStat
  * the user can run the CLI command manually if needed.
  */
 export async function getRbacStatus(capacityId: string): Promise<RbacStatus> {
-  // Extract the name from the ARM resource id
-  const name = capacityId.split('/').pop() ?? capacityId;
-  return {
-    hasContributor: true, // Optimistic default; extend later via az rest if needed
-    cliCommand: `az role assignment create --role Contributor --assignee <managed-identity-id> --scope ${capacityId}`,
-  };
+  return callExtension('getRbacStatus', { capacityId });
 }
 
 /**
  * Stub — grant RBAC via az CLI. Requires the user to have Owner/UAA on the resource.
  */
 export async function grantRbac(capacityId: string): Promise<RbacStatus> {
-  // This would need the managed identity principal ID; surfaced as guidance for now.
-  return getRbacStatus(capacityId);
+  return callExtension('grantRbac', { capacityId });
 }
 
 export async function listBankHolidays(division: string): Promise<{ dates: string[] }> {

@@ -12,6 +12,7 @@ import { SettingsView } from './components/SettingsView';
 import { AgentsView } from './components/AgentsView';
 import { CardDetailPanel } from './components/CardDetailPanel';
 import { ThermostatSettingsPage } from './components/ThermostatSettingsPage';
+import { setThermostatEnvironment } from './components/thermostatService';
 import { FluentProvider, webDarkTheme, webLightTheme } from '@fluentui/react-components';
 import type {
   AgentResources,
@@ -42,6 +43,9 @@ const DEFAULT_SETTINGS: IntegrationSettings = {
     project: '',
     workItemType: 'Task',
   },
+  thermostat: {
+    apiUrl: '',
+  }
 };
 
 const EMPTY_AGENT_RESOURCES: AgentResources = {
@@ -326,6 +330,12 @@ export default function App() {
     document.documentElement.setAttribute('data-mandala-theme', state.themeOverride);
   }, [state.themeOverride]);
 
+  useEffect(() => {
+    if (state.settings.thermostat) {
+      setThermostatEnvironment(state.settings.thermostat.apiUrl, ''); // The extension handles secret retrieval if needed in the future, or we can prompt for it
+    }
+  }, [state.settings.thermostat?.apiUrl]);
+
   const [isLightTheme, setIsLightTheme] = useState(false);
   useEffect(() => {
     const checkTheme = () => {
@@ -488,7 +498,10 @@ export default function App() {
         {activeView === 'thermostat' && (
           <div className="mandala-view-container" style={{ overflowY: 'auto', height: '100%' }}>
             <FluentProvider theme={isLightTheme ? webLightTheme : webDarkTheme} style={{ height: '100%', background: 'transparent' }}>
-              <ThermostatSettingsPage onExpand={() => openInPanel('thermostat', 'Fabric Thermostat', 'thermostat')} />
+              <ThermostatSettingsPage
+                apiUrl={settings.thermostat?.apiUrl || ''}
+                onExpand={() => openInPanel('thermostat', 'Fabric Thermostat', 'thermostat')}
+              />
             </FluentProvider>
           </div>
         )}

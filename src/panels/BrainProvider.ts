@@ -88,6 +88,9 @@ export class BrainProvider implements vscode.WebviewViewProvider {
                   orgUrl: adoConfig.get<string>('adoOrgUrl') || '',
                   project: adoConfig.get<string>('adoProject') || '',
                   workItemType: adoConfig.get<string>('adoWorkItemType') || 'Task',
+                },
+                thermostat: {
+                  apiUrl: adoConfig.get<string>('thermostatApiUrl') || '',
                 }
               }
             });
@@ -325,6 +328,10 @@ export class BrainProvider implements vscode.WebviewViewProvider {
               await adoWsConfig.update('adoProject', settings.ado.project, vscode.ConfigurationTarget.Workspace);
               await adoWsConfig.update('adoWorkItemType', settings.ado.workItemType, vscode.ConfigurationTarget.Workspace);
             }
+            if (settings.thermostat) {
+              const wsConfig = vscode.workspace.getConfiguration('mandala');
+              await wsConfig.update('thermostatApiUrl', settings.thermostat.apiUrl, vscode.ConfigurationTarget.Workspace);
+            }
 
             // Run sync
             await syncIntegrations(
@@ -461,16 +468,42 @@ export class BrainProvider implements vscode.WebviewViewProvider {
             const { reqId, method, args } = message as any;
             try {
               let result;
-              if (method === 'getConfig') {
-                result = await this._thermostat.getConfig(this._workspaceRoot.fsPath, (newConfig) => {
-                  webview.postMessage({ command: 'thermostatRefresh' });
-                });
-              } else if (method === 'putConfig') {
-                result = await this._thermostat.putConfig(this._workspaceRoot.fsPath, args.config);
-              } else if (method === 'getCapacityState') {
-                result = await this._thermostat.getCapacityState(args.capacityId);
-              } else if (method === 'triggerCapacity') {
-                result = await this._thermostat.triggerCapacity(args.capacityId, args.action, args.sku);
+              const apiUrl = vscode.workspace.getConfiguration('mandala').get<string>('thermostatApiUrl');
+              
+              if (apiUrl) {
+                // Remote Mode
+                const session = await vscode.authentication.getSession('microsoft', ['1d73ad44-4a0f-4bf4-9057-b125da568a94/.default'], { createIfNone: true });
+                if (!session) throw new Error('Failed to get Entra ID token');
+
+                if (method === 'getConfig') {
+                  result = await this._thermostat.getConfigRemote(apiUrl, session.accessToken);
+                } else if (method === 'putConfig') {
+                  result = await this._thermostat.putConfigRemote(apiUrl, session.accessToken, args.config, args.etag);
+                } else if (method === 'getCapacityState') {
+                  result = await this._thermostat.getCapacityStateRemote(apiUrl, session.accessToken, args.capacityId);
+                } else if (method === 'triggerCapacity') {
+                  result = await this._thermostat.triggerCapacityRemote(apiUrl, session.accessToken, args.capacityId, args.action, args.sku);
+                } else {
+                  throw new Error(`Unknown remote method: ${method}`);
+                }
+              } else {
+                // Local Mode (az CLI)
+                if (method === 'getConfig') {
+                  result = await this._thermostat.getConfig(this._workspaceRoot.fsPath, (newConfig) => {
+                    webview.postMessage({ command: 'thermostatRefresh' });
+                  });
+                } else if (method === 'putConfig') {
+                  result = await this._thermostat.putConfig(this._workspaceRoot.fsPath, args.config);
+                } else if (method === 'getCapacityState') {
+                  result = await this._thermostat.getCapacityState(this._workspaceRoot.fsPath, args.capacityId);
+                } else if (method === 'triggerCapacity') {
+                  result = await this._thermostat.triggerCapacity(this._workspaceRoot.fsPath, args.capacityId, args.action, args.sku);
+                } else if (method === 'getRbacStatus' || method === 'grantRbac') {
+                  // Fallback for stubs
+                  result = { hasContributor: true, cliCommand: '' };
+                } else {
+                  throw new Error(`Unknown local method: ${method}`);
+                }
               }
               
               webview.postMessage({ type: 'thermostatApiResult', reqId, result });
@@ -626,6 +659,9 @@ export class BrainProvider implements vscode.WebviewViewProvider {
         orgUrl: adoConfig.get<string>('adoOrgUrl') || '',
         project: adoConfig.get<string>('adoProject') || '',
         workItemType: adoConfig.get<string>('adoWorkItemType') || 'Task',
+      },
+      thermostat: {
+        apiUrl: adoConfig.get<string>('thermostatApiUrl') || '',
       }
     };
     this._view?.webview.postMessage({ command: 'loadSettings', settings });
@@ -737,6 +773,7 @@ export function buildWebviewHtml(
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy"
       content="default-src 'none';
+               connect-src https:;
                font-src ${webview.cspSource};
                style-src ${webview.cspSource} 'unsafe-inline';
                script-src 'nonce-${nonce}';">
