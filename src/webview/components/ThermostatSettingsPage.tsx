@@ -582,7 +582,7 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
               </Card>
 
               <Card className={styles.card}>
-                <Text weight="semibold">Weekly schedule</Text>
+                <Text weight="semibold">Weekly schedule: <strong>{activeCap.displayName || activeCap.id}</strong></Text>
                 <Text size={200}>
                   Each row lists slots for that day. The tick runbook applies the
                   <em> most recent slot whose start ≤ now</em>. Bank holidays override
