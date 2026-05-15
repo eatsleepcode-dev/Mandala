@@ -232,23 +232,13 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
     }));
   };
 
-  const addCapacity = (): void => {
-    const id = window.prompt('New Fabric capacity name (must match the Azure resource name):')?.trim();
-    if (!id) return;
-    if (config.capacities.some((c) => c.id === id)) {
-      setError(`A capacity with id '${id}' already exists.`);
-      return;
-    }
-    const next = { ...config, capacities: [...config.capacities, blankCapacity(id)] };
-    setConfig(next);
-    setActiveId(id);
-  };
-
-  const removeCapacity = (id: string): void => {
-    if (!window.confirm(`Remove capacity '${id}' from the thermostat config?`)) return;
-    const next = { ...config, capacities: config.capacities.filter((c) => c.id !== id) };
-    setConfig(next);
-    if (activeId === id) setActiveId(next.capacities[0]?.id ?? '');
+  const resetSchedule = (): void => {
+    if (!activeCap) return;
+    if (!window.confirm('Are you sure you want to clear the entire weekly schedule?')) return;
+    updateCap({
+      ...activeCap,
+      schedule: { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: [] }
+    });
   };
 
   const addSlot = (day: DayKey): void => {
@@ -392,8 +382,8 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
       {config.capacities.length === 0 ? (
         <Card className={styles.card}>
           <Text>
-            No capacities configured. Click <strong>Add capacity</strong> to start — the id must
-            match the Microsoft.Fabric/capacities resource name in Azure.
+            No capacities found. The background Azure discovery engine is currently scanning your tenant. 
+            Any discovered Microsoft.Fabric/capacities resources will automatically appear here shortly.
           </Text>
         </Card>
       ) : (
@@ -409,7 +399,6 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
                 <Option key={c.id} value={c.id}>{c.displayName || c.id}</Option>
               ))}
             </Dropdown>
-            <Button icon={<Add24Regular />} onClick={addCapacity}>Add capacity</Button>
           </div>
 
           {activeCap && (
@@ -542,13 +531,7 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
                     checked={activeCap.respectBankHolidays}
                     onChange={(_: unknown, d: { checked: boolean }) => updateCap({ ...activeCap, respectBankHolidays: d.checked })}
                   />
-                  <Button
-                    appearance="subtle"
-                    icon={<Delete24Regular />}
-                    onClick={() => removeCapacity(activeCap.id)}
-                  >
-                    Remove capacity
-                  </Button>
+
                 </div>
                 <Divider />
                 <div className={styles.slotRow}>
@@ -677,7 +660,14 @@ export const ThermostatSettingsPage: React.FC<{ onExpand?: () => void }> = ({ on
                 </Card>
               )}
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', marginBottom: '32px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', marginBottom: '32px', gap: '8px' }}>
+                <Button
+                  appearance="secondary"
+                  icon={<Delete24Regular />}
+                  onClick={resetSchedule}
+                >
+                  Reset Schedule
+                </Button>
                 <Button
                   appearance="primary"
                   icon={<Save24Regular />}
